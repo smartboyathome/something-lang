@@ -105,6 +105,12 @@ identifier          {letter}({letter}|{digit})*
 /* Strings */
 %}
 
+single_quote        "'"
+double_quote        "\""
+esc_single_quote    "''"
+esc_double_quote    "\"\""
+inside_single       [^'\n]+
+inside_double       [^\"\n]+
 single_quote_str    [']([^'\n]|\\')*[']
 double_quote_str    [\"]([^\"\n]|\\\")*[\"]
 string              ({single_quote_str}|{double_quote_str})
@@ -124,12 +130,14 @@ comment_star        "*"
 comment_newline     \n
 
 %{
-/* The %s IN_*_COMMENT defines the start condition for when we enter comments
-   defined by the characters parentheses and star. */
+/* The "%s *" defines the start condition for when we enter comments and
+   strings. */
 %}
 
 %s IN_PARENS_COMMENT
 %s IN_CURLY_COMMENT
+%s IN_SINGLE_QUOTE_STRING
+%s IN_DOUBLE_QUOTE_STRING
 %%
 
 %{
@@ -210,8 +218,15 @@ comment_newline     \n
 %}
 
 {number}            { s = yytext; return ynumber; }
-{string}            { s = yytext; return ystring; }
 {identifier}        { s = yytext; return yident; }
+
+%{
+/* Strings start with either a single or double quote, therefore these start
+   with either a single or double quote before switching to the string rules. */
+%}
+
+{single_quote}      { s = yytext; BEGIN(IN_SINGLE_QUOTE_STRING); }
+{double_quote}      { s = yytext; BEGIN(IN_DOUBLE_QUOTE_STRING); }
 
 %{
 /* These define how comments are structured. BEGIN switches the rules to those
@@ -230,6 +245,24 @@ comment_newline     \n
 {whitespace}        ;
 {newline}           { ++line_num; }
 {unknown}           { s = yytext; return yunknown; }
+
+}
+
+<IN_SINGLE_QUOTE_STRING>{
+
+{esc_single_quote}  { s = s + yytext; }
+{single_quote}      { s = s + yytext; BEGIN(INITIAL); return ystring; }
+{inside_single}     { s = s + yytext; }
+{newline}           { ++line_num; s = s + yytext; }
+
+}
+
+<IN_DOUBLE_QUOTE_STRING>{
+
+{esc_double_quote}  { s = s + yytext; }
+{double_quote}      { s = s + yytext; BEGIN(INITIAL); return ystring; }
+{inside_double}     { s = s + yytext; }
+{newline}           { ++line_num; s = s + yytext; }
 
 }
 

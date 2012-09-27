@@ -7,8 +7,12 @@
    parentheses comment *)
 aTestVar09
 anotherVar testMuch
-'I am testing pascal\'s stuff!' 'And what about me?'
-"Another test string?!?! \"Why me?\" D:<" "NO YOU!"
+'I am testing pascal''s stuff!' 'And what about me?'
+"Another test string?!?! ""Why me?"" D:<" "NO YOU!"
+'A multiline
+ single quoted string.'
+"A multiline
+ double quoted string."
 09 999.9 999.9e9
 testVar := 9/5
 9 div 3 = 13 mod 5
