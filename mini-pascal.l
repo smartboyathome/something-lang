@@ -105,8 +105,8 @@ identifier          {letter}({letter}|{digit})*
 /* Strings */
 %}
 
-single_quote_str    [']([^']|\\')*[']
-double_quote_str    [\"]([^\"]|\\\")*[\"]
+single_quote_str    [']([^'\n]|\\')*[']
+double_quote_str    [\"]([^\"\n]|\\\")*[\"]
 string              ({single_quote_str}|{double_quote_str})
 
 %{
@@ -115,7 +115,7 @@ string              ({single_quote_str}|{double_quote_str})
 
 left_curly          "{"
 right_curly         "}"
-comment_curly       "{"[^}]*"}"
+inside_curly        [^}\n]+
 
 left_comment        "(*"
 right_comment       "*)"
@@ -124,11 +124,12 @@ comment_star        "*"
 comment_newline     \n
 
 %{
-/* The %s IN_COMMENT defines the start condition for when we enter comments
+/* The %s IN_*_COMMENT defines the start condition for when we enter comments
    defined by the characters parentheses and star. */
 %}
 
-%s IN_COMMENT
+%s IN_PARENS_COMMENT
+%s IN_CURLY_COMMENT
 %%
 
 %{
@@ -217,8 +218,8 @@ comment_newline     \n
    for inside a comment instead (as defined below). */
 %}
 
-{comment_curly}     { cout << "COMMENT: " << yytext << endl; }
-{left_comment}      { s = yytext; BEGIN(IN_COMMENT); }
+{left_curly}        { s = yytext; BEGIN(IN_CURLY_COMMENT); }
+{left_comment}      { s = yytext; BEGIN(IN_PARENS_COMMENT); }
 
 %{
 /* Finally, these catch anything that is whitespace or unknown. Whitespace does
@@ -237,12 +238,25 @@ comment_newline     \n
    INITIAL will be applied. */
 %}
 
-<IN_COMMENT>{
+<IN_PARENS_COMMENT>{
 
 {right_comment}     { s = s + yytext; cout <<"COMMENT: " << s << endl; BEGIN(INITIAL); }
 {inside_comment}    { s = s + yytext; }
 {comment_star}      { s = s + yytext; }
-{comment_newline}   { s = s + yytext; }
+{newline}           { ++line_num; s = s + yytext; }
 
 }
+
+<IN_CURLY_COMMENT>{
+
+{right_curly}       { s = s + yytext; cout <<"COMMENT: " << s << endl; BEGIN(INITIAL); }
+{inside_curly}      { s = s + yytext; }
+{newline}           { ++line_num; s = s + yytext; }
+
+}
+
+%{
+/* END OF RULES. */
+%}
+
 %%

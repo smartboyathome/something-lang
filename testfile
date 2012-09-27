@@ -1,3 +1,10 @@
+{this is a curly bracket comment}
+{this is a multiline
+ curly bracket comment}
+(*this is a parentheses comment*)
+(*this parentheses comment requires a *special* start condition*)
+(* and this is a multiline
+   parentheses comment *)
 aTestVar09
 anotherVar testMuch
 'I am testing pascal\'s stuff!' 'And what about me?'
@@ -6,10 +13,3 @@ anotherVar testMuch
 testVar := 9/5
 9 div 3 = 13 mod 5
 8 <> 9
-{this is a curly bracket comment}
-{this is a multiline
- curly bracket comment}
-(*this is a parentheses comment*)
-(*this parentheses comment requires a *special* start condition*)
-(* and this is a multiline
-   parentheses comment *)
