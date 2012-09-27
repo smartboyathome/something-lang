@@ -111,9 +111,6 @@ esc_single_quote    "''"
 esc_double_quote    "\"\""
 inside_single       [^'\n]+
 inside_double       [^\"\n]+
-single_quote_str    [']([^'\n]|\\')*[']
-double_quote_str    [\"]([^\"\n]|\\\")*[\"]
-string              ({single_quote_str}|{double_quote_str})
 
 %{
 /* Comments */
