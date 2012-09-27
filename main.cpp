@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <stdio.h>
+#include <vector>
 #include "tokenconsts.h"
 using namespace std;
 
@@ -8,8 +9,101 @@ extern "C" int yylex();    // extern says they will be defined elsewhere
 extern FILE *yyin, *yyout;
 extern string s;
 extern int line_num;
-string tokenToString(int);
-string pretty_spacing(int);
+
+string pretty_spacing(int size)
+{
+    string spaces = "";
+    for(int i = size; i > 0; --i)
+    {
+        spaces = spaces + " ";
+    }
+    return spaces;
+};
+
+class HashedTokenStrings 
+{
+private:
+    vector<string> HashMap;
+public:
+    HashedTokenStrings()
+    {
+        this->HashMap.push_back("and");
+        this->HashMap.push_back("array");
+        this->HashMap.push_back("assign");
+        this->HashMap.push_back("begin");
+        this->HashMap.push_back("caret");
+        this->HashMap.push_back("case");
+        this->HashMap.push_back("colon");
+        this->HashMap.push_back("comma");
+        this->HashMap.push_back("const");
+        this->HashMap.push_back("dispose");
+        this->HashMap.push_back("div");
+        this->HashMap.push_back("divide");
+        this->HashMap.push_back("do");
+        this->HashMap.push_back("dot");
+        this->HashMap.push_back("dotdot");
+        this->HashMap.push_back("downto");
+        this->HashMap.push_back("else");
+        this->HashMap.push_back("end");
+        this->HashMap.push_back("equal");
+        this->HashMap.push_back("false");
+        this->HashMap.push_back("for");
+        this->HashMap.push_back("function");
+        this->HashMap.push_back("greater");
+        this->HashMap.push_back("greaterequal");
+        this->HashMap.push_back("ident");
+        this->HashMap.push_back("if");
+        this->HashMap.push_back("in");
+        this->HashMap.push_back("leftbracket");
+        this->HashMap.push_back("leftparen");
+        this->HashMap.push_back("less");
+        this->HashMap.push_back("lessequal");
+        this->HashMap.push_back("minus");
+        this->HashMap.push_back("mod");
+        this->HashMap.push_back("multiply");
+        this->HashMap.push_back("new");
+        this->HashMap.push_back("nil");
+        this->HashMap.push_back("notequal");
+        this->HashMap.push_back("number");
+        this->HashMap.push_back("of");
+        this->HashMap.push_back("or");
+        this->HashMap.push_back("plus");
+        this->HashMap.push_back("procedure");
+        this->HashMap.push_back("program");
+        this->HashMap.push_back("read");
+        this->HashMap.push_back("readln");
+        this->HashMap.push_back("record");
+        this->HashMap.push_back("repeat");
+        this->HashMap.push_back("rightbracket");
+        this->HashMap.push_back("rightparen");
+        this->HashMap.push_back("semicolon");
+        this->HashMap.push_back("set");
+        this->HashMap.push_back("string");
+        this->HashMap.push_back("then");
+        this->HashMap.push_back("to");
+        this->HashMap.push_back("true");
+        this->HashMap.push_back("type");
+        this->HashMap.push_back("until");
+        this->HashMap.push_back("var");
+        this->HashMap.push_back("while");
+        this->HashMap.push_back("write");
+        this->HashMap.push_back("writeln");
+        this->HashMap.push_back("unknown");
+    }
+    
+    string getString(int token)
+    {
+        int i = token - 257;
+        if(i < 0 || i >= this->HashMap.size())
+            return "";
+        return this->HashMap[i];
+    }
+    
+    int getSize()
+    {
+        return this->HashMap.size();
+    }
+};
 
 int main(int argc, char* argv[]) {
     if ( argc > 2 ) // argc should not be greater than 2 for correct execution
@@ -32,11 +126,12 @@ int main(int argc, char* argv[]) {
     }
     // lex through the input:
     int token;
+    HashedTokenStrings hash;
     while (true)
     {
         token = yylex();
         if (token == 0) break;
-        string token_string = tokenToString(token);
+        string token_string = hash.getString(token);
         int token_col_size = 14;
         string token_spaces = pretty_spacing(token_col_size - token_string.length());
         int line_num_col_size = 6;
@@ -46,145 +141,4 @@ int main(int argc, char* argv[]) {
         cout << line_num_spaces << "s = " << s << endl;
     }
     return 0;
-}
-
-string pretty_spacing(int size)
-{
-    string spaces = "";
-    for(int i = size; i > 0; --i)
-    {
-        spaces = spaces + " ";
-    }
-    return spaces;
-}
-
-string tokenToString(int token)
-{
-    switch(token)
-    {
-        case yand:
-            return "and";
-        case yarray:
-            return "array";
-        case yassign:
-            return "assign";
-        case ybegin:
-            return "begin";
-        case ycaret:
-            return "caret";
-        case ycase:
-            return "case";
-        case ycolon:
-            return "colon";
-        case ycomma:
-            return "comma";
-        case yconst:
-            return "const";
-        case ydispose:
-            return "dispose";
-        case ydiv:
-            return "div";
-        case ydivide:
-            return "divide";
-        case ydo:
-            return "do";
-        case ydot:
-            return "dot";
-        case ydotdot:
-            return "dotdot";
-        case ydownto:
-            return "downto";
-        case yelse:
-            return "else";
-        case yend:
-            return "end";
-        case yequal:
-            return "equal";
-        case yfalse:
-            return "false";
-        case yfor:
-            return "for";
-        case yfunction:
-            return "function";
-        case ygreater:
-            return "greater";
-        case ygreaterequal:
-            return "greaterequal";
-        case yident:
-            return "ident";
-        case yif:
-            return "if";
-        case yin:
-            return "in";
-        case yleftbracket:
-            return "leftbracket";
-        case yleftparen:
-            return "leftparen";
-        case yless:
-            return "less";
-        case ylessequal:
-            return "lessequal";
-        case yminus:
-            return "minus";
-        case ymod:
-            return "mod";
-        case ymultiply:
-            return "multiply";
-        case ynew:
-            return "new";
-        case ynil:
-            return "nil";
-        case ynotequal:
-            return "notequal";
-        case ynumber:
-            return "number";
-        case yof:
-            return "of";
-        case yor:
-            return "or";
-        case yplus:
-            return "plus";
-        case yprocedure:
-            return "procedure";
-        case yprogram:
-            return "program";
-        case yread:
-            return "read";
-        case yreadln:
-            return "readln";
-        case yrecord:
-            return "record";
-        case yrepeat:
-            return "repeat";
-        case yrightbracket:
-            return "rightbracket";
-        case yrightparen:
-            return "rightparen";
-        case ysemicolon:
-            return "semicolon";
-        case yset:
-            return "set";
-        case ystring:
-            return "string";
-        case ythen:
-            return "then";
-        case yto:
-            return "to";
-        case ytrue:
-            return "true";
-        case ytype:
-            return "type";
-        case yuntil:
-            return "until";
-        case yvar:
-            return "var";
-        case ywhile:
-            return "while";
-        case ywrite:
-            return "write";
-        case ywriteln:
-            return "writeln";
-        case yunknown:
-            return "unknown";
-    }
 }
