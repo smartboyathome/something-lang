@@ -17,4 +17,5 @@ anotherVar testMuch
 testVar := 9/5
 9 div 3 = 13 mod 5
 8 <> 9
-Hello hello! Test test test yo! TEST!
+'Hello hello! Test test test yo! TEST!'
+'One more test! Also single quotes look better.'
