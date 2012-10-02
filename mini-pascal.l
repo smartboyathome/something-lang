@@ -56,44 +56,46 @@ colon               ":"
 caret               "^"
 
 %{
-/* Keywords */
+/* Keywords 
+   The (?i:*) triggers a case insensitive search. (?i:and) is equivalent to
+   the regex [aA][nN][dD], but less ugly. */
 %}
 
-and                 "and"
-array               "array"
-begin               "begin"
-case                "case"
-const               "const"
-int_divide          "div"
-do                  "do"
-downto              "downto"
-else                "else"
-end                 "end"
-file                "file"
-for                 "for"
-function            "function"
-goto                "goto"
-if                  "if"
-in                  "in"
-label               "label"
-int_modulus         "mod"
-nil                 "nil"
-not                 "not"
-of                  "of"
-or                  "or"
-packed              "packed"
-procedure           "procedure"
-program             "program"
-record              "record"
-repeat              "repeat"
-set                 "set"
-then                "then"
-to                  "to"
-type                "type"
-until               "until"
-var                 "var"
-while               "while"
-with                "with"
+and                 (?i:and)
+array               (?i:array)
+begin               (?i:begin)
+case                (?i:case)
+const               (?i:const)
+int_divide          (?i:div)
+do                  (?i:do)
+downto              (?i:downto)
+else                (?i:else)
+end                 (?i:end)
+file                (?i:file)
+for                 (?i:for)
+function            (?i:function)
+goto                (?i:goto)
+if                  (?i:if)
+in                  (?i:in)
+label               (?i:label)
+int_modulus         (?i:mod)
+nil                 (?i:nil)
+not                 (?i:not)
+of                  (?i:of)
+or                  (?i:or)
+packed              (?i:packed)
+procedure           (?i:procedure)
+program             (?i:program)
+record              (?i:record)
+repeat              (?i:repeat)
+set                 (?i:set)
+then                (?i:then)
+to                  (?i:to)
+type                (?i:type)
+until               (?i:until)
+var                 (?i:var)
+while               (?i:while)
+with                (?i:with)
 
 %{
 /* These are not keywords, but special functions or values. I thought they were
@@ -101,14 +103,14 @@ with                "with"
    put them in anyway. */
 %}
 
-dispose             "dispose"
-false               "false"
-new                 "new"
-read                "read"
-readln              "readln"
-true                "true"
-write               "write"
-writeln             "writeln"
+dispose             (?i:dispose)
+false               (?i:false)
+new                 (?i:new)
+read                (?i:read)
+readln              (?i:readln)
+true                (?i:true)
+write               (?i:write)
+writeln             (?i:writeln)
 
 %{
 /* Identifiers */
