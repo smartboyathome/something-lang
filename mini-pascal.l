@@ -2,8 +2,6 @@
 #include "tokenconsts.h"
 #include <iostream>
 using namespace std;
-typedef struct token { int token; string extra; int line_number; } token;
-token t;
 #define YY_DECL extern "C" int yylex()
 string s;
 int line_num = 1;
