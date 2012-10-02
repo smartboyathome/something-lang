@@ -2,9 +2,12 @@
 #include "tokenconsts.h"
 #include <iostream>
 using namespace std;
-#define YY_DECL extern "C" int yylex()
-string s;
-int line_num = 1;
+// This defines the main return type for a token. It matches up exactly with
+// the typedef in main.cpp.
+typedef struct token { int token; string extra; int line_number; } token;
+#define YY_DECL extern "C" token *yylex()
+// Initialize our token to some sane defaults.
+token t = (token) { 0, "", 1 };
 %}
 
 %{
@@ -165,66 +168,66 @@ comment_newline     \n
 /* Operator rules come first. Rules are checked from top to bottom. */
 %}
 
-{plus}              { s = ""; return yplus; }
-{minus}             { s = ""; return yminus; }
-{multiply}          { s = ""; return ymultiply; }
-{divide}            { s = ""; return ydivide; }
-{assignment}        { s = ""; return yassign; }
-{int_divide}        { s = ""; return ydiv; }
-{int_modulus}       { s = ""; return ymod; }
-{equal}             { s = ""; return yequal; }
-{unequal}           { s = ""; return ynotequal; }
-{less}              { s = ""; return yless; }
-{less_equal}        { s = ""; return ylessequal; }
-{greater}           { s = ""; return ygreater; }
-{greater_equal}     { s = ""; return ygreaterequal; }
+{plus}              { t.extra = ""; t.token = yplus; return &t; }
+{minus}             { t.extra = ""; t.token = yminus; return &t; }
+{multiply}          { t.extra = ""; t.token = ymultiply; return &t; }
+{divide}            { t.extra = ""; t.token = ydivide; return &t; }
+{assignment}        { t.extra = ""; t.token = yassign; return &t; }
+{int_divide}        { t.extra = ""; t.token = ydiv; return &t; }
+{int_modulus}       { t.extra = ""; t.token = ymod; return &t; }
+{equal}             { t.extra = ""; t.token = yequal; return &t; }
+{unequal}           { t.extra = ""; t.token = ynotequal; return &t; }
+{less}              { t.extra = ""; t.token = yless; return &t; }
+{less_equal}        { t.extra = ""; t.token = ylessequal; return &t; }
+{greater}           { t.extra = ""; t.token = ygreater; return &t; }
+{greater_equal}     { t.extra = ""; t.token = ygreaterequal; return &t; }
 
-{semicolon}         { s = ""; return ysemicolon; }
-{double_dot}        { s = ""; return ydotdot; }
-{dot}               { s = ""; return ydot; }
-{comma}             { s = ""; return ycomma; }
-{colon}             { s = ""; return ycolon; }
-{caret}             { s = ""; return ycaret; }
+{semicolon}         { t.extra = ""; t.token = ysemicolon; return &t; }
+{double_dot}        { t.extra = ""; t.token = ydotdot; return &t; }
+{dot}               { t.extra = ""; t.token = ydot; return &t; }
+{comma}             { t.extra = ""; t.token = ycomma; return &t; }
+{colon}             { t.extra = ""; t.token = ycolon; return &t; }
+{caret}             { t.extra = ""; t.token = ycaret; return &t; }
 
-{left_parentheses}  { s = ""; return yleftparen; }
-{right_parentheses} { s = ""; return yrightparen; }
-{left_bracket}      { s = ""; return yleftbracket; }
-{right_bracket}     { s = ""; return yrightbracket; }
+{left_parentheses}  { t.extra = ""; t.token = yleftparen; return &t; }
+{right_parentheses} { t.extra = ""; t.token = yrightparen; return &t; }
+{left_bracket}      { t.extra = ""; t.token = yleftbracket; return &t; }
+{right_bracket}     { t.extra = ""; t.token = yrightbracket; return &t; }
 
 %{
 /* Keywords come next. They are string literals, so they are applied before
    any dynamic rules. */
 %}
 
-{and}               { s = ""; return yand; }
-{array}             { s = ""; return yarray; }
-{begin}             { s = ""; return ybegin; }
-{case}              { s = ""; return ycase; }
-{const}             { s = ""; return yconst; }
-{do}                { s = ""; return ydo; }
-{downto}            { s = ""; return ydownto; }
-{else}              { s = ""; return yelse; }
-{end}               { s = ""; return yend; }
-{for}               { s = ""; return yfor; }
-{function}          { s = ""; return yfunction; }
-{if}                { s = ""; return yif; }
-{in}                { s = ""; return yin; }
-{nil}               { s = ""; return ynil; }
-{not}               { s = ""; return ynot; }
-{of}                { s = ""; return yof; }
-{or}                { s = ""; return yor; }
-{procedure}         { s = ""; return yprocedure; }
-{program}           { s = ""; return yprogram; }
-{record}            { s = ""; return yrecord; }
-{repeat}            { s = ""; return yrepeat; }
-{set}               { s = ""; return yset; }
-{then}              { s = ""; return ythen; }
-{to}                { s = ""; return yto; }
-{type}              { s = ""; return ytype; }
-{until}             { s = ""; return yuntil; }
-{var}               { s = ""; return yvar; }
-{while}             { s = ""; return ywhile; }
-{with}              { s = ""; return yunknown; }
+{and}               { t.extra = ""; t.token = yand; return &t; }
+{array}             { t.extra = ""; t.token = yarray; return &t; }
+{begin}             { t.extra = ""; t.token = ybegin; return &t; }
+{case}              { t.extra = ""; t.token = ycase; return &t; }
+{const}             { t.extra = ""; t.token = yconst; return &t; }
+{do}                { t.extra = ""; t.token = ydo; return &t; }
+{downto}            { t.extra = ""; t.token = ydownto; return &t; }
+{else}              { t.extra = ""; t.token = yelse; return &t; }
+{end}               { t.extra = ""; t.token = yend; return &t; }
+{for}               { t.extra = ""; t.token = yfor; return &t; }
+{function}          { t.extra = ""; t.token = yfunction; return &t; }
+{if}                { t.extra = ""; t.token = yif; return &t; }
+{in}                { t.extra = ""; t.token = yin; return &t; }
+{nil}               { t.extra = ""; t.token = ynil; return &t; }
+{not}               { t.extra = ""; t.token = ynot; return &t; }
+{of}                { t.extra = ""; t.token = yof; return &t; }
+{or}                { t.extra = ""; t.token = yor; return &t; }
+{procedure}         { t.extra = ""; t.token = yprocedure; return &t; }
+{program}           { t.extra = ""; t.token = yprogram; return &t; }
+{record}            { t.extra = ""; t.token = yrecord; return &t; }
+{repeat}            { t.extra = ""; t.token = yrepeat; return &t; }
+{set}               { t.extra = ""; t.token = yset; return &t; }
+{then}              { t.extra = ""; t.token = ythen; return &t; }
+{to}                { t.extra = ""; t.token = yto; return &t; }
+{type}              { t.extra = ""; t.token = ytype; return &t; }
+{until}             { t.extra = ""; t.token = yuntil; return &t; }
+{var}               { t.extra = ""; t.token = yvar; return &t; }
+{while}             { t.extra = ""; t.token = ywhile; return &t; }
+{with}              { t.extra = ""; t.token = yunknown; return &t; }
 
 %{
 /* These are the special functions/values mentioned above. I'm not a fan of
@@ -232,40 +235,38 @@ comment_newline     \n
    for the grader so I have included them. */
 %}
 
-{dispose}           { s = ""; return ydispose; }
-{false}             { s = ""; return yfalse; }
-{new}               { s = ""; return ynew; }
-{read}              { s = ""; return yread; }
-{readln}            { s = ""; return yreadln; }
-{true}              { s = ""; return ytrue; }
-{write}             { s = ""; return ywrite; }
-{writeln}           { s = ""; return ywriteln; }
+{dispose}           { t.extra = ""; t.token = ydispose; return &t; }
+{false}             { t.extra = ""; t.token = yfalse; return &t; }
+{new}               { t.extra = ""; t.token = ynew; return &t; }
+{read}              { t.extra = ""; t.token = yread; return &t; }
+{readln}            { t.extra = ""; t.token = yreadln; return &t; }
+{true}              { t.extra = ""; t.token = ytrue; return &t; }
+{write}             { t.extra = ""; t.token = ywrite; return &t; }
+{writeln}           { t.extra = ""; t.token = ywriteln; return &t; }
 
 %{
 /* Here are where the rules for the basic types like numbers and identifiers
    are applied. */
 %}
 
-{number}            { s = yytext; return ynumber; }
-{identifier}        { s = yytext; return yident; }
+{number}            { t.extra = yytext; t.token = ynumber; return &t; }
+{identifier}        { t.extra = yytext; t.token = yident; return &t; }
 
 %{
 /* Strings start with either a single or double quote, therefore these start
    with either a single or double quote before switching to the string rules. */
 %}
 
-{dispose}
-
-{single_quote}      { s = ""; BEGIN(IN_SINGLE_QUOTE_STRING); }
-{double_quote}      { s = ""; BEGIN(IN_DOUBLE_QUOTE_STRING); }
+{single_quote}      { t.extra = ""; BEGIN(IN_SINGLE_QUOTE_STRING); }
+{double_quote}      { t.extra = ""; BEGIN(IN_DOUBLE_QUOTE_STRING); }
 
 %{
 /* These define how comments are structured. BEGIN switches the rules to those
    for inside a comment instead (as defined below). */
 %}
 
-{left_curly}        { s = ""; BEGIN(IN_CURLY_COMMENT); }
-{left_comment}      { s = ""; BEGIN(IN_PARENS_COMMENT); }
+{left_curly}        { t.extra = ""; BEGIN(IN_CURLY_COMMENT); }
+{left_comment}      { t.extra = ""; BEGIN(IN_PARENS_COMMENT); }
 
 %{
 /* Finally, these catch anything that is whitespace or unknown. Whitespace does
@@ -274,8 +275,8 @@ comment_newline     \n
 %}
 
 {whitespace}        ;
-{newline}           { ++line_num; }
-{unknown}           { s = yytext; return yunknown; }
+{newline}           { ++t.line_number; }
+{unknown}           { t.extra = yytext; t.token = yunknown; return &t; }
 
 }
 
@@ -286,19 +287,19 @@ comment_newline     \n
 
 <IN_SINGLE_QUOTE_STRING>{
 
-{esc_single_quote}  { s = s + "'"; }
-{single_quote}      { BEGIN(INITIAL); return ystring; }
-{inside_single}     { s = s + yytext; }
-{newline}           { ++line_num; s = s + yytext; }
+{esc_single_quote}  { t.extra = t.extra + "'"; }
+{single_quote}      { BEGIN(INITIAL); t.token = ystring; return &t; }
+{inside_single}     { t.extra = t.extra + yytext; }
+{newline}           { ++t.line_number; t.extra = t.extra + yytext; }
 
 }
 
 <IN_DOUBLE_QUOTE_STRING>{
 
-{esc_double_quote}  { s = s + "\""; }
-{double_quote}      { BEGIN(INITIAL); return ystring; }
-{inside_double}     { s = s + yytext; }
-{newline}           { ++line_num; s = s + yytext; }
+{esc_double_quote}  { t.extra = t.extra + "\""; }
+{double_quote}      { BEGIN(INITIAL); t.token = ystring; return &t; }
+{inside_double}     { t.extra = t.extra + yytext; }
+{newline}           { ++t.line_number; t.extra = t.extra + yytext; }
 
 }
 
@@ -309,18 +310,18 @@ comment_newline     \n
 
 <IN_PARENS_COMMENT>{
 
-{right_comment}     { cout << "/*" << s << "*/" << endl; BEGIN(INITIAL); }
-{inside_comment}    { s = s + yytext; }
-{comment_star}      { s = s + yytext; }
-{newline}           { ++line_num; s = s + yytext; }
+{right_comment}     { cout << "/*" << t.extra << "*/" << endl; BEGIN(INITIAL); }
+{inside_comment}    { t.extra = t.extra + yytext; }
+{comment_star}      { t.extra = t.extra + yytext; }
+{newline}           { ++t.line_number; t.extra = t.extra + yytext; }
 
 }
 
 <IN_CURLY_COMMENT>{
 
-{right_curly}       { cout << "/*" << s << "*/" << endl; BEGIN(INITIAL); }
-{inside_curly}      { s = s + yytext; }
-{newline}           { ++line_num; s = s + yytext; }
+{right_curly}       { cout << "/*" << t.extra << "*/" << endl; BEGIN(INITIAL); }
+{inside_curly}      { t.extra = t.extra + yytext; }
+{newline}           { ++t.line_number; t.extra = t.extra + yytext; }
 
 }
 
