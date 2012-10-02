@@ -6,13 +6,11 @@
 #include "tokenconsts.h"
 using namespace std;
 
-// This exactly matches the struct in the mini-pascal.l file, and is used as
-// the return type for the yylex function instead of an int.
-typedef struct token { int token; string extra; int line_number; } token;
-
 // extern says they will be defined elsewhere
-extern "C" token *yylex(); // yylex is the main flex function.
+extern "C" int yylex(); // yylex is the main flex function.
 extern FILE *yyin, *yyout; // yyin and yyout are the streams to read/write input.
+extern string s; // This is the metadata, such a s an int or string value.
+extern int line_num; // And this is the line number that flex is on.
 
 // A simple class that just hashes the tokens to strings using an array and
 // some basic arithmetic. You can get a string from a token using the getString
@@ -133,11 +131,11 @@ int main(int argc, char* argv[]) {
     HashedTokenStrings hash; // We only want to initialize the hash table once.
     while (true) // Yes an infinite loop, but its escaped using break.
     {
-        token *t = yylex(); // Gets the token as an int.
-        if (t == NULL) break; // We're done when we reach the end of file token.
-        cout << left << setw(6) << t->token; // Output the token as an int.
-        cout << left << setw(14) << hash.getString(t->token); // And as a string.
-        cout << t->extra << endl; // Finally output the metadata, if any.
+        int token = yylex(); // Gets the token as an int.
+        if (token == 0) break; // We're done when we reach the end of file token.
+        cout << left << setw(6) << token; // Output the token as an int.
+        cout << left << setw(14) << hash.getString(token); // And as a string.
+        cout << s << endl; // Finally output the metadata, if any.
     }
     return 0; // We have finished successfully.
 }

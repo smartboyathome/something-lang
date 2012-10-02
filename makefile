@@ -9,6 +9,10 @@
 
 # The 'touch' command is useful for faking an update, e.g., "touch ll" 
 
-mini-pascal:  mini-pascal.l main.cpp                      # if mini-pascal.l or main.cpp change, flex and g++ are executed
-	          flex mini-pascal.l                          # creates lex.yy.c function
-	          g++ lex.yy.c main.cpp -lfl -o mini-pascal   # compiles everything into one nice, neat executable
+mini-pascal:  mini-pascal.l main.cpp
+	          flex mini-pascal.l
+	          g++ lex.yy.c main.cpp -lfl -o mini-pascal
+
+mini-pascal-struct: mini-pascal.struct.l main.struct.cpp
+	                flex mini-pascal.struct.l
+	                g++ lex.yy.c main.struct.cpp -lfl -o mini-pascal
