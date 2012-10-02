@@ -264,8 +264,8 @@ comment_newline     \n
    for inside a comment instead (as defined below). */
 %}
 
-{left_curly}        { s = "/*"; BEGIN(IN_CURLY_COMMENT); }
-{left_comment}      { s = "/*"; BEGIN(IN_PARENS_COMMENT); }
+{left_curly}        { s = ""; BEGIN(IN_CURLY_COMMENT); }
+{left_comment}      { s = ""; BEGIN(IN_PARENS_COMMENT); }
 
 %{
 /* Finally, these catch anything that is whitespace or unknown. Whitespace does
@@ -309,7 +309,7 @@ comment_newline     \n
 
 <IN_PARENS_COMMENT>{
 
-{right_comment}     { s = s + "*/"; cout << s << endl; BEGIN(INITIAL); }
+{right_comment}     { cout << "/*" << s << "*/" << endl; BEGIN(INITIAL); }
 {inside_comment}    { s = s + yytext; }
 {comment_star}      { s = s + yytext; }
 {newline}           { ++line_num; s = s + yytext; }
@@ -318,7 +318,7 @@ comment_newline     \n
 
 <IN_CURLY_COMMENT>{
 
-{right_curly}       { s = s + "*/"; cout << s << endl; BEGIN(INITIAL); }
+{right_curly}       { cout << "/*" << s << "*/" << endl; BEGIN(INITIAL); }
 {inside_curly}      { s = s + yytext; }
 {newline}           { ++line_num; s = s + yytext; }
 
