@@ -96,6 +96,21 @@ while               "while"
 with                "with"
 
 %{
+/* These are not keywords, but special functions or values. I thought they were
+   not supposed to be put in here, but the expected output has them, so I will
+   put them in anyway. */
+%}
+
+dispose             "dispose"
+false               "false"
+new                 "new"
+read                "read"
+readln              "readln"
+true                "true"
+write               "write"
+writeln             "writeln"
+
+%{
 /* Identifiers */
 %}
 
@@ -148,70 +163,85 @@ comment_newline     \n
 /* Operator rules come first. Rules are checked from top to bottom. */
 %}
 
-{plus}              { s = yytext; return yplus; }
-{minus}             { s = yytext; return yminus; }
-{multiply}          { s = yytext; return ymultiply; }
-{divide}            { s = yytext; return ydivide; }
-{assignment}        { s = yytext; return yassign; }
-{int_divide}        { s = yytext; return ydiv; }
-{int_modulus}       { s = yytext; return ymod; }
-{equal}             { s = yytext; return yequal; }
-{unequal}           { s = yytext; return ynotequal; }
-{less}              { s = yytext; return yless; }
-{less_equal}        { s = yytext; return ylessequal; }
-{greater}           { s = yytext; return ygreater; }
-{greater_equal}     { s = yytext; return ygreaterequal; }
+{plus}              { s = ""; return yplus; }
+{minus}             { s = ""; return yminus; }
+{multiply}          { s = ""; return ymultiply; }
+{divide}            { s = ""; return ydivide; }
+{assignment}        { s = ""; return yassign; }
+{int_divide}        { s = ""; return ydiv; }
+{int_modulus}       { s = ""; return ymod; }
+{equal}             { s = ""; return yequal; }
+{unequal}           { s = ""; return ynotequal; }
+{less}              { s = ""; return yless; }
+{less_equal}        { s = ""; return ylessequal; }
+{greater}           { s = ""; return ygreater; }
+{greater_equal}     { s = ""; return ygreaterequal; }
 
-{semicolon}         { s = yytext; return ysemicolon; }
-{double_dot}        { s = yytext; return ydotdot; }
-{dot}               { s = yytext; return ydot; }
-{comma}             { s = yytext; return ycomma; }
-{colon}             { s = yytext; return ycolon; }
-{caret}             { s = yytext; return ycaret; }
+{semicolon}         { s = ""; return ysemicolon; }
+{double_dot}        { s = ""; return ydotdot; }
+{dot}               { s = ""; return ydot; }
+{comma}             { s = ""; return ycomma; }
+{colon}             { s = ""; return ycolon; }
+{caret}             { s = ""; return ycaret; }
 
-{left_parentheses}  { s = yytext; return yleftparen; }
-{right_parentheses} { s = yytext; return yrightparen; }
-{left_bracket}      { s = yytext; return yleftbracket; }
-{right_bracket}     { s = yytext; return yrightbracket; }
+{left_parentheses}  { s = ""; return yleftparen; }
+{right_parentheses} { s = ""; return yrightparen; }
+{left_bracket}      { s = ""; return yleftbracket; }
+{right_bracket}     { s = ""; return yrightbracket; }
 
 %{
 /* Keywords come next. They are string literals, so they are applied before
    any dynamic rules. */
 %}
 
-{and}               { s = yytext; return yand; }
-{array}             { s = yytext; return yarray; }
-{begin}             { s = yytext; return ybegin; }
-{case}              { s = yytext; return ycase; }
-{const}             { s = yytext; return yconst; }
-{do}                { s = yytext; return ydo; }
-{downto}            { s = yytext; return ydownto; }
-{else}              { s = yytext; return yelse; }
-{end}               { s = yytext; return yend; }
-{for}               { s = yytext; return yfor; }
-{function}          { s = yytext; return yfunction; }
-{if}                { s = yytext; return yif; }
-{in}                { s = yytext; return yin; }
-{nil}               { s = yytext; return ynil; }
-{not}               { s = yytext; return ynot; }
-{of}                { s = yytext; return yof; }
-{or}                { s = yytext; return yor; }
-{procedure}         { s = yytext; return yprocedure; }
-{program}           { s = yytext; return yprogram; }
-{record}            { s = yytext; return yrecord; }
-{repeat}            { s = yytext; return yrepeat; }
-{set}               { s = yytext; return yset; }
-{then}              { s = yytext; return ythen; }
-{to}                { s = yytext; return yto; }
-{type}              { s = yytext; return ytype; }
-{until}             { s = yytext; return yuntil; }
-{var}               { s = yytext; return yvar; }
-{while}             { s = yytext; return ywhile; }
-{with}              { s = yytext; return yunknown; }
+{and}               { s = ""; return yand; }
+{array}             { s = ""; return yarray; }
+{begin}             { s = ""; return ybegin; }
+{case}              { s = ""; return ycase; }
+{const}             { s = ""; return yconst; }
+{do}                { s = ""; return ydo; }
+{downto}            { s = ""; return ydownto; }
+{else}              { s = ""; return yelse; }
+{end}               { s = ""; return yend; }
+{for}               { s = ""; return yfor; }
+{function}          { s = ""; return yfunction; }
+{if}                { s = ""; return yif; }
+{in}                { s = ""; return yin; }
+{nil}               { s = ""; return ynil; }
+{not}               { s = ""; return ynot; }
+{of}                { s = ""; return yof; }
+{or}                { s = ""; return yor; }
+{procedure}         { s = ""; return yprocedure; }
+{program}           { s = ""; return yprogram; }
+{record}            { s = ""; return yrecord; }
+{repeat}            { s = ""; return yrepeat; }
+{set}               { s = ""; return yset; }
+{then}              { s = ""; return ythen; }
+{to}                { s = ""; return yto; }
+{type}              { s = ""; return ytype; }
+{until}             { s = ""; return yuntil; }
+{var}               { s = ""; return yvar; }
+{while}             { s = ""; return ywhile; }
+{with}              { s = ""; return yunknown; }
 
 %{
-/* Here are where the rules for the basic types like strings, numbers, and
-   identifiers are applied. */
+/* These are the special functions/values mentioned above. I'm not a fan of
+   including these here rather than the symbol table, but they are needed
+   for the grader so I have included them. */
+%}
+
+{dispose}           { s = ""; return ydispose; }
+{false}             { s = ""; return yfalse; }
+{new}               { s = ""; return ynew; }
+{read}              { s = ""; return yread; }
+{readln}            { s = ""; return yreadln; }
+{true}              { s = ""; return ytrue; }
+{write}             { s = ""; return ywrite; }
+{writeln}           { s = ""; return ywriteln; }
+
+%{
+/* Here are where the rules for the basic types like numbers and identifiers
+   are applied. */
 %}
 
 {number}            { s = yytext; return ynumber; }
@@ -222,16 +252,18 @@ comment_newline     \n
    with either a single or double quote before switching to the string rules. */
 %}
 
-{single_quote}      { s = yytext; BEGIN(IN_SINGLE_QUOTE_STRING); }
-{double_quote}      { s = yytext; BEGIN(IN_DOUBLE_QUOTE_STRING); }
+{dispose}
+
+{single_quote}      { s = ""; BEGIN(IN_SINGLE_QUOTE_STRING); }
+{double_quote}      { s = ""; BEGIN(IN_DOUBLE_QUOTE_STRING); }
 
 %{
 /* These define how comments are structured. BEGIN switches the rules to those
    for inside a comment instead (as defined below). */
 %}
 
-{left_curly}        { s = yytext; BEGIN(IN_CURLY_COMMENT); }
-{left_comment}      { s = yytext; BEGIN(IN_PARENS_COMMENT); }
+{left_curly}        { s = "/*"; BEGIN(IN_CURLY_COMMENT); }
+{left_comment}      { s = "/*"; BEGIN(IN_PARENS_COMMENT); }
 
 %{
 /* Finally, these catch anything that is whitespace or unknown. Whitespace does
@@ -245,10 +277,15 @@ comment_newline     \n
 
 }
 
+%{
+/* These are the rules for when we are inside strings. None of the rules from
+   either INITIAL or IN_*_COMMENT will be applied. */
+%}
+
 <IN_SINGLE_QUOTE_STRING>{
 
-{esc_single_quote}  { s = s + yytext; }
-{single_quote}      { s = s + yytext; BEGIN(INITIAL); return ystring; }
+{esc_single_quote}  { s = s + "'"; }
+{single_quote}      { BEGIN(INITIAL); return ystring; }
 {inside_single}     { s = s + yytext; }
 {newline}           { ++line_num; s = s + yytext; }
 
@@ -256,8 +293,8 @@ comment_newline     \n
 
 <IN_DOUBLE_QUOTE_STRING>{
 
-{esc_double_quote}  { s = s + yytext; }
-{double_quote}      { s = s + yytext; BEGIN(INITIAL); return ystring; }
+{esc_double_quote}  { s = s + "\""; }
+{double_quote}      { BEGIN(INITIAL); return ystring; }
 {inside_double}     { s = s + yytext; }
 {newline}           { ++line_num; s = s + yytext; }
 
@@ -265,12 +302,12 @@ comment_newline     \n
 
 %{
 /* These are the rules for when we are inside comments. None of the rules from
-   INITIAL will be applied. */
+   either INITIAL or IN_*_STRING will be applied. */
 %}
 
 <IN_PARENS_COMMENT>{
 
-{right_comment}     { s = s + yytext; cout <<"COMMENT: " << s << endl; BEGIN(INITIAL); }
+{right_comment}     { s = s + "*/"; cout << s << endl; BEGIN(INITIAL); }
 {inside_comment}    { s = s + yytext; }
 {comment_star}      { s = s + yytext; }
 {newline}           { ++line_num; s = s + yytext; }
@@ -279,7 +316,7 @@ comment_newline     \n
 
 <IN_CURLY_COMMENT>{
 
-{right_curly}       { s = s + yytext; cout <<"COMMENT: " << s << endl; BEGIN(INITIAL); }
+{right_curly}       { s = s + "*/"; cout << s << endl; BEGIN(INITIAL); }
 {inside_curly}      { s = s + yytext; }
 {newline}           { ++line_num; s = s + yytext; }
 

@@ -1,107 +1,109 @@
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <stdio.h>
 #include <vector>
 #include "tokenconsts.h"
 using namespace std;
 
-extern "C" int yylex();    // extern says they will be defined elsewhere
-extern FILE *yyin, *yyout;
-extern string s;
-extern int line_num;
+// extern says they will be defined elsewhere
+extern "C" int yylex(); // yylex is the main flex function.
+extern FILE *yyin, *yyout; // yyin and yyout are the streams to read/write input.
+extern string s; // This is the metadata, such a s an int or string value.
+extern int line_num; // And this is the line number that flex is on.
 
-string pretty_spacing(int size)
-{
-    string spaces = "";
-    for(int i = size; i > 0; --i)
-    {
-        spaces = spaces + " ";
-    }
-    return spaces;
-};
-
+// A simple class that just hashes the tokens to strings using an array and
+// some basic arithmetic. You can get a string from a token using the getString
+// function.
 class HashedTokenStrings 
 {
 private:
-    vector<string> HashMap;
+    static const int size = 63;
+    string HashMap[size];
 public:
+    // Initialize the array with all the strings. This class was generated from
+    // the tokenconsts.h file using a python script.
     HashedTokenStrings()
     {
-        this->HashMap.push_back("and");
-        this->HashMap.push_back("array");
-        this->HashMap.push_back("assign");
-        this->HashMap.push_back("begin");
-        this->HashMap.push_back("caret");
-        this->HashMap.push_back("case");
-        this->HashMap.push_back("colon");
-        this->HashMap.push_back("comma");
-        this->HashMap.push_back("const");
-        this->HashMap.push_back("dispose");
-        this->HashMap.push_back("div");
-        this->HashMap.push_back("divide");
-        this->HashMap.push_back("do");
-        this->HashMap.push_back("dot");
-        this->HashMap.push_back("dotdot");
-        this->HashMap.push_back("downto");
-        this->HashMap.push_back("else");
-        this->HashMap.push_back("end");
-        this->HashMap.push_back("equal");
-        this->HashMap.push_back("false");
-        this->HashMap.push_back("for");
-        this->HashMap.push_back("function");
-        this->HashMap.push_back("greater");
-        this->HashMap.push_back("greaterequal");
-        this->HashMap.push_back("ident");
-        this->HashMap.push_back("if");
-        this->HashMap.push_back("in");
-        this->HashMap.push_back("leftbracket");
-        this->HashMap.push_back("leftparen");
-        this->HashMap.push_back("less");
-        this->HashMap.push_back("lessequal");
-        this->HashMap.push_back("minus");
-        this->HashMap.push_back("mod");
-        this->HashMap.push_back("multiply");
-        this->HashMap.push_back("new");
-        this->HashMap.push_back("nil");
-        this->HashMap.push_back("notequal");
-        this->HashMap.push_back("number");
-        this->HashMap.push_back("of");
-        this->HashMap.push_back("or");
-        this->HashMap.push_back("plus");
-        this->HashMap.push_back("procedure");
-        this->HashMap.push_back("program");
-        this->HashMap.push_back("read");
-        this->HashMap.push_back("readln");
-        this->HashMap.push_back("record");
-        this->HashMap.push_back("repeat");
-        this->HashMap.push_back("rightbracket");
-        this->HashMap.push_back("rightparen");
-        this->HashMap.push_back("semicolon");
-        this->HashMap.push_back("set");
-        this->HashMap.push_back("string");
-        this->HashMap.push_back("then");
-        this->HashMap.push_back("to");
-        this->HashMap.push_back("true");
-        this->HashMap.push_back("type");
-        this->HashMap.push_back("until");
-        this->HashMap.push_back("var");
-        this->HashMap.push_back("while");
-        this->HashMap.push_back("write");
-        this->HashMap.push_back("writeln");
-        this->HashMap.push_back("unknown");
+        this->HashMap[0] = "yand";
+        this->HashMap[1] = "yarray";
+        this->HashMap[2] = "yassign";
+        this->HashMap[3] = "ybegin";
+        this->HashMap[4] = "ycaret";
+        this->HashMap[5] = "ycase";
+        this->HashMap[6] = "ycolon";
+        this->HashMap[7] = "ycomma";
+        this->HashMap[8] = "yconst";
+        this->HashMap[9] = "ydispose";
+        this->HashMap[10] = "ydiv";
+        this->HashMap[11] = "ydivide";
+        this->HashMap[12] = "ydo";
+        this->HashMap[13] = "ydot";
+        this->HashMap[14] = "ydotdot";
+        this->HashMap[15] = "ydownto";
+        this->HashMap[16] = "yelse";
+        this->HashMap[17] = "yend";
+        this->HashMap[18] = "yequal";
+        this->HashMap[19] = "yfalse";
+        this->HashMap[20] = "yfor";
+        this->HashMap[21] = "yfunction";
+        this->HashMap[22] = "ygreater";
+        this->HashMap[23] = "ygreaterequal";
+        this->HashMap[24] = "yident";
+        this->HashMap[25] = "yif";
+        this->HashMap[26] = "yin";
+        this->HashMap[27] = "yleftbracket";
+        this->HashMap[28] = "yleftparen";
+        this->HashMap[29] = "yless";
+        this->HashMap[30] = "ylessequal";
+        this->HashMap[31] = "yminus";
+        this->HashMap[32] = "ymod";
+        this->HashMap[33] = "ymultiply";
+        this->HashMap[34] = "ynew";
+        this->HashMap[35] = "ynil";
+        this->HashMap[37] = "ynotequal";
+        this->HashMap[38] = "ynumber";
+        this->HashMap[39] = "yof";
+        this->HashMap[40] = "yor";
+        this->HashMap[41] = "yplus";
+        this->HashMap[42] = "yprocedure";
+        this->HashMap[43] = "yprogram";
+        this->HashMap[44] = "yread";
+        this->HashMap[45] = "yreadln";
+        this->HashMap[46] = "yrecord";
+        this->HashMap[47] = "yrepeat";
+        this->HashMap[48] = "yrightbracket";
+        this->HashMap[49] = "yrightparen";
+        this->HashMap[50] = "ysemicolon";
+        this->HashMap[51] = "yset";
+        this->HashMap[52] = "ystring";
+        this->HashMap[53] = "ythen";
+        this->HashMap[54] = "yto";
+        this->HashMap[55] = "ytrue";
+        this->HashMap[56] = "ytype";
+        this->HashMap[57] = "yuntil";
+        this->HashMap[58] = "yvar";
+        this->HashMap[59] = "ywhile";
+        this->HashMap[60] = "ywrite";
+        this->HashMap[61] = "ywriteln";
+        this->HashMap[62] = "yunknown";
     }
     
+    // The tokens start at 257. Therefore, if you subtract 257 from the token
+    // int, you will get the index in the hashmap array.
     string getString(int token)
     {
         int i = token - 257;
-        if(i < 0 || i >= this->HashMap.size())
+        if(i < 0 || i >= size)
             return "";
         return this->HashMap[i];
     }
     
+    // This gets how many elements are in the array. For use by anything that
+    // needs to know that.
     int getSize()
     {
-        return this->HashMap.size();
+        return size;
     }
 };
 
@@ -110,14 +112,15 @@ int main(int argc, char* argv[]) {
     {
         // We print argv[0] assuming it is the program name
         cout<<"usage: "<< argv[0] <<" [<filename>]\n";
-        return -1;
+        return -1; // exit code -1 means that an error has occured.
     }
-    else if(argc == 2)
+    else if(argc == 2) // If there are no arguments, STDIN is used instead.
     {
         // open a file handle to a particular file:
 	    FILE *myfile = fopen(argv[1], "r");
 	    // make sure it's valid:
 	    if (!myfile) {
+	        // You haven't given us a file we can read from! ABORT! ABORT!
 		    cout << "I can't open " << argv[1] << "!" << endl;
 		    return -1;
 	    }
@@ -125,20 +128,14 @@ int main(int argc, char* argv[]) {
 	    yyin = myfile;
     }
     // lex through the input:
-    int token;
-    HashedTokenStrings hash;
-    while (true)
+    HashedTokenStrings hash; // We only want to initialize the hash table once.
+    while (true) // Yes an infinite loop, but its escaped using break.
     {
-        token = yylex();
-        if (token == 0) break;
-        string token_string = hash.getString(token);
-        int token_col_size = 14;
-        string token_spaces = pretty_spacing(token_col_size - token_string.length());
-        int line_num_col_size = 6;
-        string line_num_spaces = pretty_spacing(line_num_col_size - line_num / 10 + 1);
-        cout << "token = " << token << " (" << token_string << ")";
-        cout << token_spaces << "line = " << line_num;
-        cout << line_num_spaces << "s = " << s << endl;
+        int token = yylex(); // Gets the token as an int.
+        if (token == 0) break; // We're done when we reach the end of file token.
+        cout << left << setw(6) << token; // Output the token as an int.
+        cout << left << setw(14) << hash.getString(token); // And as a string.
+        cout << s << endl; // Finally output the metadata, if any.
     }
-    return 0;
+    return 0; // We have finished successfully.
 }

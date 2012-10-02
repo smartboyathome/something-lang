@@ -10,7 +10,7 @@
    int const ycolon = 263; // DONE
    int const ycomma = 264; // DONE
    int const yconst = 265; // DONE
-   int const ydispose = 266;
+   int const ydispose = 266; // DONE
    int const ydiv = 267; // DONE
    int const ydivide = 268; // DONE
    int const ydo = 269; // DONE
@@ -20,7 +20,7 @@
    int const yelse = 273; // DONE
    int const yend = 274; // DONE
    int const yequal = 275; // DONE
-   int const yfalse = 276;
+   int const yfalse = 276; // DONE
    int const yfor = 277; // DONE
    int const yfunction = 278; // DONE
    int const ygreater = 279; // DONE
@@ -35,7 +35,7 @@
    int const yminus = 288; // DONE
    int const ymod = 289; // DONE
    int const ymultiply = 290; // DONE
-   int const ynew = 291;
+   int const ynew = 291; // DONE
    int const ynil = 292; // DONE
    int const ynot  = 293; // DONE
    int const ynotequal = 294; // DONE
@@ -45,8 +45,8 @@
    int const yplus = 298; // DONE
    int const yprocedure = 299; // DONE
    int const yprogram = 300; // DONE
-   int const yread = 301;
-   int const yreadln = 302;
+   int const yread = 301; // DONE
+   int const yreadln = 302; // DONE
    int const yrecord = 303; // DONE
    int const yrepeat = 304; // DONE
    int const yrightbracket = 305; // DONE
@@ -56,12 +56,12 @@
    int const ystring = 309; // DONE
    int const ythen = 310; // DONE
    int const yto = 311; // DONE
-   int const ytrue = 312;
+   int const ytrue = 312; // DONE
    int const ytype = 313; // DONE
    int const yuntil = 314; // DONE
    int const yvar = 315; // DONE
    int const ywhile = 316; // DONE
-   int const ywrite = 317;
-   int const ywriteln = 318;
+   int const ywrite = 317; // DONE
+   int const ywriteln = 318; // DONE
    int const yunknown = 319; // DONE
 
