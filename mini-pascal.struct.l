@@ -289,6 +289,7 @@ comment_newline     \n
 
 {esc_single_quote}  { t.extra = t.extra + "'"; }
 {single_quote}      { BEGIN(INITIAL); t.token = ystring; return &t; }
+<<EOF>>				{ BEGIN(INITIAL); t.token = ystring; return &t; }
 {inside_single}     { t.extra = t.extra + yytext; }
 {newline}           { ++t.line_number; t.extra = t.extra + yytext; }
 
@@ -298,6 +299,7 @@ comment_newline     \n
 
 {esc_double_quote}  { t.extra = t.extra + "\""; }
 {double_quote}      { BEGIN(INITIAL); t.token = ystring; return &t; }
+<<EOF>>				{ BEGIN(INITIAL); t.token = ystring; return &t; }
 {inside_double}     { t.extra = t.extra + yytext; }
 {newline}           { ++t.line_number; t.extra = t.extra + yytext; }
 
@@ -311,6 +313,7 @@ comment_newline     \n
 <IN_PARENS_COMMENT>{
 
 {right_comment}     { cout << "/*" << t.extra << "*/" << endl; BEGIN(INITIAL); }
+<<EOF>>             { cout << "/*" << t.extra << "*/" << endl; BEGIN(INITIAL); }
 {inside_comment}    { t.extra = t.extra + yytext; }
 {comment_star}      { t.extra = t.extra + yytext; }
 {newline}           { ++t.line_number; t.extra = t.extra + yytext; }
@@ -320,6 +323,7 @@ comment_newline     \n
 <IN_CURLY_COMMENT>{
 
 {right_curly}       { cout << "/*" << t.extra << "*/" << endl; BEGIN(INITIAL); }
+<<EOF>>             { cout << "/*" << t.extra << "*/" << endl; BEGIN(INITIAL); }
 {inside_curly}      { t.extra = t.extra + yytext; }
 {newline}           { ++t.line_number; t.extra = t.extra + yytext; }
 

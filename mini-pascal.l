@@ -286,6 +286,7 @@ comment_newline     \n
 
 {esc_single_quote}  { s = s + "'"; }
 {single_quote}      { BEGIN(INITIAL); return ystring; }
+<<EOF>>				{ BEGIN(INITIAL); return ystring; }
 {inside_single}     { s = s + yytext; }
 {newline}           { ++line_num; s = s + yytext; }
 
@@ -295,6 +296,7 @@ comment_newline     \n
 
 {esc_double_quote}  { s = s + "\""; }
 {double_quote}      { BEGIN(INITIAL); return ystring; }
+<<EOF>>				{ BEGIN(INITIAL); return ystring; }
 {inside_double}     { s = s + yytext; }
 {newline}           { ++line_num; s = s + yytext; }
 
