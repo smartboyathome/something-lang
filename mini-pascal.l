@@ -308,6 +308,7 @@ comment_newline     \n
 <IN_PARENS_COMMENT>{
 
 {right_comment}     { cout << "/*" << s << "*/" << endl; BEGIN(INITIAL); }
+<<EOF>>             { cout << "/*" << s << "*/" << endl; BEGIN(INITIAL); }
 {inside_comment}    { s = s + yytext; }
 {comment_star}      { s = s + yytext; }
 {newline}           { ++line_num; s = s + yytext; }
@@ -317,6 +318,7 @@ comment_newline     \n
 <IN_CURLY_COMMENT>{
 
 {right_curly}       { cout << "/*" << s << "*/" << endl; BEGIN(INITIAL); }
+<<EOF>>             { cout << "/*" << s << "*/" << endl; BEGIN(INITIAL); }
 {inside_curly}      { s = s + yytext; }
 {newline}           { ++line_num; s = s + yytext; }
 

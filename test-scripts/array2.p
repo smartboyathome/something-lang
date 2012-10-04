@@ -20,4 +20,3 @@ begin
    end;
    writeln;
 end.
-
