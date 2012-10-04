@@ -64,41 +64,41 @@ caret               "^"
    the regex [aA][nN][dD], but less ugly. */
 %}
 
-and                 (?i:and)
-array               (?i:array)
-begin               (?i:begin)
-case                (?i:case)
-const               (?i:const)
-int_divide          (?i:div)
-do                  (?i:do)
-downto              (?i:downto)
-else                (?i:else)
-end                 (?i:end)
-file                (?i:file)
-for                 (?i:for)
-function            (?i:function)
-goto                (?i:goto)
-if                  (?i:if)
-in                  (?i:in)
-label               (?i:label)
-int_modulus         (?i:mod)
-nil                 (?i:nil)
-not                 (?i:not)
-of                  (?i:of)
-or                  (?i:or)
-packed              (?i:packed)
-procedure           (?i:procedure)
-program             (?i:program)
-record              (?i:record)
-repeat              (?i:repeat)
-set                 (?i:set)
-then                (?i:then)
-to                  (?i:to)
-type                (?i:type)
-until               (?i:until)
-var                 (?i:var)
-while               (?i:while)
-with                (?i:with)
+and                 [aA][nN][dD]
+array               [aA][rR][rR][aA][yY]
+begin               [bB][eE][gG][iI][nN]
+case                [cC][aA][sS][eE]
+const               [cC][oO][nN][sS][tT]
+div                 [dD][iI][vV]
+do                  [dD][oO]
+downto              [dD][oO][wW][nN][tT][oO]
+else                [eE][lL][sS][eE]
+end                 [eE][nN][dD]
+file                [fF][iI][lL][eE]
+for                 [fF][oO][rR]
+function            [fF][uU][nN][cC][tT][iI][oO][nN]
+goto                [gG][oO][tT][oO]
+if                  [iI][fF]
+in                  [iI][nN]
+label               [lL][aA][bB][eE][lL]
+mod                 [mM][oO][dD]
+nil                 [nN][iI][lL]
+not                 [nN][oO][tT]
+of                  [oO][fF]
+or                  [oO][rR]
+packed              [pP][aA][cC][kK][eE][dD]
+procedure           [pP][rR][oO][cC][eE][dD][uU][rR][eE]
+program             [pP][rR][oO][gG][rR][aA][mM]
+record              [rR][eE][cC][oO][rR][dD]
+repeat              [rR][eE][pP][eE][aA][tT]
+set                 [sS][eE][tT]
+then                [tT][hH][eE][nN]
+to                  [tT][oO]
+type                [tT][yY][pP][eE]
+until               [uU][nN][tT][iI][lL]
+var                 [vV][aA][rR]
+while               [wW][hH][iI][lL][eE]
+with                [wW][iI][tT][hH]
 
 %{
 /* These are not keywords, but special functions or values. I thought they were
@@ -106,14 +106,14 @@ with                (?i:with)
    put them in anyway. */
 %}
 
-dispose             (?i:dispose)
-false               (?i:false)
-new                 (?i:new)
-read                (?i:read)
-readln              (?i:readln)
-true                (?i:true)
-write               (?i:write)
-writeln             (?i:writeln)
+dispose             [dD][iI][sS][pP][oO][sS][eE]
+false               [fF][aA][lL][sS][eE]
+new                 [nN][eE][wW]
+read                [rR][eE][aA][dD]
+readln              [rR][eE][aA][dD][lL][nN]
+true                [tT][rR][uU][eE]
+write               [wW][rR][iI][tT][eE]
+writeln             [wW][rR][iI][tT][eE][lL][nN]
 
 %{
 /* Identifiers */
@@ -173,8 +173,8 @@ comment_newline     \n
 {multiply}          { t.extra = ""; t.token = ymultiply; return &t; }
 {divide}            { t.extra = ""; t.token = ydivide; return &t; }
 {assignment}        { t.extra = ""; t.token = yassign; return &t; }
-{int_divide}        { t.extra = ""; t.token = ydiv; return &t; }
-{int_modulus}       { t.extra = ""; t.token = ymod; return &t; }
+{div}        		{ t.extra = ""; t.token = ydiv; return &t; }
+{mod}       		{ t.extra = ""; t.token = ymod; return &t; }
 {equal}             { t.extra = ""; t.token = yequal; return &t; }
 {unequal}           { t.extra = ""; t.token = ynotequal; return &t; }
 {less}              { t.extra = ""; t.token = yless; return &t; }
