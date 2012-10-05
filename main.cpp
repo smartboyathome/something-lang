@@ -107,6 +107,15 @@ public:
     }
 };
 
+// This function strips the leading and trailing whitespace.
+// It is useful for matching line 70 of array2lexoutput.
+string strip_whitespace(string s)
+{
+    string new_s = s.erase(0, s.find_first_not_of(" \r\n\t"));
+    new_s = s.erase(s.find_last_not_of(" \r\n\t") + 1);
+    return new_s;
+};
+
 int main(int argc, char* argv[]) {
     if ( argc > 2 ) // argc should not be greater than 2 for correct execution
     {
@@ -134,8 +143,13 @@ int main(int argc, char* argv[]) {
         int token = yylex(); // Gets the token as an int.
         if (token == 0) break; // We're done when we reach the end of file token.
         cout << left << setw(6) << token; // Output the token as an int.
-        cout << left << setw(14) << hash.getString(token); // And as a string.
-        cout << s << endl; // Finally output the metadata, if any.
+        if (strip_whitespace(s) != "") // We don't want the column if we don't need it.
+        {
+            cout << left << setw(14) << hash.getString(token); // And as a string.
+            cout << s << endl; // Finally output the metadata.
+        }
+        else
+            cout << hash.getString(token) << endl; // And as a string with no trailing spaces.
     }
     return 0; // We have finished successfully.
 }
