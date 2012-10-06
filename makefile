@@ -16,3 +16,6 @@ mini-pascal:  mini-pascal.l main.cpp
 mini-pascal-struct: mini-pascal.struct.l main.struct.cpp
 	                flex mini-pascal.struct.l
 	                g++ lex.yy.c main.struct.cpp -lfl -o mini-pascal-struct
+
+clean:
+	    rm -f mini-pascal lex.yy.c
