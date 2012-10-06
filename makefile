@@ -18,4 +18,4 @@ mini-pascal-struct: mini-pascal.struct.l main.struct.cpp
 	                g++ lex.yy.c main.struct.cpp -lfl -o mini-pascal-struct
 
 clean:
-	    rm -f mini-pascal lex.yy.c
+	    rm -f mini-pascal mini-pascal-struct lex.yy.c
