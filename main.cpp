@@ -11,6 +11,7 @@ extern "C" int yylex(); // yylex is the main flex function.
 extern FILE *yyin, *yyout; // yyin and yyout are the streams to read/write input.
 extern string s; // This is the metadata, such a s an int or string value.
 extern int line_num; // And this is the line number that flex is on.
+extern "C" int yyparse();
 
 // A simple class that just hashes the tokens to strings using an array and
 // some basic arithmetic. You can get a string from a token using the getString
