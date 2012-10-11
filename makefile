@@ -1,21 +1,20 @@
-# This is a comment.
+LEX_FILE = mini-pascal.l
+MAIN_FILE = main.cpp
+BINARY_FILE = mini-pascal
+OBJ_FILES = lex.yy.o main.o
+LIBS = -lfl
 
-# A makefile must be called makefile or Makefile.  The command is 'make' .
-# If you don't tell make what to make, it makes the first thing in this file.
-# These 'targets' start in column 1 and are followed by a colon.  Following
-# the colon are the dependencies (files).  If any file in the dependency list
-# is updated, then 'make' executes the commands found on the following lines.
-# These commands must start with a tab.
+mini-pascal: $(OBJ_FILES)
+	g++ $(OBJ_FILES) $(LIBS) -o $(BINARY_FILE)
 
-# The 'touch' command is useful for faking an update, e.g., "touch ll" 
+main.o: $(MAIN_FILE)
+	g++ -c $(MAIN_FILE) -o main.o
 
-mini-pascal:  mini-pascal.l main.cpp
-	          flex mini-pascal.l
-	          g++ lex.yy.c main.cpp -lfl -o mini-pascal
+lex.yy.o: lex.yy.c
+	g++ -c lex.yy.c -o lex.yy.o
 
-mini-pascal-struct: mini-pascal.struct.l main.struct.cpp
-	                flex mini-pascal.struct.l
-	                g++ lex.yy.c main.struct.cpp -lfl -o mini-pascal-struct
+lex.yy.c: $(LEX_FILE)
+	flex $(LEX_FILE)
 
 clean:
-	    rm -f mini-pascal mini-pascal-struct lex.yy.c
+	    rm -f $(BINARY_FILE) $(OBJ_FILES) lex.yy.c
