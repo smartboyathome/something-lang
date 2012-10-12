@@ -1,5 +1,5 @@
 %{
-#include "tokenconsts.h"
+#include "y.tab.h"
 #include <iostream>
 using namespace std;
 #define YY_DECL extern "C" int yylex()

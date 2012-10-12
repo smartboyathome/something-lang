@@ -1,7 +1,8 @@
 LEX_FILE = mini-pascal.l
+YACC_FILE = mini-pascal.y
 MAIN_FILE = main.cpp
 BINARY_FILE = mini-pascal
-OBJ_FILES = lex.yy.o main.o
+OBJ_FILES = y.tab.o lex.yy.o main.o
 LIBS = -lfl
 
 mini-pascal: $(OBJ_FILES)
@@ -16,5 +17,11 @@ lex.yy.o: lex.yy.c
 lex.yy.c: $(LEX_FILE)
 	flex $(LEX_FILE)
 
+y.tab.o: y.tab.c
+	g++ -c y.tab.c -o y.tab.o
+
+y.tab.c: $(YACC_FILE)
+	bison --yacc -d $(YACC_FILE)
+
 clean:
-	    rm -f $(BINARY_FILE) $(OBJ_FILES) lex.yy.c
+	    rm -f $(BINARY_FILE) $(OBJ_FILES) lex.yy.c y.tab.c y.tab.h

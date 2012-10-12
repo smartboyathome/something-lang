@@ -3,7 +3,7 @@
 #include <string>
 #include <stdio.h>
 #include <vector>
-#include "tokenconsts.h"
+#include "y.tab.h"
 using namespace std;
 
 // extern says they will be defined elsewhere
@@ -11,7 +11,8 @@ extern "C" int yylex(); // yylex is the main flex function.
 extern FILE *yyin, *yyout; // yyin and yyout are the streams to read/write input.
 extern string s; // This is the metadata, such a s an int or string value.
 extern int line_num; // And this is the line number that flex is on.
-extern "C" int yyparse();
+extern "C" int yyparse(); // yyparse is the main bison/yacc function.
+extern "C" int yydebug;
 
 // A simple class that just hashes the tokens to strings using an array and
 // some basic arithmetic. You can get a string from a token using the getString
@@ -141,6 +142,10 @@ int main(int argc, char* argv[]) {
     HashedTokenStrings hash; // We only want to initialize the hash table once.
     while (true) // Yes an infinite loop, but its escaped using break.
     {
+        //yydebug=1;
+        yyparse();
+        if (feof(yyin)) break;
+        /*
         int token = yylex(); // Gets the token as an int.
         if (token == 0) break; // We're done when we reach the end of file token.
         cout << left << setw(6) << token; // Output the token as an int.
@@ -151,6 +156,7 @@ int main(int argc, char* argv[]) {
         }
         else
             cout << hash.getString(token) << endl; // And as a string with no trailing spaces.
+        */
     }
     return 0; // We have finished successfully.
 }

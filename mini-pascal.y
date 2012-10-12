@@ -1,14 +1,19 @@
 %{
 #include <cstdio>
+#include <cstring>
 #include <iostream>
 using namespace std;
+#define YYDEBUG 1
 
 // stuff from flex that bison needs to know about:
 extern "C" int yylex();
 extern "C" FILE *yyin;
+extern string s; // This is the metadata, such a s an int or string value.
+extern int line_num; // And this is the line number that flex is on.
 void yyerror(const char *s) {
-    count << "ERROR: " << s << endl;
+    cout << "ERROR: " << s << " on line " << line_num << endl;
 }
+extern "C" int yyparse();
 %}
 
 %start CompilationUnit
@@ -20,264 +25,260 @@ void yyerror(const char *s) {
        yrightbracket yrightparen ysemicolon yset ystring ythen yto ytrue ytype
        yuntil yvar ywhile ywrite ywriteln yunknown
 
+%left ythen
+%left yelse
+
 %union {
 	char *sval;
 }
 
 %%
-/************************** Overall program rules ****************************/
-
-CompilationUnit     : ProgramModule;
-
-ProgramModule       : yprogram yident ProgramParameters ysemicolon Block ydot;
-
-ProgramParameters   : yleftparen IdentList yrightparen;
-
-IdentList           : yident ycomma IdentList
-                    | yident;
-
-Block               : Declarations ybegin StatementSequence yend
-                    | ybegin StatementSequence yend;
-
-/***************************** Declaration rules *****************************/
-
-Declarations        : ConstantDefBlock TypeDefBlock VariableDeclBlock SubprogDeclList
-                    | ConstantDefBlock TypeDefBlock VariableDeclBlock
-                    | ConstantDefBlock TypeDefBlock SubprogDeclList
-                    | ConstantDefBlock VariableDeclBlock SubprogDeclList
-                    | TypeDefBlock VariableDeclBlock SubprogDeclList
-                    | ConstantDefBlock TypeDefBlock
-                    | ConstantDefBlock VariableDeclBlock
-                    | ConstantDefBlock SubprogDeclList
-                    | TypeDefBlock VariableDeclBlock
-                    | TypeDefBlock SubprogDeclList
-                    | VariableDeclBlock SubprogDeclList
-                    | ConstantDefBlock
-                    | TypeDefBlock
-                    | VariableDeclBlock
-                    | SubprogDeclList;
-
-/************************ Constant declaration rules *************************/
-
-ConstantDefBlock    : yconst ConstantDefList;
-
-ConstantDefList     : ConstantDef ysemicolon ConstantDefList
-                    | ConstantDef ysemicolon;
-
-ConstantDef         : yident yequal ConstExpression;
-
-ConstExpression     : UnaryOperator ConstFactor
-                    | ConstFactor
-                    | ystring
-                    | ynil;
-
-ConstFactor         : yident
-                    | ynumber
-                    | ytrue
-                    | yfalse
-                    | ynil;
-
-/************************** Type declaration rules ***************************/
-
-TypeDefBlock        : ytype TypeDefList;
-
-TypeDefList         : TypeDef ysemicolon TypeDefList
-                    | TypeDef ysemicolon;
-
-TypeDef             : yident yequal Type;
-
-Type                : yident
-                    | ArrayType
-                    | PointerType
-                    | RecordType
-                    | SetType;
-
-ArrayType           : yarray yleftbracket SubrangeList yrightbracket yof Type;
-
-SubrangeList        : Subrange ycomma SubrangeList
-                    | Subrange;
-
-Subrange            : ConstFactor ydotdot ConstFactor
-                    | ystring ydotdot ystring;
-
-PointerType         : ycaret yident;
-
-RecordType          : yrecord FieldListSequence yend;
-
-FieldListSequence   : FieldList ysemicolon FieldListSequence
-                    | FieldList;
-
-FieldList           : IdentList ysemicolon Type;
-
-SetType             : yset yof Subrange;
-
-/************************ Variable declaration rules *************************/
-
-VariableDeclBlock   : yvar VariableDeclList;
-
-VariableDeclList    : VariableDecl ysemicolon VariableDeclList
-                    | VariableDecl ysemicolon;
-
-VariableDecl        : IdentList ycolon Type;
-
-/************************ Subprog declaration rules **************************/
-
-SubprogDeclList     : ProcedureDecl ysemicolon SubprogDeclList
-                    | ProcedureDecl ysemicolon
-                    | FunctionDecl ysemicolon SubprogDeclList
-                    | FunctionDecl ysemicolon;
-
-ProcedureDecl       : ProcedureHeading ysemicolon Block;
-
-ProcedureHeading    : yprocedure yident FormalParameters
-                    | yprocedure yident;
-
-FormalParameters    : yleftparen OneFormalParamList;
-
-OneFormalParamList  : OneFormalParam ysemicolon OneFormalParamList
-                    | OneFormalParam;
-
-OneFormalParam      : yvar IdentList ycolon yident
-                    | IdentList ycolon yident;
-
-FunctionDecl        : FunctionHeading ycolon yident ysemicolon Block;
-
-FunctionHeading     : yfunction yident FormalParameters
-                    | yfunction yident;
-
-/***************************** Statement rules *******************************/
-
-StatementSequence   : StatementList;
-
-StatementList       : Statement ysemicolon Statement
-                    | Statement;
-
-Statement           : Assignment
-                    | ProcedureCall
-                    | IfStatement
-                    | CaseStatement
-                    | WhileStatement
-                    | RepeatStatement
-                    | ForStatement
-                    | IOStatement
-                    | MemoryStatement
-                    | StatementSequence
-                    | /* apparently this is an empty rule */
-                    ;
-
-Assignment          : Designator yassign Expression;
-
-Designator          : yident DesignatorStuff
-                    | yident;
-
-DesignatorStuffList : DesignatorStuff DesignatorStuffList
-                    | DesignatorStuff;
-
-DesignatorStuff     : ydot yident
-                    | yleftbracket ExpList yrightbracket
-                    | ycaret;
-
-ExpList             : Expression ExpList
-                    | Expression;
-
-Expression          : SimpleExpression Relation SimpleExpression
-                    | SimpleExpression;
-
-SimpleExpression    : UnaryOperator TermList
-                    | TermList;
-
-TermList            : Term AddOperator TermList
-                    | Term;
-
-Term                : FactorList;
-
-FactorList          : Factor MultOperator FactorList
-                    | Factor;
-
-Factor              : ynumber
-                    | ystring                    
-                    | ytrue
-                    | yfalse
-                    | ynil
-                    | Designator
-                    | yleftparen Expression yrightparen
-                    | ynot Factor
-                    | Setvalue
-                    | FunctionCall;
-
-Setvalue            : yleftbracket ElementList yrightbracket
-                    | yleftbracket yrightbracket;
-
-ElementList         : Element ycomma ElementList
-                    | Element;
-
-Element             : ConstExpression ydotdot ConstExpression
-                    | ConstExpression;
-
-FunctionCall        : yident ActualParameters;
-
-ActualParameters    : yleftparen ExpList yrightparen;
-
-ProcedureCall       : yident ActualParameters
-                    | yident;
-
-IfStatement         : yif Expression ythen Statement yelse Statement
-                    | yif Expression ythen Statement;
-
-CaseStatement       : ycase Expression yof CaseList yend;
-
-CaseList            : Case ysemicolon CaseList
-                    : Case;
-
-Case                : CaseLabelList ycolon Statement;
-
-CaseLabelList       : ConstExpression ycomma CaseLabelList
-                    | ConstExpression;
-
-WhileStatement      : ywhile Expression ydo Statement;
-
-RepeatStatement     : yrepeat StatementSequence yuntil Expression;
-
-ForStatement        : yfor yident yassign Expression WhichWay Expression ydo Statement;
-
-WhichWay            : yto
-                    | ydownto;
-
-IOStatement         : yread yleftparen DesignatorList yrightparen
-                    | yreadln yleftparen DesignatorList yrightparen
-                    | yreadln
-                    | ywrite yleftparen ExpList yrightparen
-                    | ywriteln yleftparen ExpList yrightparen
-                    | ywriteln;
-
-DesignatorList      : Designator ycomma DesignatorList
-                    | Designator;
-
-MemoryStatement     : ynew yleftparen yident yrightparen
-                    | ydispose yleftparen yident yrightparen;
-
-
-
-/****************************** Operator rules *******************************/
-
-UnaryOperator       : yplus
-                    | yminus;
-
-MultOperator        : ymultiply
-                    | ydivide
-                    | ydiv
-                    | ymod
-                    | yand;
-
-AddOperator         : yplus
-                    | yminus
-                    | yor;
-
-Relation            : yequal
-                    | ynotequal
-                    | yless
-                    | ylessequal
-                    | ygreater
-                    | ygreaterequal
-                    | yin;
+/* rules section */
+
+/**************************  Pascal program **********************************/
+
+CompilationUnit    :  ProgramModule        
+                   ;
+ProgramModule      :  yprogram Identifier ProgramParameters ysemicolon Block ydot
+                   ;
+ProgramParameters  :  yleftparen  IdentList  yrightparen
+                   ;
+IdentList          :  Identifier 
+                   |  IdentList ycomma Identifier
+                   ;
+
+Identifier         :  yident
+                   {  char* str = new char[s.size()+1];
+                      strcpy(str, s.c_str());
+                      printf("%s\n", str);
+                      delete[] str; }
+                   ;
+
+/**************************  Declarations section ***************************/
+
+Block              :  Declarations  ybegin  StatementSequence  yend
+                   ;
+Declarations       :  ConstantDefBlock
+                      TypeDefBlock
+                      VariableDeclBlock
+                      SubprogDeclList  
+                   ;
+ConstantDefBlock   :  /*** empty ***/
+                   |  yconst ConstantDefList
+                   ;
+ConstantDefList    :  ConstantDefList ConstantDef ysemicolon
+                   |  ConstantDef ysemicolon
+                   ;
+TypeDefBlock       :  /*** empty ***/
+                   |  ytype  TypeDefList          
+                   ;
+TypeDefList        :  TypeDef  ysemicolon
+                   |  TypeDefList TypeDef ysemicolon  
+                   ;
+VariableDeclBlock  :  /*** empty ***/
+                   |  yvar VariableDeclList
+                   ;
+VariableDeclList   :  VariableDeclList VariableDecl ysemicolon
+                   |  VariableDecl ysemicolon
+                   ;  
+ConstantDef        :  Identifier  yequal  ConstExpression
+                   ;
+TypeDef            :  Identifier  yequal  Type
+                   ;
+VariableDecl       :  IdentList  ycolon  Type
+                   ;
+
+/***************************  Const/Type Stuff  ******************************/
+
+ConstExpression    :  UnaryOperator ConstFactor
+                   |  ConstFactor
+                   |  ystring
+                   ;
+ConstFactor        :  Identifier
+                   |  ynumber
+                   |  ytrue
+                   |  yfalse
+                   |  ynil
+                   ;
+Type               :  Identifier
+                   |  ArrayType
+                   |  PointerType
+                   |  RecordType
+                   |  SetType
+                   ;
+ArrayType          :  yarray yleftbracket Subrange SubrangeList 
+                      yrightbracket  yof Type
+                   ;
+SubrangeList       :  /*** empty ***/
+                   |  SubrangeList ycomma Subrange 
+                   ;
+Subrange           :  ConstFactor ydotdot ConstFactor
+                   |  ystring ydotdot  ystring
+                   ;
+RecordType         :  yrecord  FieldListSequence  yend
+                   ;
+SetType            :  yset  yof  Subrange
+                   ;
+PointerType        :  ycaret  Identifier 
+                   ;
+FieldListSequence  :  FieldList  
+                   |  FieldListSequence  ysemicolon  FieldList
+                   ;
+FieldList          :  IdentList  ycolon  Type
+                   ;
+
+/***************************  Statements  ************************************/
+
+StatementSequence  :  Statement  
+                   |  StatementSequence  ysemicolon  Statement
+                   ;
+Statement          :  Assignment
+                   |  ProcedureCall
+                   |  IfStatement
+                   |  CaseStatement
+                   |  WhileStatement
+                   |  RepeatStatement
+                   |  ForStatement
+                   |  IOStatement
+                   |  MemoryStatement
+                   |  ybegin StatementSequence yend
+                   |  /*** empty ***/
+                   ;
+Assignment         :  Designator yassign Expression
+                   ;
+ProcedureCall      :  Identifier 
+                   |  Identifier ActualParameters
+                   ;
+IfStatement        :  yif  Expression  ythen  Statement  ElsePart
+                   ;
+ElsePart           :  /*** empty ***/
+                   |  yelse  Statement  
+                   ;
+CaseStatement      :  ycase  Expression  yof  CaseList  yend
+                   ;
+CaseList           :  Case
+                   |  CaseList  ysemicolon  Case  
+                   ;
+Case               :  CaseLabelList  ycolon  Statement
+                   ;
+CaseLabelList      :  ConstExpression  
+                   |  CaseLabelList  ycomma  ConstExpression   
+                   ;
+WhileStatement     :  ywhile  Expression  ydo  Statement  
+                   ;
+RepeatStatement    :  yrepeat  StatementSequence  yuntil  Expression
+                   ;
+ForStatement       :  yfor  Identifier  yassign  Expression  WhichWay  Expression
+                            ydo  Statement
+                   ;
+WhichWay           :  yto  |  ydownto
+                   ;
+IOStatement        :  yread  yleftparen  DesignatorList  yrightparen
+                   |  yreadln  
+                   |  yreadln  yleftparen DesignatorList  yrightparen 
+                   |  ywrite  yleftparen  ExpList  yrightparen
+                   |  ywriteln  
+                   |  ywriteln  yleftparen  ExpList  yrightparen 
+                   ;
+
+/***************************  Designator Stuff  ******************************/
+
+DesignatorList     :  Designator  
+                   |  DesignatorList  ycomma  Designator 
+                   ;
+Designator         :  Identifier  DesignatorStuff 
+                   ;
+DesignatorStuff    :  /*** empty ***/
+                   |  DesignatorStuff  theDesignatorStuff
+                   ;
+theDesignatorStuff :  ydot Identifier 
+                   |  yleftbracket ExpList yrightbracket 
+                   |  ycaret 
+                   ;
+ActualParameters   :  yleftparen  ExpList  yrightparen
+                   ;
+ExpList            :  Expression   
+                   |  ExpList  ycomma  Expression       
+                   ;
+MemoryStatement    :  ynew  yleftparen  Identifier  yrightparen  
+                   |  ydispose yleftparen  Identifier  yrightparen
+                   ;
+
+/***************************  Expression Stuff  ******************************/
+
+Expression         :  SimpleExpression  
+                   |  SimpleExpression  Relation  SimpleExpression 
+                   ;
+SimpleExpression   :  TermExpr
+                   |  UnaryOperator  TermExpr
+                   ;
+TermExpr           :  Term  
+                   |  TermExpr  AddOperator  Term
+                   ;
+Term               :  Factor  
+                   |  Term  MultOperator  Factor
+                   ;
+Factor             :  ynumber
+                   |  ytrue
+                   |  yfalse
+                   |  ynil
+                   |  ystring
+                   |  Designator
+                   |  yleftparen  Expression  yrightparen
+                   |  ynot Factor
+                   |  Setvalue
+                   |  FunctionCall
+                   ;
+/*  Functions with no parameters have no parens, but you don't need         */
+/*  to handle that in FunctionCall because it is handled by Designator.     */
+/*  A FunctionCall has at least one parameter in parens, more are           */
+/*  separated with commas.                                                  */
+FunctionCall       :  Identifier ActualParameters
+                   ;
+Setvalue           :  yleftbracket ElementList  yrightbracket
+                   |  yleftbracket yrightbracket
+                   ;
+ElementList        :  Element  
+                   |  ElementList  ycomma  Element
+                   ;
+Element            :  ConstExpression  
+                   |  ConstExpression  ydotdot  ConstExpression 
+                   ;
+
+/***************************  Subprogram Stuff  ******************************/
+
+SubprogDeclList    :  /*** empty ***/
+                   |  SubprogDeclList ProcedureDecl ysemicolon  
+                   |  SubprogDeclList FunctionDecl ysemicolon
+                   ;
+ProcedureDecl      :  ProcedureHeading  ysemicolon  Block 
+                   ;
+FunctionDecl       :  FunctionHeading  ycolon  Identifier  ysemicolon  Block
+                   ;
+ProcedureHeading   :  yprocedure  Identifier  
+                   |  yprocedure  Identifier  FormalParameters
+                   ;
+FunctionHeading    :  yfunction  Identifier  
+                   |  yfunction  Identifier  FormalParameters
+                   ;
+FormalParameters   :  yleftparen FormalParamList yrightparen 
+                   ;
+FormalParamList    :  OneFormalParam 
+                   |  FormalParamList ysemicolon OneFormalParam
+                   ;
+OneFormalParam     :  yvar  IdentList  ycolon  Identifier
+                   |  IdentList  ycolon  Identifier
+                   ;
+
+/***************************  More Operators  ********************************/
+
+UnaryOperator      :  yplus | yminus
+                   ;
+MultOperator       :  ymultiply | ydivide | ydiv | ymod | yand 
+                   ;
+AddOperator        :  yplus | yminus | yor
+                   ;
+Relation           :  yequal  | ynotequal | yless | ygreater 
+                   |  ylessequal | ygreaterequal | yin
+                   ;
 %%
