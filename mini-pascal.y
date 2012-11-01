@@ -39,19 +39,12 @@ extern "C" int yyparse();
 
 CompilationUnit    :  ProgramModule        
                    ;
-ProgramModule      :  yprogram Identifier ProgramParameters ysemicolon Block ydot
+ProgramModule      :  yprogram yident ProgramParameters ysemicolon Block ydot
                    ;
 ProgramParameters  :  yleftparen  IdentList  yrightparen
                    ;
-IdentList          :  Identifier 
-                   |  IdentList ycomma Identifier
-                   ;
-
-Identifier         :  yident
-                   {  char* str = new char[s.size()+1];
-                      strcpy(str, s.c_str());
-                      printf("%s\n", str);
-                      delete[] str; }
+IdentList          :  yident 
+                   |  IdentList ycomma yident
                    ;
 
 /**************************  Declarations section ***************************/
@@ -81,9 +74,9 @@ VariableDeclBlock  :  /*** empty ***/
 VariableDeclList   :  VariableDeclList VariableDecl ysemicolon
                    |  VariableDecl ysemicolon
                    ;  
-ConstantDef        :  Identifier  yequal  ConstExpression
+ConstantDef        :  yident  yequal  ConstExpression
                    ;
-TypeDef            :  Identifier  yequal  Type
+TypeDef            :  yident  yequal  Type
                    ;
 VariableDecl       :  IdentList  ycolon  Type
                    ;
@@ -94,13 +87,13 @@ ConstExpression    :  UnaryOperator ConstFactor
                    |  ConstFactor
                    |  ystring
                    ;
-ConstFactor        :  Identifier
+ConstFactor        :  yident
                    |  ynumber
                    |  ytrue
                    |  yfalse
                    |  ynil
                    ;
-Type               :  Identifier
+Type               :  yident
                    |  ArrayType
                    |  PointerType
                    |  RecordType
@@ -119,7 +112,7 @@ RecordType         :  yrecord  FieldListSequence  yend
                    ;
 SetType            :  yset  yof  Subrange
                    ;
-PointerType        :  ycaret  Identifier 
+PointerType        :  ycaret  yident 
                    ;
 FieldListSequence  :  FieldList  
                    |  FieldListSequence  ysemicolon  FieldList
@@ -146,8 +139,8 @@ Statement          :  Assignment
                    ;
 Assignment         :  Designator yassign Expression
                    ;
-ProcedureCall      :  Identifier 
-                   |  Identifier ActualParameters
+ProcedureCall      :  yident 
+                   |  yident ActualParameters
                    ;
 IfStatement        :  yif  Expression  ythen  Statement  ElsePart
                    ;
@@ -168,7 +161,7 @@ WhileStatement     :  ywhile  Expression  ydo  Statement
                    ;
 RepeatStatement    :  yrepeat  StatementSequence  yuntil  Expression
                    ;
-ForStatement       :  yfor  Identifier  yassign  Expression  WhichWay  Expression
+ForStatement       :  yfor  yident  yassign  Expression  WhichWay  Expression
                             ydo  Statement
                    ;
 WhichWay           :  yto  |  ydownto
@@ -186,12 +179,12 @@ IOStatement        :  yread  yleftparen  DesignatorList  yrightparen
 DesignatorList     :  Designator  
                    |  DesignatorList  ycomma  Designator 
                    ;
-Designator         :  Identifier  DesignatorStuff 
+Designator         :  yident  DesignatorStuff 
                    ;
 DesignatorStuff    :  /*** empty ***/
                    |  DesignatorStuff  theDesignatorStuff
                    ;
-theDesignatorStuff :  ydot Identifier 
+theDesignatorStuff :  ydot yident 
                    |  yleftbracket ExpList yrightbracket 
                    |  ycaret 
                    ;
@@ -200,8 +193,8 @@ ActualParameters   :  yleftparen  ExpList  yrightparen
 ExpList            :  Expression   
                    |  ExpList  ycomma  Expression       
                    ;
-MemoryStatement    :  ynew  yleftparen  Identifier  yrightparen  
-                   |  ydispose yleftparen  Identifier  yrightparen
+MemoryStatement    :  ynew  yleftparen  yident  yrightparen  
+                   |  ydispose yleftparen  yident  yrightparen
                    ;
 
 /***************************  Expression Stuff  ******************************/
@@ -233,7 +226,7 @@ Factor             :  ynumber
 /*  to handle that in FunctionCall because it is handled by Designator.     */
 /*  A FunctionCall has at least one parameter in parens, more are           */
 /*  separated with commas.                                                  */
-FunctionCall       :  Identifier ActualParameters
+FunctionCall       :  yident ActualParameters
                    ;
 Setvalue           :  yleftbracket ElementList  yrightbracket
                    |  yleftbracket yrightbracket
@@ -253,21 +246,21 @@ SubprogDeclList    :  /*** empty ***/
                    ;
 ProcedureDecl      :  ProcedureHeading  ysemicolon  Block 
                    ;
-FunctionDecl       :  FunctionHeading  ycolon  Identifier  ysemicolon  Block
+FunctionDecl       :  FunctionHeading  ycolon  yident  ysemicolon  Block
                    ;
-ProcedureHeading   :  yprocedure  Identifier  
-                   |  yprocedure  Identifier  FormalParameters
+ProcedureHeading   :  yprocedure  yident  
+                   |  yprocedure  yident  FormalParameters
                    ;
-FunctionHeading    :  yfunction  Identifier  
-                   |  yfunction  Identifier  FormalParameters
+FunctionHeading    :  yfunction  yident  
+                   |  yfunction  yident  FormalParameters
                    ;
 FormalParameters   :  yleftparen FormalParamList yrightparen 
                    ;
 FormalParamList    :  OneFormalParam 
                    |  FormalParamList ysemicolon OneFormalParam
                    ;
-OneFormalParam     :  yvar  IdentList  ycolon  Identifier
-                   |  IdentList  ycolon  Identifier
+OneFormalParam     :  yvar  IdentList  ycolon  yident
+                   |  IdentList  ycolon  yident
                    ;
 
 /***************************  More Operators  ********************************/

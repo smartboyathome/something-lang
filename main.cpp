@@ -63,6 +63,7 @@ public:
         this->HashMap[33] = "ymultiply";
         this->HashMap[34] = "ynew";
         this->HashMap[35] = "ynil";
+        this->HashMap[36] = "ynot";
         this->HashMap[37] = "ynotequal";
         this->HashMap[38] = "ynumber";
         this->HashMap[39] = "yof";

@@ -1,10 +1,12 @@
 %{
 #include "y.tab.h"
 #include <iostream>
+#include <string>
 using namespace std;
 #define YY_DECL extern "C" int yylex()
 string s;
 int line_num = 1;
+
 %}
 
 %{
@@ -95,7 +97,6 @@ type                [tT][yY][pP][eE]
 until               [uU][nN][tT][iI][lL]
 var                 [vV][aA][rR]
 while               [wW][hH][iI][lL][eE]
-with                [wW][iI][tT][hH]
 
 %{
 /* These are not keywords, but special functions or values. I thought they were
@@ -224,7 +225,6 @@ comment_newline     \n
 {until}             { s = ""; return yuntil; }
 {var}               { s = ""; return yvar; }
 {while}             { s = ""; return ywhile; }
-{with}              { s = ""; return yunknown; }
 
 %{
 /* These are the special functions/values mentioned above. I'm not a fan of
@@ -247,7 +247,7 @@ comment_newline     \n
 %}
 
 {number}            { s = yytext; return ynumber; }
-{identifier}        { s = yytext; return yident; }
+{identifier}        { s = yytext; for(int i = 0; i < s.length(); ++i) s[i] = tolower(s[i]); return yident; }
 
 %{
 /* Strings start with either a single or double quote, therefore these start
@@ -309,8 +309,8 @@ comment_newline     \n
 
 <IN_PARENS_COMMENT>{
 
-{right_comment}     { cout << "/*" << s << "*/" << endl; BEGIN(INITIAL); }
-<<EOF>>             { cout << "/*" << s << "*/" << endl; BEGIN(INITIAL); }
+{right_comment}     { BEGIN(INITIAL); }
+<<EOF>>             { BEGIN(INITIAL); }
 {inside_comment}    { s = s + yytext; }
 {comment_star}      { s = s + yytext; }
 {newline}           { ++line_num; s = s + yytext; }
@@ -319,8 +319,8 @@ comment_newline     \n
 
 <IN_CURLY_COMMENT>{
 
-{right_curly}       { cout << "/*" << s << "*/" << endl; BEGIN(INITIAL); }
-<<EOF>>             { cout << "/*" << s << "*/" << endl; BEGIN(INITIAL); }
+{right_curly}       { BEGIN(INITIAL); }
+<<EOF>>             { BEGIN(INITIAL); }
 {inside_curly}      { s = s + yytext; }
 {newline}           { ++line_num; s = s + yytext; }
 

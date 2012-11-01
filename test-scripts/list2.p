@@ -23,6 +23,7 @@ type
 var
   list, newrec: cellPtr;
   count, classNum: integer;
+  with: real;
 
 (* ************************************************************************* *)
 (* procedure insert                                                          *)
