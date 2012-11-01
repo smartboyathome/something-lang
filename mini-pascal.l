@@ -99,21 +99,6 @@ var                 [vV][aA][rR]
 while               [wW][hH][iI][lL][eE]
 
 %{
-/* These are not keywords, but special functions or values. I thought they were
-   not supposed to be put in here, but the expected output has them, so I will
-   put them in anyway. */
-%}
-
-dispose             [dD][iI][sS][pP][oO][sS][eE]
-false               [fF][aA][lL][sS][eE]
-new                 [nN][eE][wW]
-read                [rR][eE][aA][dD]
-readln              [rR][eE][aA][dD][lL][nN]
-true                [tT][rR][uU][eE]
-write               [wW][rR][iI][tT][eE]
-writeln             [wW][rR][iI][tT][eE][lL][nN]
-
-%{
 /* Identifiers */
 %}
 
