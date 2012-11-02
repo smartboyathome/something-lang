@@ -22,6 +22,7 @@ public:
     pair<bool,Type*> Remove(string);
     map<string, Type*> GetParentScope();
     map<string, Type*> GetLocalScope();
+    string ToString();
 };
 
 class GlobalScope
