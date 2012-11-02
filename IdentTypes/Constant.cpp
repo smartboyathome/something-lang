@@ -1,6 +1,9 @@
 // Constant.cpp
 #include "Constant.h"
 
+		
+
+
 // Constructor
 // Takes a string name and string value
 Constant::Constant(const string name, const string value) {
@@ -24,6 +27,6 @@ string Constant::ToString() const {
 
 // Return a C-formatted string representation of this object
 string Constant::CString() const {
-
+	return "";
 }
 	

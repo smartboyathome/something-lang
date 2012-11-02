@@ -22,6 +22,7 @@ public:
 	virtual string ToString() const = 0;
 	virtual string CString() const = 0;
 	
+	// Operator overloading for 'equals'
 	bool operator==(const Type &rhs) const;	
 	
 	
