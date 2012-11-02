@@ -3,7 +3,7 @@
 
 // Constructor
 Procedure::Procedure(const string name)
-: Type(name) {
+: MetaType(name) {
 }
 
 // Destructor

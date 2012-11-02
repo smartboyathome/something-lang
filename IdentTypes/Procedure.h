@@ -1,9 +1,9 @@
 // Procedure.h
 #pragma once
-#include "Type.h"
+#include "MetaType.h"
 #include <vector>
 
-class Procedure:public Type {
+class Procedure:public MetaType {
 public:
 	Procedure(const string name);
 	~Procedure();

@@ -1,9 +1,6 @@
 // Constant.cpp
 #include "Constant.h"
 
-		
-
-
 // Constructor
 // Takes a string name and string value
 Constant::Constant(const string name, const string value) {
