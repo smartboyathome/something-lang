@@ -18,12 +18,22 @@ Variable::Variable(const string name, const string value) {
 Variable::~Variable() {
 }
 
-string Variable::ToString() const {
-	// Note: No new line
-	cout << identifier << " " << variable_value;
-
+// Set the value
+bool Variable::SetValue(string value) {
+	variable_value = value;
 }
 
+// Get a value
+string Variable::GetValue() {
+	return variable_value;
+}
+
+// Return a string representation of this object
+string Variable::ToString() const {
+	return identifier + " " + variable_value;
+}
+
+// Return a C-formatted string representation of this object
 string Variable::CString() const {
 	// For later
 }

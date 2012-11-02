@@ -9,6 +9,7 @@ public:
 	~Variable();
 	
 	bool SetValue(string value);
+	string GetValue();
 	
 	string ToString() const;
 	string CString() const;
