@@ -3,8 +3,9 @@
 
 // Constructor
 // Takes a string name (identifier)
-Variable::Variable(const string name) 
-: Type(name) {
+Variable::Variable(const string name) {
+	identifier = name;
+	variable_value = "";
 }
 
 // Constructor
@@ -30,10 +31,15 @@ string Variable::GetValue() {
 
 // Return a string representation of this object
 string Variable::ToString() const {
-	return identifier + " " + variable_value;
+
+			// If this variable has no set value...
+	if ( strcmp(variable_value, "") == 0)
+		return identifier;	
+	else	// This variable has a set value, print it out as well
+		return identifier + " " + variable_value;
 }
 
 // Return a C-formatted string representation of this object
 string Variable::CString() const {
-	// For later
+	return "";
 }
