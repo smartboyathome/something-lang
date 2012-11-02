@@ -1,8 +1,10 @@
 #include "Scopes.h"
+#include <stringstream>
 
 GlobalScope::GlobalScope()
 {
-    program_scopes.push(new LocalScope());
+    program_scopes.push(new LocalScope(program_scopes.size()+1));
+    
 }
 
 void GlobalScope::CreateNewScope()
@@ -15,7 +17,7 @@ void GlobalScope::CreateNewScope()
     {
         new_parent_scope.insert(pair<string, Type*>(i->first, i->second)); // This will only insert if the ident doesn't exist.
     }
-    program_scopes.push(new LocalScope(new_parent_scope));
+    program_scopes.push(new LocalScope(program_scopes.size()+1, new_parent_scope));
 }
 
 LocalScope* GlobalScope::GetCurrentScope()
@@ -84,6 +86,7 @@ bool LocalScope::Insert(string identifier, Type* type)
     if (local_scope.count(identifier) > 0)
         return false;
     local_scope.insert(pair<string, Type*>(identifier, type));
+    cout << make_indent() << type->ToString() << endl;
     return true;
 }
 
@@ -113,4 +116,37 @@ map<string, Type*> LocalScope::GetParentScope()
 map<string, Type*> LocalScope::GetLocalScope()
 {
     return local_scope;
+}
+
+string LocalScope::make_indent()
+{
+    stringstream ss;
+    for(int i = 0; i < scope_level; ++i)
+    {
+        indent = indent + "   ";
+    }
+    return ss.str();
+}
+
+string LocalScope::ToString()
+{
+    typedef map<string, Type*>::iterator iterator;
+    string indent = make_indent();
+    bool first = true;
+    stringstream ss;
+    for(iterator i = local_scope.begin(); i != local_scope.end(); ++i)
+    {
+        if(first)
+            first = false
+        else
+            ss << endl;
+        ss << indent << i->second->ToString();
+    }
+    return ss.str();
+}
+
+LocalScope::~LocalScope()
+{
+    // We won't do anything since the type references should be deleted manually.
+    // They may be attached to other objects and could affect those objects.
 }

@@ -10,9 +10,12 @@ class LocalScope
 private:
     map<string, Type*> parent_scope;
     map<string, Type*> local_scope;
+    int scope_level;
+    string make_indent();
 public:
-    LocalScope();
-    LocalScope(map<string, Type*>);
+    LocalScope(int scope_level);
+    LocalScope(int scope_level, map<string, Type*>);
+    ~LocalScope();
     bool IsInScope(string);
     bool IsInLocalScope(string);
     bool IsInParentScope(string);
@@ -22,7 +25,8 @@ public:
     pair<bool,Type*> Remove(string);
     map<string, Type*> GetParentScope();
     map<string, Type*> GetLocalScope();
-    string ToString();
+    string ToString(int);
+    void AddCallback(LocalScopeEventType, LocalScopeEvent);
 };
 
 class GlobalScope
@@ -35,4 +39,5 @@ public:
     void CreateNewScope();
     LocalScope* GetCurrentScope();
     bool PopCurrentScope();
+    void PrintCurrentScope();
 };
