@@ -13,7 +13,6 @@ private:
 public:
     LocalScope();
     LocalScope(map<string, Type*>);
-    // TODO: Deconstructor
     bool IsInScope(string);
     bool IsInLocalScope(string);
     bool IsInParentScope(string);
@@ -31,7 +30,7 @@ private:
     stack<LocalScope*> program_scopes;
 public:
     GlobalScope();
-    // TODO: Deconstructor
+    ~GlobalScope();
     void CreateNewScope();
     LocalScope* GetCurrentScope();
     bool PopCurrentScope();

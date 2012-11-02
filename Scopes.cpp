@@ -15,7 +15,6 @@ void GlobalScope::CreateNewScope()
     {
         new_parent_scope.insert(pair<string, Type*>(i->first, i->second)); // This will only insert if the ident doesn't exist.
     }
-    LocalScope new_scope(new_parent_scope);
     program_scopes.push(new LocalScope(new_parent_scope));
 }
 
@@ -32,6 +31,17 @@ bool GlobalScope::PopCurrentScope()
     program_scopes.pop();
     delete old_scope;
     return true;
+}
+
+GlobalScope::~GlobalScope()
+{
+    int size = program_scopes.size();
+    while(!program_scopes.empty())
+    {
+        LocalScope* top_scope = program_scopes.top();
+        program_scopes.pop();
+        delete top_scope;
+    }
 }
 
 LocalScope::LocalScope()
