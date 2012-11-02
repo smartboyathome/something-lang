@@ -8,21 +8,31 @@ using namespace std;
 class LocalScope
 {
 private:
-    Map<string, Type*> parent_scope;
-    Map<string, Type*> local_scope;
+    map<string, Type*> parent_scope;
+    map<string, Type*> local_scope;
 public:
+    LocalScope();
+    LocalScope(map<string, Type*>);
+    // TODO: Deconstructor
     bool IsInScope(string);
+    bool IsInLocalScope(string);
+    bool IsInParentScope(string);
+    Type* Get(string);
     bool Insert(string, Type*);
-    bool Modify(string, Type*);
-    bool Remove(string);
+    pair<bool,Type*> Modify(string, Type*);
+    pair<bool,Type*> Remove(string);
+    map<string, Type*> GetParentScope();
+    map<string, Type*> GetLocalScope();
 };
 
 class GlobalScope
 {
 private:
-    stack<LocalScope> program_scopes;
+    stack<LocalScope*> program_scopes;
 public:
-    bool CreateNewScope();
+    GlobalScope();
+    // TODO: Deconstructor
+    void CreateNewScope();
     LocalScope* GetCurrentScope();
     bool PopCurrentScope();
 };
