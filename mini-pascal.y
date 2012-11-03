@@ -2,6 +2,11 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
+#include <stack>
+#include "Scopes.h"
+#include "IdentTypes/MetaType.h"
+#include "IdentTypes/Procedure.h"
+#include "IdentTypes/Variable.h"
 using namespace std;
 #define YYDEBUG 1
 
@@ -14,23 +19,26 @@ void yyerror(const char *s) {
     cout << "ERROR: " << s << " on line " << line_num << endl;
 }
 extern "C" int yyparse();
+GlobalScope global_scope;
+stack<Variable*> temp_vars;
 %}
 
 %start CompilationUnit
-%token yand yarray yassign ybegin ycaret ycase ycolon ycomma yconst ydispose
-       ydiv ydivide ydo ydot ydotdot ydownto yelse yend yequal yfalse yfor
-       yfunction ygreater ygreaterequal yident yif yin yleftbracket yleftparen
-       yless ylessequal yminus ymod ymultiply ynew ynil ynot ynotequal ynumber
-       yof yor yplus yprocedure yprogram yread yreadln yrecord yrepeat
-       yrightbracket yrightparen ysemicolon yset ystring ythen yto ytrue ytype
-       yuntil yvar ywhile ywrite ywriteln yunknown
-
-%left ythen
-%left yelse
 
 %union {
 	char *sval;
 }
+
+%token<sval> yand yarray yassign ybegin ycaret ycase ycolon ycomma yconst ydiv
+             ydivide ydo ydot ydotdot ydownto yelse yend yequal yfor yfunction
+             ygreater ygreaterequal yident yif yin yleftbracket yleftparen
+             yless ylessequal yminus ymod ymultiply ynil ynot ynotequal ynumber
+             yof yor yplus yprocedure yprogram yrecord yrepeat yrightbracket
+             yrightparen ysemicolon yset ystring ythen yto ytype yuntil yvar
+             ywhile yunknown
+
+%left ythen
+%left yelse
 
 %%
 /* rules section */
@@ -39,17 +47,43 @@ extern "C" int yyparse();
 
 CompilationUnit    :  ProgramModule        
                    ;
-ProgramModule      :  yprogram yident ProgramParameters ysemicolon Block ydot
+ProgramModule      :  yprogram yident ProgramParameters
+                      {
+                          global_scope.CreateNewScope();
+                          Procedure* program = new Procedure($2);
+                          while(!temp_vars.empty())
+                          {
+                              Variable* param = temp_vars.top();
+                              temp_vars.pop();
+                              // Zander said to ignore these parameters, so we will.
+                              delete param;
+                          }
+                          global_scope.GetCurrentScope()->Insert($2, program);
+                      } 
+                      ysemicolon Block ydot
                    ;
 ProgramParameters  :  yleftparen  IdentList  yrightparen
                    ;
 IdentList          :  yident 
+                      {
+                          temp_vars.push(new Variable($1));
+                      }
                    |  IdentList ycomma yident
+                      {
+                          temp_vars.push(new Variable($3));
+                      }
                    ;
 
 /**************************  Declarations section ***************************/
 
-Block              :  Declarations  ybegin  StatementSequence  yend
+Block              :  Declarations  ybegin
+                      {
+                          global_scope.CreateNewScope();
+                      }
+                      StatementSequence  yend
+                      {
+                          global_scope.PopCurrentScope();
+                      }
                    ;
 Declarations       :  ConstantDefBlock
                       TypeDefBlock
@@ -79,6 +113,9 @@ ConstantDef        :  yident  yequal  ConstExpression
 TypeDef            :  yident  yequal  Type
                    ;
 VariableDecl       :  IdentList  ycolon  Type
+                      {
+                          
+                      }
                    ;
 
 /***************************  Const/Type Stuff  ******************************/
@@ -89,8 +126,6 @@ ConstExpression    :  UnaryOperator ConstFactor
                    ;
 ConstFactor        :  yident
                    |  ynumber
-                   |  ytrue
-                   |  yfalse
                    |  ynil
                    ;
 Type               :  yident
@@ -166,12 +201,11 @@ ForStatement       :  yfor  yident  yassign  Expression  WhichWay  Expression
                    ;
 WhichWay           :  yto  |  ydownto
                    ;
-IOStatement        :  yread  yleftparen  DesignatorList  yrightparen
-                   |  yreadln  
-                   |  yreadln  yleftparen DesignatorList  yrightparen 
-                   |  ywrite  yleftparen  ExpList  yrightparen
-                   |  ywriteln  
-                   |  ywriteln  yleftparen  ExpList  yrightparen 
+IOStatement        :  ProcedureCallLeft  DesignatorList  yrightparen
+                   |  yident
+                   |  ProcedureCallLeft  ExpList  yrightparen
+                   ;
+ProcedureCallLeft  : yident yleftparen
                    ;
 
 /***************************  Designator Stuff  ******************************/
@@ -193,8 +227,7 @@ ActualParameters   :  yleftparen  ExpList  yrightparen
 ExpList            :  Expression   
                    |  ExpList  ycomma  Expression       
                    ;
-MemoryStatement    :  ynew  yleftparen  yident  yrightparen  
-                   |  ydispose yleftparen  yident  yrightparen
+MemoryStatement    :  ProcedureCallLeft  yident  yrightparen
                    ;
 
 /***************************  Expression Stuff  ******************************/
@@ -212,8 +245,6 @@ Term               :  Factor
                    |  Term  MultOperator  Factor
                    ;
 Factor             :  ynumber
-                   |  ytrue
-                   |  yfalse
                    |  ynil
                    |  ystring
                    |  Designator

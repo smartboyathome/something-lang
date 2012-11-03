@@ -1,6 +1,7 @@
 // Variable.h
 #pragma once
 #include "MetaType.h"
+#include "VariableType.h"
 
 class Variable:public MetaType {
 public:
@@ -9,7 +10,7 @@ public:
 	~Variable();
 	
 	bool SetValue(string value);
-	bool SetType(string varType);
+	bool SetType(VariableType* varType);
 	string GetValue();
 	
 	string ToString() const;
@@ -17,5 +18,5 @@ public:
 	
 private:
 	string variable_value;
-	VariableType my_type;
+	VariableType* my_type;
 };

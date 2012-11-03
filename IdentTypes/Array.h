@@ -1,6 +1,7 @@
 // Array.h
 #pragma once
 #include "MetaType.h"
+#include <vector>
 
 class Array:public MetaType {
 public:
@@ -18,7 +19,7 @@ private:
 	struct RangeStruct {
 		string low;		// Low value 
 		string high;	// .. High value
-	}
+	};
 	vector <RangeStruct> ranges;	// Vector holding ranges
 	
 	int dimensions; // Count of dimensions (1d, 2d, 3d, etc)

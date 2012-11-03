@@ -212,21 +212,6 @@ comment_newline     \n
 {while}             { s = ""; return ywhile; }
 
 %{
-/* These are the special functions/values mentioned above. I'm not a fan of
-   including these here rather than the symbol table, but they are needed
-   for the grader so I have included them. */
-%}
-
-{dispose}           { s = ""; return ydispose; }
-{false}             { s = ""; return yfalse; }
-{new}               { s = ""; return ynew; }
-{read}              { s = ""; return yread; }
-{readln}            { s = ""; return yreadln; }
-{true}              { s = ""; return ytrue; }
-{write}             { s = ""; return ywrite; }
-{writeln}           { s = ""; return ywriteln; }
-
-%{
 /* Here are where the rules for the basic types like numbers and identifiers
    are applied. */
 %}

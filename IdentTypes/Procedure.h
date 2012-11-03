@@ -1,6 +1,7 @@
 // Procedure.h
 #pragma once
 #include "MetaType.h"
+#include "Variable.h"
 #include <vector>
 
 class Procedure:public MetaType {

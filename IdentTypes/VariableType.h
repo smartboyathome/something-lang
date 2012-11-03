@@ -2,7 +2,7 @@
 #pragma once
 #include "MetaType.h"
 
-class VariableType:public Type {
+class VariableType:public MetaType {
 	
 	//TODO:
 	/*

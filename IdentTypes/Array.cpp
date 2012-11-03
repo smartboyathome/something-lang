@@ -2,7 +2,7 @@
 #include "Array.h"
 
 // Constructor
-ArrayType::ArrayType(const string name) {
+Array::Array(const string name) : MetaType(name) {
 	identifier = name;
 	type = "";
 	dimensions = 0;
@@ -11,7 +11,7 @@ ArrayType::ArrayType(const string name) {
 // Destructor
 // Clears out "ranges" vector
 Array::~Array() {
-	ranges.clear()
+	ranges.clear();
 }
 
 // Create a new dimension and set low/high values
