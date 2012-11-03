@@ -24,6 +24,11 @@ bool Variable::SetValue(string value) {
 	variable_value = value;
 }
 
+/////////// Should this even be a string? I don't know...
+bool Variable::SetType(string varType) {
+	my_type = VariableType(varType);
+}
+
 // Get a value
 string Variable::GetValue() {
 	return variable_value;
