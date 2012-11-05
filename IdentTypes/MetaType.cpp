@@ -3,7 +3,10 @@
 #include "MetaType.h"
 
 // Constructor with a name
-MetaType::MetaType(const string name) : MetaType(name) {}
+MetaType::MetaType(const string name, MetaTypeType metatype) {
+    identifier = name;
+    this->metatype = metatype;
+}
 
 // Destructor
 MetaType::~MetaType() { } // Not sure if it'll need anything.
@@ -20,11 +23,11 @@ int MetaType::Compare(const MetaType& rhs) const {
 		return -1;
 }	
 // operator==
-bool operator==(const MetaType &rhs) const {
-	return Compare(rhs) == 0;
+bool operator==(const MetaType &lhs, const MetaType &rhs) {
+	return lhs.Compare(rhs) == 0;
 }
 
 // gets string name
-string GetName() {
+string MetaType::GetName() {
 	return identifier;
 }

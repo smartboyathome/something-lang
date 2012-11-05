@@ -2,13 +2,14 @@ LEX_FILE = mini-pascal.l
 YACC_FILE = mini-pascal.y
 MAIN_FILE = main.cpp
 BINARY_FILE = mini-pascal
+SCOPES_FILE = Scopes.cpp
 ARRAY_FILE = IdentTypes/Array.cpp
 CONSTANT_FILE = IdentTypes/Constant.cpp
 METATYPE_FILE = IdentTypes/MetaType.cpp
 PROCEDURE_FILE = IdentTypes/Procedure.cpp
 VARIABLE_FILE = IdentTypes/Variable.cpp
 VARIABLETYPE_FILE = IdentTypes/VariableType.cpp
-OBJ_FILES = y.tab.o lex.yy.o main.o array.o constant.o metatype.o procedure.o variable.o variabletype.o
+OBJ_FILES = y.tab.o lex.yy.o main.o scopes.o IdentTypes/constant.o IdentTypes/metatype.o IdentTypes/procedure.o IdentTypes/variable.o IdentTypes/variabletype.o
 LIBS = -lfl
 
 mini-pascal: $(OBJ_FILES)
@@ -17,23 +18,26 @@ mini-pascal: $(OBJ_FILES)
 main.o: $(MAIN_FILE)
 	g++ -c $(MAIN_FILE) -o main.o
 
-array.o: $(ARRAY_FILE)
-	g++ -c $(ARRAY_FILE) -o array.o
+scopes.o: $(SCOPES_FILE)
+	g++ -c $(SCOPES_FILE) -o scopes.o
 
-constant.o: $(CONSTANT_FILE)
-	g++ -c $(CONSTANT_FILE) -o constant.o
+IdentTypes/array.o: $(ARRAY_FILE)
+	g++ -c $(ARRAY_FILE) -o IdentTypes/array.o
 
-metatype.o: $(METATYPE_FILE)
-	g++ -c $(METATYPE_FILE) -o metatype.o
+IdentTypes/constant.o: $(CONSTANT_FILE)
+	g++ -c $(CONSTANT_FILE) -o IdentTypes/constant.o
 
-procedure.o: $(PROCEDURE_FILE)
-	g++ -c $(PROCEDURE_FILE) -o procedure.o
+IdentTypes/metatype.o: $(METATYPE_FILE)
+	g++ -c $(METATYPE_FILE) -o IdentTypes/metatype.o
 
-variable.o: $(VARIABLE_FILE)
-	g++ -c $(VARIABLE_FILE) -o variable.o
+IdentTypes/procedure.o: $(PROCEDURE_FILE)
+	g++ -c $(PROCEDURE_FILE) -o IdentTypes/procedure.o
 
-variabletype.o: $(VARIABLETYPE_FILE)
-	g++ -c $(VARIABLETYPE_FILE) -o variabletype.o
+IdentTypes/variable.o: $(VARIABLE_FILE)
+	g++ -c $(VARIABLE_FILE) -o IdentTypes/variable.o
+
+IdentTypes/variabletype.o: $(VARIABLETYPE_FILE)
+	g++ -c $(VARIABLETYPE_FILE) -o IdentTypes/variabletype.o
 
 lex.yy.o: lex.yy.c
 	g++ -c lex.yy.c -o lex.yy.o

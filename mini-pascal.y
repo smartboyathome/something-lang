@@ -50,15 +50,23 @@ CompilationUnit    :  ProgramModule
 ProgramModule      :  yprogram yident ProgramParameters
                       {
                           global_scope.CreateNewScope();
+                          cout << "TEST A" << endl;
                           Procedure* program = new Procedure($2);
+                          cout << "TEST B" << endl;
                           while(!temp_vars.empty())
                           {
+                              cout << "TEST C" << endl;
                               Variable* param = temp_vars.top();
+                              cout << "TEST D" << endl;
                               temp_vars.pop();
+                              cout << "TEST E" << endl;
                               // Zander said to ignore these parameters, so we will.
                               delete param;
+                              cout << "TEST F" << endl;
                           }
+                          cout << "TEST G" << endl;
                           global_scope.GetCurrentScope()->Insert($2, program);
+                          cout << "TEST H" << endl;
                       } 
                       ysemicolon Block ydot
                    ;
@@ -67,10 +75,12 @@ ProgramParameters  :  yleftparen  IdentList  yrightparen
 IdentList          :  yident 
                       {
                           temp_vars.push(new Variable($1));
+                          cout << "TEST I" << endl;
                       }
                    |  IdentList ycomma yident
                       {
                           temp_vars.push(new Variable($3));
+                          cout << "TEST J" << endl;
                       }
                    ;
 
@@ -79,10 +89,12 @@ IdentList          :  yident
 Block              :  Declarations  ybegin
                       {
                           global_scope.CreateNewScope();
+                          cout << "TEST K" << endl;
                       }
                       StatementSequence  yend
                       {
                           global_scope.PopCurrentScope();
+                          cout << "TEST K" << endl;
                       }
                    ;
 Declarations       :  ConstantDefBlock
@@ -113,9 +125,6 @@ ConstantDef        :  yident  yequal  ConstExpression
 TypeDef            :  yident  yequal  Type
                    ;
 VariableDecl       :  IdentList  ycolon  Type
-                      {
-                          
-                      }
                    ;
 
 /***************************  Const/Type Stuff  ******************************/
@@ -167,8 +176,6 @@ Statement          :  Assignment
                    |  WhileStatement
                    |  RepeatStatement
                    |  ForStatement
-                   |  IOStatement
-                   |  MemoryStatement
                    |  ybegin StatementSequence yend
                    |  /*** empty ***/
                    ;
@@ -176,6 +183,7 @@ Assignment         :  Designator yassign Expression
                    ;
 ProcedureCall      :  yident 
                    |  yident ActualParameters
+                   |  yident IOParameters
                    ;
 IfStatement        :  yif  Expression  ythen  Statement  ElsePart
                    ;
@@ -201,16 +209,11 @@ ForStatement       :  yfor  yident  yassign  Expression  WhichWay  Expression
                    ;
 WhichWay           :  yto  |  ydownto
                    ;
-IOStatement        :  ProcedureCallLeft  DesignatorList  yrightparen
-                   |  yident
-                   |  ProcedureCallLeft  ExpList  yrightparen
-                   ;
-ProcedureCallLeft  : yident yleftparen
-                   ;
+
 
 /***************************  Designator Stuff  ******************************/
 
-DesignatorList     :  Designator  
+DesignatorList     :  Designator
                    |  DesignatorList  ycomma  Designator 
                    ;
 Designator         :  yident  DesignatorStuff 
@@ -224,10 +227,10 @@ theDesignatorStuff :  ydot yident
                    ;
 ActualParameters   :  yleftparen  ExpList  yrightparen
                    ;
+IOParameters       :  yleftparen  DesignatorList  yrightparen
+                   ;
 ExpList            :  Expression   
                    |  ExpList  ycomma  Expression       
-                   ;
-MemoryStatement    :  ProcedureCallLeft  yident  yrightparen
                    ;
 
 /***************************  Expression Stuff  ******************************/
@@ -247,7 +250,6 @@ Term               :  Factor
 Factor             :  ynumber
                    |  ynil
                    |  ystring
-                   |  Designator
                    |  yleftparen  Expression  yrightparen
                    |  ynot Factor
                    |  Setvalue

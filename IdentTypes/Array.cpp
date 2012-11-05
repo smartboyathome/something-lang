@@ -2,8 +2,7 @@
 #include "Array.h"
 
 // Constructor
-Array::Array(const string name) : MetaType(name) {
-	identifier = name;
+Array::Array(const string name) : MetaType(name, ARRAY) {
 	type = "";
 	dimensions = 0;
 }

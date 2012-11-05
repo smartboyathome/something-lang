@@ -3,8 +3,7 @@
 
 // Constructor
 // Takes a string name and string value
-Constant::Constant(const string name, const string value) {
-	identifier = name;
+Constant::Constant(const string name, const string value) : MetaType(name, CONSTANT) {
 	constant_value = value;
 }
 

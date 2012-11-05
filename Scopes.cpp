@@ -1,6 +1,6 @@
 #include "Scopes.h"
 #include "IdentTypes/MetaType.h"
-#include <stringstream>
+#include <sstream>
 
 GlobalScope::GlobalScope()
 {
@@ -47,13 +47,14 @@ GlobalScope::~GlobalScope()
     }
 }
 
-LocalScope::LocalScope()
+LocalScope::LocalScope(int scope_level)
 {
-    
+    this->scope_level = scope_level;
 }
 
-LocalScope::LocalScope(map<string, MetaType*> new_parent_scope)
+LocalScope::LocalScope(int scope_level, map<string, MetaType*> new_parent_scope)
 {
+    this->scope_level = scope_level;
     parent_scope = new_parent_scope;
 }
 
@@ -124,7 +125,7 @@ string LocalScope::make_indent()
     stringstream ss;
     for(int i = 0; i < scope_level; ++i)
     {
-        indent = indent + "   ";
+        ss << "   ";
     }
     return ss.str();
 }
@@ -138,7 +139,7 @@ string LocalScope::ToString()
     for(iterator i = local_scope.begin(); i != local_scope.end(); ++i)
     {
         if(first)
-            first = false
+            first = false;
         else
             ss << endl;
         ss << indent << i->second->ToString();

@@ -2,8 +2,7 @@
 #include "Procedure.h"
 
 // Constructor
-Procedure::Procedure(const string name)
-: MetaType(name) {
+Procedure::Procedure(const string name) : MetaType(name, PROCEDURE) {
 }
 
 // Destructor
@@ -28,7 +27,7 @@ bool Procedure::InsertParameter(Variable* param) {
 bool Procedure::HasDuplicateParameter(const Variable* checkedParam) {
 	// Loop through vector "parameters"
 	for (int x = 0; x < parameters.size(); x++) {
-		if (*parameters[x] == checkedParam)
+		if (*parameters[x] == *checkedParam)
 			return true;	// A duplicate was found!
 	}
 	return false;			// No duplicate was found.
@@ -36,7 +35,7 @@ bool Procedure::HasDuplicateParameter(const Variable* checkedParam) {
 
 // Return a string representation of this object
 string Procedure::ToString() const {
-	return name;
+	return identifier;
 }
 
 // Return a C-formatted string representation of this object

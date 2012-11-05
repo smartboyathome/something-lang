@@ -25,7 +25,7 @@ public:
     pair<bool,MetaType*> Remove(string);
     map<string, MetaType*> GetParentScope();
     map<string, MetaType*> GetLocalScope();
-    string ToString(int);
+    string ToString();
 };
 
 class GlobalScope
