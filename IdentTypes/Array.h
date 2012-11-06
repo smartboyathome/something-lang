@@ -9,7 +9,8 @@ public:
 	~Array();
 	
 	void AddDimension(string, string);
-	void SetType(string);
+	
+	void SetType(VariableType* varType);
 	
 	string ToString() const;
 	string CString() const;
@@ -26,6 +27,6 @@ private:
 	
 	/* As shown in the testoutput, Arrays must show what 
 	   kind of value they contain */
-	string type;	
+	VariableType* my_type;	
 	
 };

@@ -1,6 +1,13 @@
 // Constant.cpp
 #include "Constant.h"
 
+
+// Constructor
+// Takes a string name, not yet a value.
+Constant::Constant(const string name) : MetaType(name, CONSTANT) {
+	constant_value = "";
+}
+
 // Constructor
 // Takes a string name and string value
 Constant::Constant(const string name, const string value) : MetaType(name, CONSTANT) {
@@ -24,5 +31,4 @@ string Constant::ToString() const {
 // Return a C-formatted string representation of this object
 string Constant::CString() const {
 	return "";
-}
-	
+}	

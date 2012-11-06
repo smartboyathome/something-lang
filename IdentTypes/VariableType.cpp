@@ -2,17 +2,25 @@
 #include "VariableType.h"
 
 // Constructor
-VariableType::VariableType(const string name) : MetaType(name, VARIABLE_TYPE) {
-
-/* Note: I have no idea what I'm doing here. 
-	If these four types are even the four we want, if they're even the proper
-	names, if strcmp is even the right thing... Whatever... General idea...
-*/
-	type = name;
+VariableType::VariableType(const VarType varType) : MetaType(name, VARIABLE_TYPE) {
+	this->var_type = varType;
 }
 
 VariableType::~VariableType() {}
 
 string VariableType::GetType() {
-	return type;
+	switch (var_type) {
+		case INTEGER:
+			return "integer";
+			break;
+		case BOOLEAN:
+			return "Boolean";
+			break;
+		case REAL:
+			return "real";
+			break;
+		case CHAR:
+			return "char";
+			break;
+	}
 }

@@ -22,7 +22,7 @@ bool Variable::SetValue(string value) {
 	variable_value = value;
 }
 
-/////////// Should this even be a string? I don't know...
+// Set the type of the variable using the VariableType object
 bool Variable::SetType(VariableType* varType) {
 	my_type = varType;
 }
