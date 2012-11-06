@@ -21,8 +21,6 @@ void yyerror(const char *s) {
 }
 extern "C" int yyparse();
 GlobalScope global_scope;
-stack<Variable*> temp_vars;
-stack<string> temp_strings;
 %}
 
 %start CompilationUnit
@@ -51,22 +49,21 @@ CompilationUnit    :  ProgramModule
                    ;
 ProgramModule      :  yprogram yident
                       {
-                          temp_strings.push(s);
+                          global_scope.GetCurrentScope()->PushTempStrings(s);
                       }
                       ProgramParameters
                       {
+                          string program_name = global_scope.GetCurrentScope()->PopTempStrings();
                           global_scope.CreateNewScope();
-                          string program_name = temp_strings.top();
-                          temp_strings.pop();
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
                           Procedure* program = new Procedure(program_name);
-                          while(!temp_vars.empty())
+                          while(!current_scope->TempVarsEmpty())
                           {
-                              Variable* param = temp_vars.top();
-                              temp_vars.pop();
+                              Variable* param = current_scope->PopTempVars();
                               // Zander said to ignore these parameters, so we will.
                               delete param;
                           }
-                          global_scope.GetCurrentScope()->Insert(program_name, program);
+                          current_scope->Insert(program_name, program);
                       } 
                       ysemicolon Block ydot
                    ;
@@ -74,12 +71,11 @@ ProgramParameters  :  yleftparen  IdentList  yrightparen
                    ;
 IdentList          :  yident 
                       {
-                          Variable* temp = new Variable(s);
-                          temp_vars.push(temp);
+                          global_scope.GetCurrentScope()->PushTempVars(new Variable(s));
                       }
                    |  IdentList ycomma yident
                       {
-                          temp_vars.push(new Variable(s));
+                          global_scope.GetCurrentScope()->PushTempVars(new Variable(s));
                       }
                    ;
 
@@ -87,21 +83,20 @@ IdentList          :  yident
 
 Block              :  Declarations  ybegin
                       {
-                          if (!temp_vars.empty() | !temp_strings.empty())
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          if (!current_scope->AllTempsEmpty())
                           {
                               stringstream ss;
                               ss << "UNDEFINED:" << endl;
-                              while(!temp_vars.empty())
+                              while(!current_scope->TempVarsEmpty())
                               {
-                                  Variable* var = temp_vars.top();
+                                  Variable* var = current_scope->PopTempVars();
                                   ss << "VAR " << var->ToString() << endl;
-                                  temp_vars.pop();
                                   delete var;
                               }
-                              while(!temp_strings.empty())
+                              while(!current_scope->TempStringsEmpty())
                               {
-                                  ss << "STRING " << temp_strings.top() << endl;
-                                  temp_vars.pop();
+                                  ss << "STRING " << current_scope->PopTempStrings() << endl;
                               }
                               yyerror(ss.str().c_str());
                               YYERROR;
@@ -143,11 +138,11 @@ ConstantDef        :  yident  yequal  ConstExpression
                    ;
 TypeDef            :  yident
                       {
-                          temp_strings.push(s);
+                          global_scope.GetCurrentScope()->PushTempStrings(s);
                       }
                       yequal  Type
                       {
-                          temp_strings.pop();
+                          global_scope.GetCurrentScope()->PopTempStrings();
                       }
                    ;
 VariableDecl       :  IdentList  ycolon  Type
@@ -178,12 +173,11 @@ SubrangeList       :  /*** empty ***/
 Subrange           :  ConstFactor ydotdot ConstFactor
                    |  ystring
                       {
-                          temp_strings.push(s);
+                          global_scope.GetCurrentScope()->PushTempStrings(s);
                       }
                       ydotdot  ystring
                       {
-                          string a = temp_strings.top();
-                          temp_strings.pop();
+                          string a = global_scope.GetCurrentScope()->PopTempStrings();
                           string b = s;
                           if (a.length() != 1 | b.length() != 1)
                           {

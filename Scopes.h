@@ -3,6 +3,7 @@
 #include <stack>
 #include <string>
 #include "IdentTypes/MetaType.h"
+#include "IdentTypes/Variable.h"
 using namespace std;
 
 class LocalScope
@@ -10,6 +11,11 @@ class LocalScope
 private:
     map<string, MetaType*> parent_scope;
     map<string, MetaType*> local_scope;
+    
+    stack<Variable*> temporary_variables;
+    stack<string> temporary_strings;
+    
+    // This is for outputting Zander-style strings.
     int scope_level;
     string make_indent();
 public:
@@ -26,6 +32,13 @@ public:
     map<string, MetaType*> GetParentScope();
     map<string, MetaType*> GetLocalScope();
     string ToString();
+    void PushTempVars(Variable*);
+    void PushTempStrings(string);
+    Variable* PopTempVars();
+    string PopTempStrings();
+    bool TempVarsEmpty();
+    bool TempStringsEmpty();
+    bool AllTempsEmpty();
 };
 
 class GlobalScope

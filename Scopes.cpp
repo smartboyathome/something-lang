@@ -4,7 +4,7 @@
 
 GlobalScope::GlobalScope()
 {
-    program_scopes.push(new LocalScope(program_scopes.size()+1));
+    program_scopes.push(new LocalScope(program_scopes.size()-1));
 }
 
 void GlobalScope::CreateNewScope()
@@ -17,7 +17,7 @@ void GlobalScope::CreateNewScope()
     {
         new_parent_scope.insert(pair<string, MetaType*>(i->first, i->second)); // This will only insert if the ident doesn't exist.
     }
-    program_scopes.push(new LocalScope(program_scopes.size()+1, new_parent_scope));
+    program_scopes.push(new LocalScope(program_scopes.size()-1, new_parent_scope));
 }
 
 LocalScope* GlobalScope::GetCurrentScope()
@@ -150,4 +150,45 @@ LocalScope::~LocalScope()
 {
     // We won't do anything since the type references should be deleted manually.
     // They may be attached to other objects and could affect those objects.
+}
+
+void LocalScope::PushTempVars(Variable* temp_var)
+{
+    temporary_variables.push(temp_var);
+}
+
+void LocalScope::PushTempStrings(string temp_str)
+{
+    temporary_strings.push(temp_str);
+}
+
+Variable* LocalScope::PopTempVars()
+{
+    Variable* retval = temporary_variables.top();
+    temporary_variables.pop();
+    return retval;
+}
+
+string LocalScope::PopTempStrings()
+{
+    if (temporary_strings.empty())
+        return "";
+    string retval = temporary_strings.top();
+    temporary_strings.pop();
+    return retval;
+}
+
+bool LocalScope::TempVarsEmpty()
+{
+    return temporary_variables.empty();
+}
+
+bool LocalScope::TempStringsEmpty()
+{
+    return temporary_strings.empty();
+}
+
+bool LocalScope::AllTempsEmpty()
+{
+    return temporary_variables.empty() and temporary_strings.empty();
 }
