@@ -10,10 +10,10 @@ PROCEDURE_FILE = IdentTypes/Procedure.cpp
 VARIABLE_FILE = IdentTypes/Variable.cpp
 VARIABLETYPE_FILE = IdentTypes/VariableType.cpp
 OBJ_FILES = y.tab.o lex.yy.o main.o scopes.o IdentTypes/constant.o IdentTypes/metatype.o IdentTypes/procedure.o IdentTypes/variable.o IdentTypes/variabletype.o
-LIBS = -lfl
+COMPILER_FLAGS = -lfl -g
 
 mini-pascal: $(OBJ_FILES)
-	g++ $(OBJ_FILES) $(LIBS) -o $(BINARY_FILE)
+	g++ $(OBJ_FILES) $(COMPILER_FLAGS) -o $(BINARY_FILE)
 
 main.o: $(MAIN_FILE)
 	g++ -c $(MAIN_FILE) -o main.o

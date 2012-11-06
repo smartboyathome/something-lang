@@ -3,6 +3,7 @@
 #include <cstring>
 #include <iostream>
 #include <stack>
+#include <sstream>
 #include "Scopes.h"
 #include "IdentTypes/MetaType.h"
 #include "IdentTypes/Procedure.h"
@@ -21,6 +22,7 @@ void yyerror(const char *s) {
 extern "C" int yyparse();
 GlobalScope global_scope;
 stack<Variable*> temp_vars;
+stack<string> temp_strings;
 %}
 
 %start CompilationUnit
@@ -29,7 +31,7 @@ stack<Variable*> temp_vars;
 	char *sval;
 }
 
-%token<sval> yand yarray yassign ybegin ycaret ycase ycolon ycomma yconst ydiv
+%token       yand yarray yassign ybegin ycaret ycase ycolon ycomma yconst ydiv
              ydivide ydo ydot ydotdot ydownto yelse yend yequal yfor yfunction
              ygreater ygreaterequal yident yif yin yleftbracket yleftparen
              yless ylessequal yminus ymod ymultiply ynil ynot ynotequal ynumber
@@ -47,26 +49,24 @@ stack<Variable*> temp_vars;
 
 CompilationUnit    :  ProgramModule        
                    ;
-ProgramModule      :  yprogram yident ProgramParameters
+ProgramModule      :  yprogram yident
+                      {
+                          temp_strings.push(s);
+                      }
+                      ProgramParameters
                       {
                           global_scope.CreateNewScope();
-                          cout << "TEST A" << endl;
-                          Procedure* program = new Procedure($2);
-                          cout << "TEST B" << endl;
+                          string program_name = temp_strings.top();
+                          temp_strings.pop();
+                          Procedure* program = new Procedure(program_name);
                           while(!temp_vars.empty())
                           {
-                              cout << "TEST C" << endl;
                               Variable* param = temp_vars.top();
-                              cout << "TEST D" << endl;
                               temp_vars.pop();
-                              cout << "TEST E" << endl;
                               // Zander said to ignore these parameters, so we will.
                               delete param;
-                              cout << "TEST F" << endl;
                           }
-                          cout << "TEST G" << endl;
-                          global_scope.GetCurrentScope()->Insert($2, program);
-                          cout << "TEST H" << endl;
+                          global_scope.GetCurrentScope()->Insert(program_name, program);
                       } 
                       ysemicolon Block ydot
                    ;
@@ -74,13 +74,12 @@ ProgramParameters  :  yleftparen  IdentList  yrightparen
                    ;
 IdentList          :  yident 
                       {
-                          temp_vars.push(new Variable($1));
-                          cout << "TEST I" << endl;
+                          Variable* temp = new Variable(s);
+                          temp_vars.push(temp);
                       }
                    |  IdentList ycomma yident
                       {
-                          temp_vars.push(new Variable($3));
-                          cout << "TEST J" << endl;
+                          temp_vars.push(new Variable(s));
                       }
                    ;
 
@@ -88,13 +87,33 @@ IdentList          :  yident
 
 Block              :  Declarations  ybegin
                       {
-                          global_scope.CreateNewScope();
-                          cout << "TEST K" << endl;
+                          if (!temp_vars.empty() | !temp_strings.empty())
+                          {
+                              stringstream ss;
+                              ss << "UNDEFINED:" << endl;
+                              while(!temp_vars.empty())
+                              {
+                                  Variable* var = temp_vars.top();
+                                  ss << "VAR " << var->ToString() << endl;
+                                  temp_vars.pop();
+                                  delete var;
+                              }
+                              while(!temp_strings.empty())
+                              {
+                                  ss << "STRING " << temp_strings.top() << endl;
+                                  temp_vars.pop();
+                              }
+                              yyerror(ss.str().c_str());
+                              YYERROR;
+                          }
+                          else
+                          {
+                              global_scope.CreateNewScope();
+                          }
                       }
                       StatementSequence  yend
                       {
                           global_scope.PopCurrentScope();
-                          cout << "TEST K" << endl;
                       }
                    ;
 Declarations       :  ConstantDefBlock
@@ -122,7 +141,14 @@ VariableDeclList   :  VariableDeclList VariableDecl ysemicolon
                    ;  
 ConstantDef        :  yident  yequal  ConstExpression
                    ;
-TypeDef            :  yident  yequal  Type
+TypeDef            :  yident
+                      {
+                          temp_strings.push(s);
+                      }
+                      yequal  Type
+                      {
+                          temp_strings.pop();
+                      }
                    ;
 VariableDecl       :  IdentList  ycolon  Type
                    ;
@@ -150,7 +176,20 @@ SubrangeList       :  /*** empty ***/
                    |  SubrangeList ycomma Subrange 
                    ;
 Subrange           :  ConstFactor ydotdot ConstFactor
-                   |  ystring ydotdot  ystring
+                   |  ystring
+                      {
+                          temp_strings.push(s);
+                      }
+                      ydotdot  ystring
+                      {
+                          string a = temp_strings.top();
+                          temp_strings.pop();
+                          string b = s;
+                          if (a.length() != 1 | b.length() != 1)
+                          {
+                              yyerror("BAD SUBRANGE");
+                          }
+                      }
                    ;
 RecordType         :  yrecord  FieldListSequence  yend
                    ;

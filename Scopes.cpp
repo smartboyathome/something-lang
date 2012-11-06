@@ -5,7 +5,6 @@
 GlobalScope::GlobalScope()
 {
     program_scopes.push(new LocalScope(program_scopes.size()+1));
-    
 }
 
 void GlobalScope::CreateNewScope()
