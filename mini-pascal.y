@@ -159,6 +159,19 @@ ConstFactor        :  yident
                    |  ynil
                    ;
 Type               :  yident
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          if(!current_scope->IsInScope(s))
+                          {
+                              yyerror("UNDEFINED: " + s);
+                              YYERROR;
+                          }
+                          else
+                          {
+                              VariableType* type = current_scope->Get(s);
+                              global_scope.GetCurrentScope()->PushTempTypes(temp);
+                          }
+                      }
                    |  ArrayType
                    |  PointerType
                    |  RecordType

@@ -12,6 +12,7 @@ enum MetaTypeType
     ARRAY,
     CONSTANT,
     PROCEDURE,
+    RANGE,
     VARIABLE,
     VARIABLE_TYPE
 };

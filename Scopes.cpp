@@ -82,6 +82,22 @@ MetaType* LocalScope::Get(string identifier)
         return NULL;
 }
 
+MetaType* LocalScope::GetFromLocal(string identifier)
+{
+    if (local_scope.count(identifier) > 0)
+        return local_scope[identifier];
+    else
+        return NULL;
+}
+
+MetaType* LocalScope::GetFromParent(string identifier)
+{
+    if (parent_scope.count(identifier) > 0)
+        return parent_scope[identifier];
+    else
+        return NULL;
+}
+
 bool LocalScope::Insert(string identifier, MetaType* type)
 {
     if (local_scope.count(identifier) > 0)
@@ -157,16 +173,42 @@ void LocalScope::PushTempVars(Variable* temp_var)
     temporary_variables.push(temp_var);
 }
 
-void LocalScope::PushTempStrings(string temp_str)
-{
-    temporary_strings.push(temp_str);
-}
-
 Variable* LocalScope::PopTempVars()
 {
+    if(temporary_variables.empty())
+        return NULL;
     Variable* retval = temporary_variables.top();
     temporary_variables.pop();
     return retval;
+}
+
+bool LocalScope::TempVarsEmpty()
+{
+    return temporary_variables.empty();
+}
+
+void LocalScope::PushTempTypes(VariableType* temp_type)
+{
+    temporary_types.push(temp_type);
+}
+
+VariableType* LocalScope::PopTempTypes()
+{
+    if(temporary_types.empty())
+        return NULL;
+    VariableType* retval = temporary_types.top();
+    temporary_types.pop();
+    return retval;
+}
+
+bool LocalScope::TempTypesEmpty()
+{
+    return temporary_types.empty();
+}
+
+void LocalScope::PushTempStrings(string temp_str)
+{
+    temporary_strings.push(temp_str);
 }
 
 string LocalScope::PopTempStrings()
@@ -178,11 +220,6 @@ string LocalScope::PopTempStrings()
     return retval;
 }
 
-bool LocalScope::TempVarsEmpty()
-{
-    return temporary_variables.empty();
-}
-
 bool LocalScope::TempStringsEmpty()
 {
     return temporary_strings.empty();
@@ -190,5 +227,5 @@ bool LocalScope::TempStringsEmpty()
 
 bool LocalScope::AllTempsEmpty()
 {
-    return temporary_variables.empty() and temporary_strings.empty();
+    return temporary_variables.empty() && temporary_types.empty() && temporary_strings.empty();
 }
