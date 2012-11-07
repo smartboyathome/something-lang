@@ -2,24 +2,22 @@
 #pragma once
 #include "MetaType.h"
 
+// The four basic variable types
+enum VarType {
+	INTEGER,
+	BOOLEAN,
+	REAL,
+	CHAR
+};
+
 class VariableType:public MetaType {
-	
-	//TODO:
-	/*
-		This class will maintain the types of variables properly.
-		I haven't figured out how this should work. But look at Variable's
-		function "SetType" and its private VariableType object "my_type" to
-		see where this will be used, I guess.
-		
-	*/
-	
 public:
-	// Constructor takes a string (like "integer", "real", "boolean", "character")
-	VariableType(const string typeName);
+	// Constructor takes a VarType, "INTEGER", "BOOLEAN", "REAL", or "CHAR"
+	VariableType(const VarType type);
 	~VariableType();
 	
-	string GetType();
+	string GetType();	// Returns a string representation of the type
 	
 private:
-	string type;
+	VarType var_type;
 };

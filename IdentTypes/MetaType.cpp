@@ -23,8 +23,13 @@ int MetaType::Compare(const MetaType& rhs) const {
 		return -1;
 }	
 // operator==
-bool operator==(const MetaType &lhs, const MetaType &rhs) {
-	return lhs.Compare(rhs) == 0;
+bool MetaType::operator==(const MetaType &rhs)const {
+	return Compare(rhs) == 0;
+}
+
+// operator !=
+bool MetaType::operator!=(const MetaType &rhs) const {
+	return !(*this == rhs);
 }
 
 // gets string name

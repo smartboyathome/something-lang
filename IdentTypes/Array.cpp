@@ -23,9 +23,10 @@ void Array::AddDimension(string low, string high) {
 	ranges[dimensions - 1].high = high;
 }
 
-// Function to set type of variables the array uses
-void Array::SetType(string inType) {
-	type = inType;
+
+// Set the type of the variable using the VariableType object
+bool Array::SetType(VariableType* varType) {
+	my_type = varType;
 }
 	
 // Return a string representation of this object

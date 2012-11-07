@@ -19,7 +19,9 @@ bool Procedure::InsertParameter(Variable* param) {
 		return false;
 	} else {
 		parameters.push_back(param);	// Add onto the end to maintain order
+		return true;
 	}
+	
 }
 
 // Returns whether or not the parameters vector contains a variable with
@@ -35,7 +37,13 @@ bool Procedure::HasDuplicateParameter(const Variable* checkedParam) {
 
 // Return a string representation of this object
 string Procedure::ToString() const {
-	return identifier;
+	
+					// I am not sure that this is the way we SHOULD do this...
+	string s = identifier;
+	for (int x = 0; x < parameters.size(); x++) {
+		s += ( "   " + parameters[x]->ToString() + "\n");
+	}
+	return s;
 }
 
 // Return a C-formatted string representation of this object

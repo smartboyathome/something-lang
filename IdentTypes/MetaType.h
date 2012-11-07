@@ -14,13 +14,16 @@ enum MetaTypeType
     PROCEDURE,
     RANGE,
     VARIABLE,
-    VARIABLE_TYPE
+    VARIABLE_TYPE,
+	POINTER,
+	RECORD,
+	SET
 };
 
 class MetaType {
 public:
-	// Constructor takes the name and a value
-	MetaType(const string name, MetaTypeType);	
+	// Constructor takes the name and a MetaTypeType
+	MetaType(const string name, MetaTypeType);
 	~MetaType();
 	
 	// Returns int: -1 for less, 0 for equal, 1 for greater
@@ -33,9 +36,9 @@ public:
 	virtual string ToString() const = 0;
 	virtual string CString() const = 0;
 	
-	// Operator overloading for 'equals'
-	friend bool operator==(const MetaType &lhs, const MetaType &rhs);	
-	
+	// Operator overloading for 'equals' and 'not equals'
+	friend bool operator==(const MetaType &rhs)const;	
+	friend bool operator!=(const MetaType &rhs)const;
 	
 protected:	// Not private, grants access to the subclasses
 	string identifier;		// The name of the MetaType
