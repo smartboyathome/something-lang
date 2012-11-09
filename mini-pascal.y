@@ -121,7 +121,7 @@ Block              :  Declarations  ybegin
                               {
                                   cout << "TEST BEGIN BLOCK 7A" << endl;
                                   Range range = current_scope->PopTempRanges();
-                                  ss << "RANGE LOW " << range.low << " HIGH " << range.high << endl;
+                                  ss << "RANGE " << range.ToString() << endl;
                               }
                               cout << "TEST BEGIN BLOCK 8" << endl;
                               yyerror(ss.str().c_str());
@@ -162,7 +162,31 @@ VariableDeclBlock  :  /*** empty ***/
 VariableDeclList   :  VariableDeclList VariableDecl ysemicolon
                    |  VariableDecl ysemicolon
                    ;  
-ConstantDef        :  yident  yequal  ConstExpression
+/*ConstantDef        :  yident  yequal  ConstExpression
+                   ;*/
+ConstantDef        :  yident
+                      {
+                          global_scope.GetCurrentScope()->PushTempStrings(s);
+                      }
+                      yequal  ConstExpression
+                      {
+                          cout << "TEST AFTER ConstDef 0" << endl;
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          string identifier = current_scope->PopTempStrings();
+                          if(current_scope->IsInLocalScope(identifier))
+                          {
+                              yyerror(("REDEFINED: " + identifier).c_str());
+                              YYERROR;
+                          }
+                          else
+                          {
+                              cout << "TEST AFTER ConstDef 1" << endl;
+                              VariableType* type = current_scope->PopTempTypes();
+                              type->SetName(identifier);
+                              current_scope->Insert(identifier, type);
+                              cout << "TEST AFTER ConstDef 2" << endl;
+                          }
+                      }
                    ;
 TypeDef            :  yident
                       {
@@ -208,6 +232,15 @@ VariableDecl       :  IdentList  ycolon  Type
 /***************************  Const/Type Stuff  ******************************/
 
 ConstExpression    :  UnaryOperator ConstFactor
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          string op = current_scope->PopTempStrings();
+                          int value = current_scope->PopTempInts();
+                          if ((op == "+" && value < 0) || (op == "-" && value > 0))
+                                value *= -1;    // Overrides the original sign of value
+                          
+                          current_scope->PushTempInts(value);
+                      }
                    |  ConstFactor
                    |  ystring
                    ;
@@ -292,7 +325,7 @@ Type               :  yident
                           {
                               Range range = reversed.top();
                               reversed.pop();
-                              array->AddDimension(range.low, range.high);
+                              array->AddDimension(range);
                           }
                           current_scope->PushTempTypes(array);
                           cout << "TEST TYPE ARRAY 1" << endl;
@@ -307,7 +340,7 @@ Type               :  yident
                           // We can do this without a loop like above since there's
                           // only one range.
                           Range range = current_scope->PopTempRanges();
-                          array->AddDimension(range.low, range.high);
+                          array->AddDimension(range);
                           current_scope->PushTempTypes(array);
                           cout << "TEST TYPE SET 1" << endl;
                       }
@@ -492,7 +525,14 @@ OneFormalParam     :  yvar  IdentList  ycolon  yident
 
 /***************************  More Operators  ********************************/
 
-UnaryOperator      :  yplus | yminus
+UnaryOperator      :  yplus
+                      {
+                          global_scope.GetCurrentScope()->PushTempStrings("+");
+                      }
+                   |  yminus
+                      {
+                          global_scope.GetCurrentScope()->PushTempStrings("-");
+                      }
                    ;
 MultOperator       :  ymultiply | ydivide | ydiv | ymod | yand 
                    ;
