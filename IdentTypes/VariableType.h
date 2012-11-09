@@ -16,7 +16,7 @@ public:
 	VariableType(const VarType type);
 	~VariableType();
 	
-	string GetType();	// Returns a string representation of the type
+	string GetVarType();	// Returns a string representation of the type
 	
 private:
 	VarType var_type;

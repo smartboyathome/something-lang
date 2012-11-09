@@ -8,7 +8,7 @@ VariableType::VariableType(const VarType varType) : MetaType(name, VARIABLE_TYPE
 
 VariableType::~VariableType() {}
 
-string VariableType::GetType() {
+string VariableType::GetVarType() {
 	switch (var_type) {
 		case INTEGER:
 			return "integer";
