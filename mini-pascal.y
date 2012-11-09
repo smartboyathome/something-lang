@@ -382,7 +382,6 @@ Assignment         :  Designator yassign Expression
                    ;
 ProcedureCall      :  yident 
                    |  yident ActualParameters
-                   //|  yident IOParameters
                    ;
 IfStatement        :  yif  Expression  ythen  Statement  ElsePart
                    ;
@@ -412,9 +411,6 @@ WhichWay           :  yto  |  ydownto
 
 /***************************  Designator Stuff  ******************************/
 
-/*DesignatorList     :  Designator
-                   |  DesignatorList  ycomma  Designator 
-                   ;*/
 Designator         :  yident  DesignatorStuff 
                    ;
 DesignatorStuff    :  /*** empty ***/
@@ -426,8 +422,6 @@ theDesignatorStuff :  ydot yident
                    ;
 ActualParameters   :  yleftparen  ExpList  yrightparen
                    ;
-/*IOParameters       :  yleftparen  DesignatorList  yrightparen
-                   ;*/
 ExpList            :  Expression   
                    |  ExpList  ycomma  Expression       
                    ;
