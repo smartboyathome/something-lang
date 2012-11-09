@@ -3,7 +3,8 @@
 
 // Constructor
 Array::Array(const string name) : MetaType(name, ARRAY) {
-	type = "";
+	key_type = AcceptedTypes.NONE;
+	array_dimensions = 0;
 	dimensions = 0;
 }
 
@@ -13,15 +14,64 @@ Array::~Array() {
 	ranges.clear();
 }
 
-// Create a new dimension and set low/high values
-void Array::AddDimension(string low, string high) {
-	dimensions++;				// New dimension, increase dimensions by one
-	ranges.push_back(RangeStruct());	// Add RangeStruct to end
+// Create a new dimension and set low/high values (ints)
+void Array::AddDimension(int low, int high) {
+	// Filter with the array's stated type
+	if(key_type == AcceptedTypes.NONE)
+        key_type = AcceptedTypes.INT;
+    else if (key_type != AcceptedTypes.INT)
+        return false;	// Not acceptable
+		
+	// If the orders are mixed-up, fix it
+    if (high < low) {
+        int temp = low;
+        low = high;
+        high = low;
+    }
 	
-	// Set the low and high values in the new RangeStruct
-	ranges[dimensions - 1].low = low;
-	ranges[dimensions - 1].high = high;
+	dimensions++;				// New dimension, increase dimensions by one
+	ranges.push_back(Range());	// Add Range to end
+	
+	// Set the low and high values in the new Range
+	ranges[dimensions - 1].intLow = low;
+	ranges[dimensions - 1].intHigh = high;
+	
+	// Update the dimensions level
+	array_dimensions = get_array_dimensions();
+	
+	return true;
 }
+
+// Create a new dimension and set low/high values (chars)
+bool ArrayType::AddDimension(char low, char high) {
+	// Filter with the array's stated type
+    if(key_type == AcceptedTypes.NONE)
+        key_type = AcceptedTypes.CHAR;
+    else if (key_type != AcceptedTypes.CHAR)
+        return false;
+    if (high < low)
+    {
+        char temp = low;
+        low = high;
+        high = low;
+    }
+	
+    if (!('a' <= low && low <= 'z' && 'a' <= high && high <= 'z') 
+	|| !('A' <= low && low <= 'Z' && 'A' <= high && high <= 'Z'))
+        return false;
+	
+	dimensions++;				// New dimension, increase dimensions by one
+	ranges.push_back(Range());	// Add Range to end
+	
+	// Set the low and high values in the new Range
+	ranges[dimensions - 1].charLow = low;
+	ranges[dimensions - 1].charHigh = high;
+	
+	// Update the dimensions level
+	array_dimensions = get_array_dimensions();
+	return true;
+}
+
 
 
 // Set the type of the variable using the VariableType object
@@ -54,3 +104,30 @@ string Array::ToString() const {
 string Array::CString() const {
 	return "";
 }
+
+// Find the size of a multi-dimensional array
+int Array::get_array_dimensions() {	
+	if (dimensions == 0) 
+		return 0;	// No work needed
+		
+	
+	int sum = 0;
+	if (key_type == AcceptedTypes.INT) {	// Dealing with ints
+		
+		for (int x = 0; x < dimensions; x++) {
+			sum += (int)((ranges[x].intHigh + 1 - ranges[x].intLow) 
+							* pow(dimensions, (dimensions - 1 - x)));
+		}
+	} else {								// Dealing with chars
+	
+	/* Oh god, I need to look into more of this to see if this dangerously 
+	flippant casting of ints into chars and vice versa is even possible...*/
+		for (int x = 0; x < dimensions; x++) {
+			sum += (int)((ranges[x].charHigh + 1 - ranges[x].charLow) 
+							* pow(dimensions, (dimensions - 1 - x)));
+		}
+	}
+	
+	return sum;
+}
+

@@ -5,25 +5,42 @@
 
 class Array:public MetaType {
 public:
-	Array(const string name);
+	Array(const string);
 	~Array();
 	
-	void AddDimension(string, string);
+	bool AddDimension(int, int);
+	bool AddDimension(char, char);
 	
 	void SetType(VariableType* varType);
 	
 	string ToString() const;
 	string CString() const;
 
-private:
-	// RangeStruct allows us to hold a vector of 'low' and 'high' values
-	struct RangeStruct {
-		string low;		// Low value 
-		string high;	// .. High value
+	
+	// Range allows us to hold a vector of 'low' and 'high' values
+	struct Range {
+		char charLow;
+		char charHigh;
+		
+		int intLow;
+		int intHigh;
 	};
-	vector <RangeStruct> ranges;	// Vector holding ranges
+	
+	struct AcceptedTypes {
+		enum Types {
+			NONE,
+			CHAR,
+			INT
+		};
+	};
+	
+private:
+	int key_type;			// Tracking ints vs chars
+	vector <Range> ranges;	// Vector holding ranges
 	
 	int dimensions; // Count of dimensions (1d, 2d, 3d, etc)
+	int array_dimensions;	// Track the size of the array to hold each entry
+	int get_array_dimensions();	// Use a simple algorithm
 	
 	/* As shown in the testoutput, Arrays must show what 
 	   kind of value they contain */
