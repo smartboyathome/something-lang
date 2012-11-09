@@ -5,6 +5,7 @@
 #include "IdentTypes/MetaType.h"
 #include "IdentTypes/Variable.h"
 #include "IdentTypes/VariableType.h"
+#include "IdentTypes/Array.h"
 using namespace std;
 
 class LocalScope
@@ -17,6 +18,8 @@ private:
     stack<Variable*> temporary_variables;
     stack<string> temporary_strings;
     stack<VariableType*> temporary_types;
+    stack<int> temporary_ints;
+    stack<Range> temporary_ranges;
     
     // This is for outputting Zander-style strings.
     int scope_level;
@@ -37,15 +40,27 @@ public:
     map<string, MetaType*> GetParentScope();
     map<string, MetaType*> GetLocalScope();
     string ToString();
+    
     void PushTempVars(Variable*);
     Variable* PopTempVars();
     bool TempVarsEmpty();
+    
     void PushTempTypes(VariableType*);
     VariableType* PopTempTypes();
     bool TempTypesEmpty();
+    
     void PushTempStrings(string);
     string PopTempStrings();
     bool TempStringsEmpty();
+    
+    void PushTempInts(int);
+    int PopTempInts();
+    bool TempIntsEmpty();
+    
+    void PushTempRanges(Range);
+    Range PopTempRanges();
+    bool TempRangesEmpty();
+    
     bool AllTempsEmpty();
 };
 

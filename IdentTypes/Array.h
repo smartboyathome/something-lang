@@ -1,49 +1,55 @@
 // Array.h
 #pragma once
 #include "MetaType.h"
+#include "VariableType.h"
 #include <vector>
+using namespace std;
 
-class Array:public MetaType {
+struct AcceptedTypes {
+    enum Types {
+        NONE,
+        CHAR,
+        INT
+    };
+};
+
+// Range allows us to hold a vector of 'low' and 'high' values
+struct Range {
+    char charLow;
+    char charHigh;
+    
+    int intLow;
+    int intHigh;
+    AcceptedTypes::Types rangeType;
+    
+    Range();
+    Range(int, int);
+    Range(char, char);
+    
+    string ToString() const;
+};
+
+class ArrayType:public VariableType {
 public:
-	Array(const string);
-	~Array();
+	ArrayType(const string);
+	~ArrayType();
 	
 	bool AddDimension(int, int);
 	bool AddDimension(char, char);
+    bool AddDimension(Range);
 	
 	void SetType(VariableType* varType);
+    int get_array_dimensions();
 	
 	string ToString() const;
 	string CString() const;
 
-	
-	// Range allows us to hold a vector of 'low' and 'high' values
-	struct Range {
-		char charLow;
-		char charHigh;
-		
-		int intLow;
-		int intHigh;
-	};
-	
-	struct AcceptedTypes {
-		enum Types {
-			NONE,
-			CHAR,
-			INT
-		};
-	};
-	
 private:
-	int key_type;			// Tracking ints vs chars
-	vector <Range> ranges;	// Vector holding ranges
-	
-	int dimensions; // Count of dimensions (1d, 2d, 3d, etc)
-	int array_dimensions;	// Track the size of the array to hold each entry
-	int get_array_dimensions();	// Use a simple algorithm
-	
-	/* As shown in the testoutput, Arrays must show what 
-	   kind of value they contain */
-	VariableType* my_type;	
-	
+    // RangeStruct allows us to hold a vector of 'low' and 'high' values
+    vector <Range> ranges;    // Vector holding ranges
+    
+    /* As shown in the testoutput, Arrays must show what 
+       kind of value they contain */
+    VariableType* my_type;    
+    
 };

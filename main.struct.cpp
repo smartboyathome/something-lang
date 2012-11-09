@@ -119,15 +119,15 @@ int main(int argc, char* argv[]) {
     else if(argc == 2) // If there are no arguments, STDIN is used instead.
     {
         // open a file handle to a particular file:
-	    FILE *myfile = fopen(argv[1], "r");
-	    // make sure it's valid:
-	    if (!myfile) {
-	        // You haven't given us a file we can read from! ABORT! ABORT!
-		    cout << "I can't open " << argv[1] << "!" << endl;
-		    return -1;
-	    }
-	    // set lex to read from it instead of defaulting to STDIN:
-	    yyin = myfile;
+        FILE *myfile = fopen(argv[1], "r");
+        // make sure it's valid:
+        if (!myfile) {
+            // You haven't given us a file we can read from! ABORT! ABORT!
+            cout << "I can't open " << argv[1] << "!" << endl;
+            return -1;
+        }
+        // set lex to read from it instead of defaulting to STDIN:
+        yyin = myfile;
     }
     // lex through the input:
     HashedTokenStrings hash; // We only want to initialize the hash table once.

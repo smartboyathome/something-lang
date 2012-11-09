@@ -4,15 +4,15 @@
 
 class Constant:public MetaType {
 public:
-	Constant(const string name);
-	Constant(const string name, const string value);
-	~Constant();
-	
-	string GetValue();
-	
-	string ToString() const;
-	string CString() const;
-	
+    Constant(const string name);
+    Constant(const string name, const string value);
+    ~Constant();
+    
+    string GetValue();
+    
+    string ToString() const;
+    string CString() const;
+    
 private:
-	string constant_value;
+    string constant_value;
 };

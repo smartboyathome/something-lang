@@ -53,18 +53,21 @@ ProgramModule      :  yprogram yident
                       }
                       ProgramParameters
                       {
-                          string program_name = global_scope.GetCurrentScope()->PopTempStrings();
-                          global_scope.CreateNewScope();
-                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          LocalScope* prev_scope = global_scope.GetCurrentScope();
+                          string program_name = prev_scope->PopTempStrings();
                           Procedure* program = new Procedure(program_name);
-                          while(!current_scope->TempVarsEmpty())
+                          while(!prev_scope->TempVarsEmpty())
                           {
-                              Variable* param = current_scope->PopTempVars();
+                              Variable* param = prev_scope->PopTempVars();
                               // Zander said to ignore these parameters, so we will.
                               delete param;
                           }
+                          global_scope.CreateNewScope();
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
                           current_scope->Insert(program_name, program);
-                      } 
+                          // This scope is for all the variables defined in the program.
+                          global_scope.CreateNewScope();
+                      }
                       ysemicolon Block ydot
                    ;
 ProgramParameters  :  yleftparen  IdentList  yrightparen
@@ -83,27 +86,52 @@ IdentList          :  yident
 
 Block              :  Declarations  ybegin
                       {
+                          cout << "TEST BEGIN BLOCK 0" << endl;
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           if (!current_scope->AllTempsEmpty())
                           {
+                              cout << "TEST BEGIN BLOCK 3" << endl;
                               stringstream ss;
                               ss << "UNDEFINED:" << endl;
                               while(!current_scope->TempVarsEmpty())
                               {
                                   Variable* var = current_scope->PopTempVars();
-                                  ss << "VAR " << var->ToString() << endl;
+                                  ss << "VAR " << var->GetName() << endl;
                                   delete var;
                               }
+                              cout << "TEST BEGIN BLOCK 4" << endl;
                               while(!current_scope->TempStringsEmpty())
                               {
                                   ss << "STRING " << current_scope->PopTempStrings() << endl;
                               }
+                              cout << "TEST BEGIN BLOCK 5" << endl;
+                              while(!current_scope->TempTypesEmpty())
+                              {
+                                  VariableType* type = current_scope->PopTempTypes();
+                                  ss << "TYPE " << type->GetName() << endl;
+                                  delete type;
+                              }
+                              cout << "TEST BEGIN BLOCK 6" << endl;
+                              while(!current_scope->TempIntsEmpty())
+                              {
+                                  ss << "INT " << current_scope->PopTempInts() << endl;
+                              }
+                              cout << "TEST BEGIN BLOCK 7" << endl;
+                              while(!current_scope->TempRangesEmpty())
+                              {
+                                  cout << "TEST BEGIN BLOCK 7A" << endl;
+                                  Range range = current_scope->PopTempRanges();
+                                  ss << "RANGE LOW " << range.low << " HIGH " << range.high << endl;
+                              }
+                              cout << "TEST BEGIN BLOCK 8" << endl;
                               yyerror(ss.str().c_str());
                               YYERROR;
                           }
                           else
                           {
+                              cout << "TEST BEGIN BLOCK 1" << endl;
                               global_scope.CreateNewScope();
+                              cout << "TEST BEGIN BLOCK 2" << endl;
                           }
                       }
                       StatementSequence  yend
@@ -142,10 +170,39 @@ TypeDef            :  yident
                       }
                       yequal  Type
                       {
-                          global_scope.GetCurrentScope()->PopTempStrings();
+                          cout << "TEST AFTER TYPE 0" << endl;
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          string identifier = current_scope->PopTempStrings();
+                          if(current_scope->IsInLocalScope(identifier))
+                          {
+                              yyerror(("REDEFINED: " + identifier).c_str());
+                              YYERROR;
+                          }
+                          else
+                          {
+                              cout << "TEST AFTER TYPE 1" << endl;
+                              VariableType* type = current_scope->PopTempTypes();
+                              type->SetName(identifier);
+                              current_scope->Insert(identifier, type);
+                              cout << "TEST AFTER TYPE 2" << endl;
+                          }
                       }
                    ;
 VariableDecl       :  IdentList  ycolon  Type
+                      {
+                          cout << "TEST VARIABLE DECLARE 0" << endl;
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          VariableType* type = current_scope->PopTempTypes();
+                          while(!current_scope->TempVarsEmpty())
+                          {
+                              cout << "TEST VARIABLE DECLARE 1" << endl;
+                              Variable* var = current_scope->PopTempVars();
+                              var->SetType(type);
+                              current_scope->Insert(var->GetName(), var);
+                              cout << "TEST VARIABLE DECLARE 2" << endl;
+                          }
+                          cout << "TEST VARIABLE DECLARE 3" << endl;
+                      }
                    ;
 
 /***************************  Const/Type Stuff  ******************************/
@@ -155,27 +212,105 @@ ConstExpression    :  UnaryOperator ConstFactor
                    |  ystring
                    ;
 ConstFactor        :  yident
-                   |  ynumber
-                   |  ynil
-                   ;
-Type               :  yident
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           if(!current_scope->IsInScope(s))
                           {
-                              yyerror("UNDEFINED: " + s);
+                              yyerror(("UNDEFINED: " + s).c_str());
+                              YYERROR;
+                          }
+                          else 
+                          {
+                              MetaType* var = current_scope->Get(s);
+                              if(var->GetType() != VARIABLE_TYPE)
+                              {
+                                  yyerror(("NOT A TYPE: " + s).c_str());
+                                  YYERROR;
+                              }
+                              else if(((VariableType*)var)->GetVarType() != VarTypes::INTEGER)
+                              {
+                                  yyerror(("NOT OF TYPE INTEGER " + s).c_str());
+                                  YYERROR;
+                              }
+                              else
+                              {
+                                  IntegerType* Int = (IntegerType*)var;
+                                  global_scope.GetCurrentScope()->PushTempInts(Int->GetValue());
+                              }
+                          }
+                      }
+                   |  ynumber
+                      {
+                          int temp;
+                          stringstream(s) >> temp;
+                          global_scope.GetCurrentScope()->PushTempInts(temp);
+                      }
+                   |  ynil
+                      {
+                          global_scope.GetCurrentScope()->PushTempInts(0);
+                      }
+                   ;
+Type               :  yident
+                      {
+                          cout << "TEST TYPE IDENT 0" << endl;
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          if(!current_scope->IsInScope(s))
+                          {
+                              yyerror(("UNDEFINED: " + s).c_str());
                               YYERROR;
                           }
                           else
                           {
-                              VariableType* type = current_scope->Get(s);
-                              global_scope.GetCurrentScope()->PushTempTypes(temp);
+                              cout << "TEST TYPE IDENT 1" << endl;
+                              LocalScope* current_scope = global_scope.GetCurrentScope();
+                              MetaType* var = current_scope->Get(s);
+                              if(var->GetType() != VARIABLE_TYPE)
+                              {
+                                  yyerror(("NOT A TYPE " + s).c_str());
+                                  YYERROR;
+                              }
+                              else
+                              {
+                                  cout << "TEST TYPE IDENT 2" << endl;
+                                  current_scope->PushTempTypes((VariableType*) var);
+                                  cout << "TEST TYPE IDENT 3" << endl;
+                              }
                           }
+                          cout << "TEST TYPE IDENT 4" << endl;
                       }
                    |  ArrayType
+                      {
+                          cout << "TEST TYPE ARRAY 0" << endl;
+                          ArrayType* array = new ArrayType("");
+                          stack<Range> reversed; // Needed since the ranges will be backwards
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          while(!current_scope->TempRangesEmpty())
+                          {
+                              reversed.push(current_scope->PopTempRanges());
+                          }
+                          while(!reversed.empty())
+                          {
+                              Range range = reversed.top();
+                              reversed.pop();
+                              array->AddDimension(range.low, range.high);
+                          }
+                          current_scope->PushTempTypes(array);
+                          cout << "TEST TYPE ARRAY 1" << endl;
+                      }
                    |  PointerType
                    |  RecordType
                    |  SetType
+                      {
+                          cout << "TEST TYPE SET 0" << endl;
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          ArrayType* array = new ArrayType("");
+                          // We can do this without a loop like above since there's
+                          // only one range.
+                          Range range = current_scope->PopTempRanges();
+                          array->AddDimension(range.low, range.high);
+                          current_scope->PushTempTypes(array);
+                          cout << "TEST TYPE SET 1" << endl;
+                      }
                    ;
 ArrayType          :  yarray yleftbracket Subrange SubrangeList 
                       yrightbracket  yof Type
@@ -184,17 +319,35 @@ SubrangeList       :  /*** empty ***/
                    |  SubrangeList ycomma Subrange 
                    ;
 Subrange           :  ConstFactor ydotdot ConstFactor
+                      {
+                          cout << "TEST A0" << endl;
+                          int b = global_scope.GetCurrentScope()->PopTempInts();
+                          int a = global_scope.GetCurrentScope()->PopTempInts();
+                          cout << "TEST A1" << endl;
+                          Range temp(a, b);
+                          cout << "TEST A2" << endl;
+                          global_scope.GetCurrentScope()->PushTempRanges(temp);
+                          cout << "TEST A5" << endl;
+                      }
                    |  ystring
                       {
+                          cout << "TEST B" << endl;
                           global_scope.GetCurrentScope()->PushTempStrings(s);
                       }
                       ydotdot  ystring
                       {
+                          cout << "TEST C" << endl;
                           string a = global_scope.GetCurrentScope()->PopTempStrings();
                           string b = s;
-                          if (a.length() != 1 | b.length() != 1)
+                          if (a.length() != 1 || b.length() != 1)
                           {
-                              yyerror("BAD SUBRANGE");
+                              yyerror(("BAD SUBRANGE: '" + a + "'..'" + b + "'").c_str());
+                              YYERROR;
+                          }
+                          else
+                          {
+                              Range temp(a[0], b[0]);
+                              global_scope.GetCurrentScope()->PushTempRanges(temp);
                           }
                       }
                    ;
@@ -229,7 +382,7 @@ Assignment         :  Designator yassign Expression
                    ;
 ProcedureCall      :  yident 
                    |  yident ActualParameters
-                   |  yident IOParameters
+                   //|  yident IOParameters
                    ;
 IfStatement        :  yif  Expression  ythen  Statement  ElsePart
                    ;
@@ -259,9 +412,9 @@ WhichWay           :  yto  |  ydownto
 
 /***************************  Designator Stuff  ******************************/
 
-DesignatorList     :  Designator
+/*DesignatorList     :  Designator
                    |  DesignatorList  ycomma  Designator 
-                   ;
+                   ;*/
 Designator         :  yident  DesignatorStuff 
                    ;
 DesignatorStuff    :  /*** empty ***/
@@ -273,8 +426,8 @@ theDesignatorStuff :  ydot yident
                    ;
 ActualParameters   :  yleftparen  ExpList  yrightparen
                    ;
-IOParameters       :  yleftparen  DesignatorList  yrightparen
-                   ;
+/*IOParameters       :  yleftparen  DesignatorList  yrightparen
+                   ;*/
 ExpList            :  Expression   
                    |  ExpList  ycomma  Expression       
                    ;
@@ -296,6 +449,7 @@ Term               :  Factor
 Factor             :  ynumber
                    |  ynil
                    |  ystring
+                   |  Designator
                    |  yleftparen  Expression  yrightparen
                    |  ynot Factor
                    |  Setvalue

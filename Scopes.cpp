@@ -46,14 +46,16 @@ GlobalScope::~GlobalScope()
     }
 }
 
-LocalScope::LocalScope(int scope_level)
+LocalScope::LocalScope(int level)
 {
-    this->scope_level = scope_level;
+    scope_level = level;
+    cout << "LEVEL " << level << endl;
 }
 
-LocalScope::LocalScope(int scope_level, map<string, MetaType*> new_parent_scope)
+LocalScope::LocalScope(int level, map<string, MetaType*> new_parent_scope)
 {
-    this->scope_level = scope_level;
+    scope_level = level;
+    cout << "LEVEL " << level << endl;
     parent_scope = new_parent_scope;
 }
 
@@ -137,6 +139,7 @@ map<string, MetaType*> LocalScope::GetLocalScope()
 
 string LocalScope::make_indent()
 {
+    cout << "INDENT: " << scope_level << endl;
     stringstream ss;
     for(int i = 0; i < scope_level; ++i)
     {
@@ -225,7 +228,45 @@ bool LocalScope::TempStringsEmpty()
     return temporary_strings.empty();
 }
 
+void LocalScope::PushTempInts(int temp_int)
+{
+    temporary_ints.push(temp_int);
+}
+
+int LocalScope::PopTempInts()
+{
+    if (temporary_ints.empty())
+        return 0;
+    int retval = temporary_ints.top();
+    temporary_ints.pop();
+    return retval;
+}
+
+bool LocalScope::TempIntsEmpty()
+{
+    return temporary_ints.empty();
+}
+
+void LocalScope::PushTempRanges(Range temp_range)
+{
+    temporary_ranges.push(temp_range);
+}
+
+Range LocalScope::PopTempRanges()
+{
+    if (temporary_ranges.empty())
+        return Range(-1, -1);
+    Range retval = temporary_ranges.top();
+    temporary_ranges.pop();
+    return retval;
+}
+
+bool LocalScope::TempRangesEmpty()
+{
+    return temporary_ranges.empty();
+}
+
 bool LocalScope::AllTempsEmpty()
 {
-    return temporary_variables.empty() && temporary_types.empty() && temporary_strings.empty();
+    return temporary_variables.empty() && temporary_types.empty() && temporary_strings.empty() && temporary_ints.empty() && temporary_ranges.empty();
 }

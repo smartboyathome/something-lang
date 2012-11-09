@@ -4,16 +4,16 @@
 
 class Set:public MetaType {
 public:
-	Set(const string name);
-	~Set();
-	
-	void SetRange(int low, int high);
-	
-	string ToString() const;
-	string CString() const;
+    Set(const string name);
+    ~Set();
+    
+    void SetRange(int low, int high);
+    
+    string ToString() const;
+    string CString() const;
 
 private:
-	int low;
-	int high;
+    int low;
+    int high;
 
 };

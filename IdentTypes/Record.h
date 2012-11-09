@@ -6,17 +6,17 @@
 
 class Record:public MetaType {
 public:
-	Record(const string name);
-	~Record();
-	
-	bool InsertMember(Variable*);
-	bool HasDuplicateMember(const Variable*);
-	
-	string ToString() const;
-	string CString() const;
+    Record(const string name);
+    ~Record();
+    
+    bool InsertMember(Variable*);
+    bool HasDuplicateMember(const Variable*);
+    
+    string ToString() const;
+    string CString() const;
 
 private:
-	// Vector holding pointers to Variables that represent the members 
-	// of this Record
-	vector<Variable*> members;
+    // Vector holding pointers to Variables that represent the members 
+    // of this Record
+    vector<Variable*> members;
 };
