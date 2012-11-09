@@ -65,6 +65,8 @@ ProgramModule      :  yprogram yident
                           global_scope.CreateNewScope();
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           current_scope->Insert(program_name, program);
+                          // This scope is for all the variables defined in the program.
+                          global_scope.CreateNewScope();
                       }
                       ysemicolon Block ydot
                    ;
@@ -187,6 +189,20 @@ TypeDef            :  yident
                       }
                    ;
 VariableDecl       :  IdentList  ycolon  Type
+                      {
+                          cout << "TEST VARIABLE DECLARE 0" << endl;
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          VariableType* type = current_scope->PopTempTypes();
+                          while(!current_scope->TempVarsEmpty())
+                          {
+                              cout << "TEST VARIABLE DECLARE 1" << endl;
+                              Variable* var = current_scope->PopTempVars();
+                              var->SetType(type);
+                              current_scope->Insert(var->GetName(), var);
+                              cout << "TEST VARIABLE DECLARE 2" << endl;
+                          }
+                          cout << "TEST VARIABLE DECLARE 3" << endl;
+                      }
                    ;
 
 /***************************  Const/Type Stuff  ******************************/
@@ -366,7 +382,7 @@ Assignment         :  Designator yassign Expression
                    ;
 ProcedureCall      :  yident 
                    |  yident ActualParameters
-                   |  yident IOParameters
+                   //|  yident IOParameters
                    ;
 IfStatement        :  yif  Expression  ythen  Statement  ElsePart
                    ;
@@ -396,9 +412,9 @@ WhichWay           :  yto  |  ydownto
 
 /***************************  Designator Stuff  ******************************/
 
-DesignatorList     :  Designator
+/*DesignatorList     :  Designator
                    |  DesignatorList  ycomma  Designator 
-                   ;
+                   ;*/
 Designator         :  yident  DesignatorStuff 
                    ;
 DesignatorStuff    :  /*** empty ***/
@@ -410,8 +426,8 @@ theDesignatorStuff :  ydot yident
                    ;
 ActualParameters   :  yleftparen  ExpList  yrightparen
                    ;
-IOParameters       :  yleftparen  DesignatorList  yrightparen
-                   ;
+/*IOParameters       :  yleftparen  DesignatorList  yrightparen
+                   ;*/
 ExpList            :  Expression   
                    |  ExpList  ycomma  Expression       
                    ;
@@ -433,6 +449,7 @@ Term               :  Factor
 Factor             :  ynumber
                    |  ynil
                    |  ystring
+                   |  Designator
                    |  yleftparen  Expression  yrightparen
                    |  ynot Factor
                    |  Setvalue

@@ -46,14 +46,16 @@ GlobalScope::~GlobalScope()
     }
 }
 
-LocalScope::LocalScope(int scope_level)
+LocalScope::LocalScope(int level)
 {
-    this->scope_level = scope_level;
+    scope_level = level;
+    cout << "LEVEL " << level << endl;
 }
 
-LocalScope::LocalScope(int scope_level, map<string, MetaType*> new_parent_scope)
+LocalScope::LocalScope(int level, map<string, MetaType*> new_parent_scope)
 {
-    this->scope_level = scope_level;
+    scope_level = level;
+    cout << "LEVEL " << level << endl;
     parent_scope = new_parent_scope;
 }
 
@@ -137,6 +139,7 @@ map<string, MetaType*> LocalScope::GetLocalScope()
 
 string LocalScope::make_indent()
 {
+    cout << "INDENT: " << scope_level << endl;
     stringstream ss;
     for(int i = 0; i < scope_level; ++i)
     {
