@@ -121,7 +121,7 @@ Block              :  Declarations  ybegin
                               {
                                   cout << "TEST BEGIN BLOCK 7A" << endl;
                                   Range range = current_scope->PopTempRanges();
-                                  ss << "RANGE LOW " << range.low << " HIGH " << range.high << endl;
+                                  ss << "RANGE " << range.ToString() << endl;
                               }
                               cout << "TEST BEGIN BLOCK 8" << endl;
                               yyerror(ss.str().c_str());
@@ -292,7 +292,7 @@ Type               :  yident
                           {
                               Range range = reversed.top();
                               reversed.pop();
-                              array->AddDimension(range.low, range.high);
+                              array->AddDimension(range);
                           }
                           current_scope->PushTempTypes(array);
                           cout << "TEST TYPE ARRAY 1" << endl;
@@ -307,7 +307,7 @@ Type               :  yident
                           // We can do this without a loop like above since there's
                           // only one range.
                           Range range = current_scope->PopTempRanges();
-                          array->AddDimension(range.low, range.high);
+                          array->AddDimension(range);
                           current_scope->PushTempTypes(array);
                           cout << "TEST TYPE SET 1" << endl;
                       }
