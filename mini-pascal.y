@@ -162,7 +162,31 @@ VariableDeclBlock  :  /*** empty ***/
 VariableDeclList   :  VariableDeclList VariableDecl ysemicolon
                    |  VariableDecl ysemicolon
                    ;  
-ConstantDef        :  yident  yequal  ConstExpression
+/*ConstantDef        :  yident  yequal  ConstExpression
+                   ;*/
+ConstantDef        :  yident
+                      {
+                          global_scope.GetCurrentScope()->PushTempStrings(s);
+                      }
+                      yequal  ConstExpression
+                      {
+                          cout << "TEST AFTER ConstDef 0" << endl;
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          string identifier = current_scope->PopTempStrings();
+                          if(current_scope->IsInLocalScope(identifier))
+                          {
+                              yyerror(("REDEFINED: " + identifier).c_str());
+                              YYERROR;
+                          }
+                          else
+                          {
+                              cout << "TEST AFTER ConstDef 1" << endl;
+                              VariableType* type = current_scope->PopTempTypes();
+                              type->SetName(identifier);
+                              current_scope->Insert(identifier, type);
+                              cout << "TEST AFTER ConstDef 2" << endl;
+                          }
+                      }
                    ;
 TypeDef            :  yident
                       {
@@ -208,6 +232,15 @@ VariableDecl       :  IdentList  ycolon  Type
 /***************************  Const/Type Stuff  ******************************/
 
 ConstExpression    :  UnaryOperator ConstFactor
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          string op = current_scope->PopTempStrings();
+                          int value = current_scope->PopTempInts();
+                          if ((op == "+" && value < 0) || (op == "-" && value > 0))
+                                value *= -1;    // Overrides the original sign of value
+                          
+                          current_scope->PushTempInts(value);
+                      }
                    |  ConstFactor
                    |  ystring
                    ;
@@ -498,7 +531,14 @@ OneFormalParam     :  yvar  IdentList  ycolon  yident
 
 /***************************  More Operators  ********************************/
 
-UnaryOperator      :  yplus | yminus
+UnaryOperator      :  yplus
+                      {
+                          global_scope.GetCurrentScope()->PushTempStrings("+");
+                      }
+                   |  yminus
+                      {
+                          global_scope.GetCurrentScope()->PushTempStrings("-");
+                      }
                    ;
 MultOperator       :  ymultiply | ydivide | ydiv | ymod | yand 
                    ;
