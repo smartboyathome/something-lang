@@ -1,5 +1,6 @@
 // Array.cpp
 #include "Array.h"
+#include <sstream>
 
 Range::Range(int low, int high)
 {
@@ -41,19 +42,21 @@ string ArrayType::ToString() const {
     /*if ( VariableType == NULL ) 
         return "ERROR: 'type' of " + identifier + " was not set.\n";*/
     
-    string s = identifier + " ";
+    stringstream ss;
+    
+    ss << identifier + " ";
     
     // Creating "low..high, low..high, low..high"
     for (int x = 0; x < ranges.size(); x++) {
-        s += ranges[x].low + ".." + ranges[x].high;
+        ss << ranges[x].low << ".." << ranges[x].high;
         
         if (x < ranges.size()-1)    // Smart commas
-            s += ", ";
+            ss << ", ";
     }
     
     //s += type;
     
-    return s;
+    return ss.str();
 }
 
 // Return a C-formatted string representation of this object

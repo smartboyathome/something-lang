@@ -84,9 +84,11 @@ IdentList          :  yident
 
 Block              :  Declarations  ybegin
                       {
+                          cout << "TEST BEGIN BLOCK 0" << endl;
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           if (!current_scope->AllTempsEmpty())
                           {
+                              cout << "TEST BEGIN BLOCK 3" << endl;
                               stringstream ss;
                               ss << "UNDEFINED:" << endl;
                               while(!current_scope->TempVarsEmpty())
@@ -95,31 +97,39 @@ Block              :  Declarations  ybegin
                                   ss << "VAR " << var->GetName() << endl;
                                   delete var;
                               }
+                              cout << "TEST BEGIN BLOCK 4" << endl;
                               while(!current_scope->TempStringsEmpty())
                               {
                                   ss << "STRING " << current_scope->PopTempStrings() << endl;
                               }
+                              cout << "TEST BEGIN BLOCK 5" << endl;
                               while(!current_scope->TempTypesEmpty())
                               {
                                   VariableType* type = current_scope->PopTempTypes();
                                   ss << "TYPE " << type->GetName() << endl;
                                   delete type;
                               }
+                              cout << "TEST BEGIN BLOCK 6" << endl;
                               while(!current_scope->TempIntsEmpty())
                               {
                                   ss << "INT " << current_scope->PopTempInts() << endl;
                               }
+                              cout << "TEST BEGIN BLOCK 7" << endl;
                               while(!current_scope->TempRangesEmpty())
                               {
+                                  cout << "TEST BEGIN BLOCK 7A" << endl;
                                   Range range = current_scope->PopTempRanges();
                                   ss << "RANGE LOW " << range.low << " HIGH " << range.high << endl;
                               }
+                              cout << "TEST BEGIN BLOCK 8" << endl;
                               yyerror(ss.str().c_str());
                               YYERROR;
                           }
                           else
                           {
+                              cout << "TEST BEGIN BLOCK 1" << endl;
                               global_scope.CreateNewScope();
+                              cout << "TEST BEGIN BLOCK 2" << endl;
                           }
                       }
                       StatementSequence  yend
@@ -158,6 +168,7 @@ TypeDef            :  yident
                       }
                       yequal  Type
                       {
+                          cout << "TEST AFTER TYPE 0" << endl;
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           string identifier = current_scope->PopTempStrings();
                           if(current_scope->IsInLocalScope(identifier))
@@ -167,9 +178,11 @@ TypeDef            :  yident
                           }
                           else
                           {
+                              cout << "TEST AFTER TYPE 1" << endl;
                               VariableType* type = current_scope->PopTempTypes();
                               type->SetName(identifier);
                               current_scope->Insert(identifier, type);
+                              cout << "TEST AFTER TYPE 2" << endl;
                           }
                       }
                    ;
@@ -223,6 +236,7 @@ ConstFactor        :  yident
                    ;
 Type               :  yident
                       {
+                          cout << "TEST TYPE IDENT 0" << endl;
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           if(!current_scope->IsInScope(s))
                           {
@@ -231,6 +245,7 @@ Type               :  yident
                           }
                           else
                           {
+                              cout << "TEST TYPE IDENT 1" << endl;
                               LocalScope* current_scope = global_scope.GetCurrentScope();
                               MetaType* var = current_scope->Get(s);
                               if(var->GetType() != VARIABLE_TYPE)
@@ -239,11 +254,17 @@ Type               :  yident
                                   YYERROR;
                               }
                               else
-                                current_scope->PushTempTypes((VariableType*) var);
+                              {
+                                  cout << "TEST TYPE IDENT 2" << endl;
+                                  current_scope->PushTempTypes((VariableType*) var);
+                                  cout << "TEST TYPE IDENT 3" << endl;
+                              }
                           }
+                          cout << "TEST TYPE IDENT 4" << endl;
                       }
                    |  ArrayType
                       {
+                          cout << "TEST TYPE ARRAY 0" << endl;
                           ArrayType* array = new ArrayType("");
                           stack<Range> reversed; // Needed since the ranges will be backwards
                           LocalScope* current_scope = global_scope.GetCurrentScope();
@@ -258,11 +279,13 @@ Type               :  yident
                               array->AddDimension(range.low, range.high);
                           }
                           current_scope->PushTempTypes(array);
+                          cout << "TEST TYPE ARRAY 1" << endl;
                       }
                    |  PointerType
                    |  RecordType
                    |  SetType
                       {
+                          cout << "TEST TYPE SET 0" << endl;
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           ArrayType* array = new ArrayType("");
                           // We can do this without a loop like above since there's
@@ -270,6 +293,7 @@ Type               :  yident
                           Range range = current_scope->PopTempRanges();
                           array->AddDimension(range.low, range.high);
                           current_scope->PushTempTypes(array);
+                          cout << "TEST TYPE SET 1" << endl;
                       }
                    ;
 ArrayType          :  yarray yleftbracket Subrange SubrangeList 
@@ -280,17 +304,23 @@ SubrangeList       :  /*** empty ***/
                    ;
 Subrange           :  ConstFactor ydotdot ConstFactor
                       {
+                          cout << "TEST A0" << endl;
                           int b = global_scope.GetCurrentScope()->PopTempInts();
                           int a = global_scope.GetCurrentScope()->PopTempInts();
+                          cout << "TEST A1" << endl;
                           Range temp(a, b);
+                          cout << "TEST A2" << endl;
                           global_scope.GetCurrentScope()->PushTempRanges(temp);
+                          cout << "TEST A5" << endl;
                       }
                    |  ystring
                       {
+                          cout << "TEST B" << endl;
                           global_scope.GetCurrentScope()->PushTempStrings(s);
                       }
                       ydotdot  ystring
                       {
+                          cout << "TEST C" << endl;
                           string a = global_scope.GetCurrentScope()->PopTempStrings();
                           string b = s;
                           if (a.length() != 1 || b.length() != 1)
