@@ -21,7 +21,7 @@ int MetaType::Compare(const MetaType& rhs) const {
 		return 0;
 	else
 		return -1;
-}	
+}
 // operator==
 bool MetaType::operator==(const MetaType &rhs)const {
 	return Compare(rhs) == 0;
@@ -35,4 +35,14 @@ bool MetaType::operator!=(const MetaType &rhs) const {
 // gets string name
 string MetaType::GetName() {
 	return identifier;
+}
+
+MetaTypeType MetaType::GetType()
+{
+    return metatype;
+}
+
+void MetaType::SetName(string name)
+{
+    identifier = name;
 }

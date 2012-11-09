@@ -53,18 +53,19 @@ ProgramModule      :  yprogram yident
                       }
                       ProgramParameters
                       {
-                          string program_name = global_scope.GetCurrentScope()->PopTempStrings();
-                          global_scope.CreateNewScope();
-                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          LocalScope* prev_scope = global_scope.GetCurrentScope();
+                          string program_name = prev_scope->PopTempStrings();
                           Procedure* program = new Procedure(program_name);
-                          while(!current_scope->TempVarsEmpty())
+                          while(!prev_scope->TempVarsEmpty())
                           {
-                              Variable* param = current_scope->PopTempVars();
+                              Variable* param = prev_scope->PopTempVars();
                               // Zander said to ignore these parameters, so we will.
                               delete param;
                           }
+                          global_scope.CreateNewScope();
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
                           current_scope->Insert(program_name, program);
-                      } 
+                      }
                       ysemicolon Block ydot
                    ;
 ProgramParameters  :  yleftparen  IdentList  yrightparen
@@ -91,12 +92,27 @@ Block              :  Declarations  ybegin
                               while(!current_scope->TempVarsEmpty())
                               {
                                   Variable* var = current_scope->PopTempVars();
-                                  ss << "VAR " << var->ToString() << endl;
+                                  ss << "VAR " << var->GetName() << endl;
                                   delete var;
                               }
                               while(!current_scope->TempStringsEmpty())
                               {
                                   ss << "STRING " << current_scope->PopTempStrings() << endl;
+                              }
+                              while(!current_scope->TempTypesEmpty())
+                              {
+                                  VariableType* type = current_scope->PopTempTypes();
+                                  ss << "TYPE " << type->GetName() << endl;
+                                  delete type;
+                              }
+                              while(!current_scope->TempIntsEmpty())
+                              {
+                                  ss << "INT " << current_scope->PopTempInts() << endl;
+                              }
+                              while(!current_scope->TempRangesEmpty())
+                              {
+                                  Range range = current_scope->PopTempRanges() << endl;
+                                  ss << "RANGE LOW " << range.low << " HIGH " << range.high << endl;
                               }
                               yyerror(ss.str().c_str());
                               YYERROR;
@@ -142,7 +158,19 @@ TypeDef            :  yident
                       }
                       yequal  Type
                       {
-                          global_scope.GetCurrentScope()->PopTempStrings();
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          string identifier = current_scope->PopTempStrings();
+                          if(current_scope->IsInLocalScope(string))
+                          {
+                              yyerror("REDEFINED: " + identifier);
+                              YYERROR;
+                          }
+                          else
+                          {
+                              VariableType* type = current_scope->PopTempTypes();
+                              type->SetName(identifier);
+                              current_scope->Insert(identifier, type);
+                          }
                       }
                    ;
 VariableDecl       :  IdentList  ycolon  Type
@@ -155,8 +183,38 @@ ConstExpression    :  UnaryOperator ConstFactor
                    |  ystring
                    ;
 ConstFactor        :  yident
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          if(!current_scope->IsInScope(s))
+                          {
+                              yyerror("UNDEFINED: " + s);
+                              YYERROR;
+                          }
+                          else 
+                          {
+                              MetaType* var = current_scope->Get(s);
+                              if(var->GetType() != INTEGER)
+                              {
+                                  yyerror("WRONG TYPE: " + s);
+                                  YYERROR;
+                              }
+                              else
+                              {
+                                  IntegerType* Int = (IntegerType*)var;
+                                  global_scope.GetCurrentScope()->PushTempInts(Int->GetValue());
+                              }
+                          }
+                      }
                    |  ynumber
+                      {
+                          int temp;
+                          stringstream(s) >> temp;
+                          global_scope.GetCurrentScope()->PushTempInts(temp);
+                      }
                    |  ynil
+                      {
+                          global_scope.GetCurrentScope()->PushTempInts(0);
+                      }
                    ;
 Type               :  yident
                       {
@@ -168,14 +226,39 @@ Type               :  yident
                           }
                           else
                           {
+                              LocalScope* current_scope = global_scope.GetCurrentScope();
                               VariableType* type = current_scope->Get(s);
-                              global_scope.GetCurrentScope()->PushTempTypes(temp);
+                              current_scope->PushTempTypes(temp);
                           }
                       }
                    |  ArrayType
+                      {
+                          Array* array = new Array("");
+                          stack<Range> reversed; // Needed since the ranges will be backwards
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          while(!current_scope->TempRangesEmpty())
+                          {
+                              reversed.push(current_scope->PopTempRanges());
+                          }
+                          while(!reversed.empty())
+                          {
+                              Range range = reversed.top();
+                              reversed.pop();
+                              array->AddDimension(range.low, range.high);
+                          }
+                          current_scope->PushTempTypes(array);
+                      }
                    |  PointerType
                    |  RecordType
                    |  SetType
+                      {
+                          Array* array = new Array("");
+                          // We can do this without a loop like above since there's
+                          // only one range.
+                          Range range = current_scope->PopTempRanges();
+                          array->AddDimension(range.low, range.high);
+                          global_scope.GetCurrentScope()->PushTempTypes(array);
+                      }
                    ;
 ArrayType          :  yarray yleftbracket Subrange SubrangeList 
                       yrightbracket  yof Type
@@ -184,6 +267,12 @@ SubrangeList       :  /*** empty ***/
                    |  SubrangeList ycomma Subrange 
                    ;
 Subrange           :  ConstFactor ydotdot ConstFactor
+                      {
+                          int b = global_scope.GetCurrentScope()->PopTempInts();
+                          int a = global_scope.GetCurrentScope()->PopTempInts();
+                          Range temp(a, b);
+                          global_scope.GetCurrentScope()->PushTempRanges(temp);
+                      }
                    |  ystring
                       {
                           global_scope.GetCurrentScope()->PushTempStrings(s);
@@ -192,9 +281,15 @@ Subrange           :  ConstFactor ydotdot ConstFactor
                       {
                           string a = global_scope.GetCurrentScope()->PopTempStrings();
                           string b = s;
-                          if (a.length() != 1 | b.length() != 1)
+                          if (a.length() != 1 || b.length() != 1)
                           {
-                              yyerror("BAD SUBRANGE");
+                              yyerror("BAD SUBRANGE: '" + a + "'..'" + b + "'");
+                              YYERROR;
+                          }
+                          else
+                          {
+                              Range temp(a[0], b[0]);
+                              global_scope.GetCurrentScope()->PushTempRanges(temp);
                           }
                       }
                    ;

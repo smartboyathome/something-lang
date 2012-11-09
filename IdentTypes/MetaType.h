@@ -17,7 +17,9 @@ enum MetaTypeType
     VARIABLE_TYPE,
 	POINTER,
 	RECORD,
-	SET
+	SET,
+	INTEGER,
+	STRING
 };
 
 class MetaType {
@@ -31,6 +33,8 @@ public:
 	
 	// gets string name
 	string GetName();
+	MetaTypeType GetType();
+	void SetName(string);
 	
 	// Pure virtual string-producing files
 	virtual string ToString() const = 0;

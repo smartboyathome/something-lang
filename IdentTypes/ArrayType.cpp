@@ -20,7 +20,12 @@ string ArrayType::CString() const
     return "";
 }
 
-bool ArrayType::AddRange(int low, int high)
+bool ArrayType::AddDimensionLegal(int range_index, ArrayDimension*)
+{
+    
+}
+
+bool ArrayType::AddDimension(int low, int high)
 {
     if(key_type == AcceptedTypes.NONE)
         key_type = AcceptedTypes.INT;
@@ -42,7 +47,7 @@ bool ArrayType::AddRange(int low, int high)
     return true;
 }
 
-bool ArrayType::AddRange(char low, char high)
+bool ArrayType::AddDimension(char low, char high)
 {
     if(key_type == AcceptedTypes.NONE)
         key_type = AcceptedTypes.CHAR;
@@ -160,16 +165,31 @@ char CharRange::GetHigh()
     return high;
 }
 
+ArrayDimension::ArrayDimension()
+{
+    type = ArrayDimensionTypes.NONE;
+    this->value = NULL;
+    this->next_dimension = NULL;
+}
+
 ArrayDimension::ArrayDimension(Variable* value)
 {
+    type = ArrayDimensionTypes.VALUE;
     this->value = value;
     this->next_dimension = NULL;
 }
 
 ArrayDimension::ArrayDimension(ArrayDimension* next_dimension)
 {
+    type = ArrayDimensionTypes.ARRAY_DIMENSION;
     this->value = NULL;
     this->next_dimension = next_dimension;
+}
+
+ArrayDimension::~ArrayDimension()
+{
+    if(next_dimension != NULL)
+        delete next_dimension;
 }
 
 Variable* ArrayDimension::GetValue()
@@ -184,26 +204,35 @@ ArrayDimension* ArrayDimension::GetDimension()
 
 bool ArrayDimension::SetValue(Variable* value)
 {
+    if(IsUnset())
+        type = ArrayDimensionTypes.VALUE;
     if(!IsValue())
         return false;
     this->value = value;
     return true;
 }
 
-bool ArrayDimension::SetDimension(ArrayDimension* next_dimension)
+bool ArrayDimension::AddDimension(int, int)
 {
+    if(IsUnset())
+        type = ArrayDimensionTypes.ARRAY_DIMENSION;
     if(!IsDimension())
         return false;
     this->next_dimension = next_dimension;
     return true;
 }
 
+bool ArrayDimension::IsUnset()
+{
+    return type == ArrayDimensionTypes.NONE;
+}
+
 bool ArrayDimension::IsDimension()
 {
-    return next_dimension != NULL;
+    return type == ArrayDimensionTypes.ARRAY_DIMENSION;
 }
 
 bool ArrayDimension::IsValue()
 {
-    return next_dimension == NULL;
+    return type == ArrayDimensionTypes.VALUE;
 }

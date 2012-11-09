@@ -225,7 +225,45 @@ bool LocalScope::TempStringsEmpty()
     return temporary_strings.empty();
 }
 
+void LocalScope::PushTempInts(int temp_int)
+{
+    temporary_ints.push(temp_int);
+}
+
+int LocalScope::PopTempInts()
+{
+    if (temporary_ints.empty())
+        return 0;
+    int retval = temporary_ints.top();
+    temporary_ints.pop();
+    return retval;
+}
+
+bool LocalScope::TempIntsEmpty()
+{
+    return temporary_ints.empty();
+}
+
+void LocalScope::PushTempRanges(Range temp_range)
+{
+    temporary_ranges.push(temp_range);
+}
+
+Range LocalScope::PopTempRanges()
+{
+    if (temporary_ints.empty())
+        return 0;
+    Range retval = temporary_ranges.top();
+    temporary_ranges.pop();
+    return retval;
+}
+
+bool LocalScope::TempRangesEmpty()
+{
+    return temporary_ranges.empty();
+}
+
 bool LocalScope::AllTempsEmpty()
 {
-    return temporary_variables.empty() && temporary_types.empty() && temporary_strings.empty();
+    return temporary_variables.empty() && temporary_types.empty() && temporary_strings.empty() && temporary_ints.empty() && temporary_ranges.empty();
 }

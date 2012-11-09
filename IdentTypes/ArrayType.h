@@ -14,6 +14,16 @@ struct AcceptedTypes
     };
 };
 
+struct ArrayDimensionTypes
+{
+    enum Types
+    {
+        NONE,
+        VALUE,
+        ARRAY_DIMENSION
+    };
+};
+
 class Range : VariableType
 {
 
@@ -48,18 +58,21 @@ private:
 class ArrayDimension
 {
 public:
+    ArrayDimension();
+    ~ArrayDimension();
     ArrayDimension(Variable*);
     ArrayDimension(ArrayDimension*);
     Variable* GetValue();
-    ArrayDimension* GetDimension();
+    pair<bool, ArrayDimension*> GetDimension(int);
     bool SetValue(Variable*);
-    bool SetDimension(ArrayDimension*);
+    bool AddDimension(int, int);
     bool IsDimension();
     bool IsValue();
 private:
+    ArrayDimensionTypes.Types type;
     Variable* value;
     Range range;
-    ArrayDimension* next_dimension;
+    map<int, ArrayDimension*> next_dimension;
 };
 
 class ArrayType : public VariableType
@@ -83,7 +96,8 @@ public:
     pair<bool, Variable*> GetIndex(int);
     pair<bool, Variable*> GetIndex(char);
 private:
-    map<int, ArrayDimension> array;
+    bool AddDimensionLegal(int, int);
+    map<int, ArrayDimension*> array;
     vector<Range> ranges;
     AcceptedTypes.Types key_type;
     VariableType* value_type;
