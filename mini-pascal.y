@@ -111,7 +111,7 @@ Block              :  Declarations  ybegin
                               }
                               while(!current_scope->TempRangesEmpty())
                               {
-                                  Range range = current_scope->PopTempRanges() << endl;
+                                  Range range = current_scope->PopTempRanges();
                                   ss << "RANGE LOW " << range.low << " HIGH " << range.high << endl;
                               }
                               yyerror(ss.str().c_str());
@@ -160,9 +160,9 @@ TypeDef            :  yident
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           string identifier = current_scope->PopTempStrings();
-                          if(current_scope->IsInLocalScope(string))
+                          if(current_scope->IsInLocalScope(identifier))
                           {
-                              yyerror("REDEFINED: " + identifier);
+                              yyerror(("REDEFINED: " + identifier).c_str());
                               YYERROR;
                           }
                           else
@@ -187,15 +187,20 @@ ConstFactor        :  yident
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           if(!current_scope->IsInScope(s))
                           {
-                              yyerror("UNDEFINED: " + s);
+                              yyerror(("UNDEFINED: " + s).c_str());
                               YYERROR;
                           }
                           else 
                           {
                               MetaType* var = current_scope->Get(s);
-                              if(var->GetType() != INTEGER)
+                              if(var->GetType() != VARIABLE_TYPE)
                               {
-                                  yyerror("WRONG TYPE: " + s);
+                                  yyerror(("NOT A TYPE: " + s).c_str());
+                                  YYERROR;
+                              }
+                              else if(((VariableType*)var)->GetVarType() != VarTypes::INTEGER)
+                              {
+                                  yyerror(("NOT OF TYPE INTEGER " + s).c_str());
                                   YYERROR;
                               }
                               else
@@ -221,19 +226,25 @@ Type               :  yident
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           if(!current_scope->IsInScope(s))
                           {
-                              yyerror("UNDEFINED: " + s);
+                              yyerror(("UNDEFINED: " + s).c_str());
                               YYERROR;
                           }
                           else
                           {
                               LocalScope* current_scope = global_scope.GetCurrentScope();
-                              VariableType* type = current_scope->Get(s);
-                              current_scope->PushTempTypes(temp);
+                              MetaType* var = current_scope->Get(s);
+                              if(var->GetType() != VARIABLE_TYPE)
+                              {
+                                  yyerror(("NOT A TYPE " + s).c_str());
+                                  YYERROR;
+                              }
+                              else
+                                current_scope->PushTempTypes((VariableType*) var);
                           }
                       }
                    |  ArrayType
                       {
-                          Array* array = new Array("");
+                          ArrayType* array = new ArrayType("");
                           stack<Range> reversed; // Needed since the ranges will be backwards
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           while(!current_scope->TempRangesEmpty())
@@ -252,12 +263,13 @@ Type               :  yident
                    |  RecordType
                    |  SetType
                       {
-                          Array* array = new Array("");
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          ArrayType* array = new ArrayType("");
                           // We can do this without a loop like above since there's
                           // only one range.
                           Range range = current_scope->PopTempRanges();
                           array->AddDimension(range.low, range.high);
-                          global_scope.GetCurrentScope()->PushTempTypes(array);
+                          current_scope->PushTempTypes(array);
                       }
                    ;
 ArrayType          :  yarray yleftbracket Subrange SubrangeList 
@@ -283,7 +295,7 @@ Subrange           :  ConstFactor ydotdot ConstFactor
                           string b = s;
                           if (a.length() != 1 || b.length() != 1)
                           {
-                              yyerror("BAD SUBRANGE: '" + a + "'..'" + b + "'");
+                              yyerror(("BAD SUBRANGE: '" + a + "'..'" + b + "'").c_str());
                               YYERROR;
                           }
                           else

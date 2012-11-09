@@ -1,32 +1,34 @@
 // Array.h
 #pragma once
 #include "MetaType.h"
+#include "VariableType.h"
 #include <vector>
+using namespace std;
 
-class Array:public MetaType {
+struct Range {
+    int low;        // Low value 
+    int high;    // .. High value
+    Range(int, int);
+};
+
+class ArrayType:public VariableType {
 public:
-	Array(const string name);
-	~Array();
-	
-	void AddDimension(string, string);
-	
-	void SetType(VariableType* varType);
-	
-	string ToString() const;
-	string CString() const;
+    ArrayType(const string name);
+    ~ArrayType();
+    
+    void AddDimension(int, int);
+    
+    void SetType(VariableType* varType);
+    
+    string ToString() const;
+    string CString() const;
 
 private:
-	// RangeStruct allows us to hold a vector of 'low' and 'high' values
-	struct RangeStruct {
-		string low;		// Low value 
-		string high;	// .. High value
-	};
-	vector <RangeStruct> ranges;	// Vector holding ranges
-	
-	int dimensions; // Count of dimensions (1d, 2d, 3d, etc)
-	
-	/* As shown in the testoutput, Arrays must show what 
-	   kind of value they contain */
-	VariableType* my_type;	
-	
+    // RangeStruct allows us to hold a vector of 'low' and 'high' values
+    vector <Range> ranges;    // Vector holding ranges
+    
+    /* As shown in the testoutput, Arrays must show what 
+       kind of value they contain */
+    VariableType* my_type;    
+    
 };

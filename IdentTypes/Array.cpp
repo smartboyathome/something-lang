@@ -1,56 +1,62 @@
 // Array.cpp
 #include "Array.h"
 
+Range::Range(int low, int high)
+{
+    if(low > high)
+    {
+        int temp = low;
+        low = high;
+        high = low;
+    }
+    this->low = low;
+    this->high = high;
+}
+
 // Constructor
-Array::Array(const string name) : MetaType(name, ARRAY) {
-	type = "";
-	dimensions = 0;
+ArrayType::ArrayType(const string name) : VariableType(name, VarTypes::ARRAY) {
+    my_type = NULL;
 }
 
 // Destructor
 // Clears out "ranges" vector
-Array::~Array() {
-	ranges.clear();
+ArrayType::~ArrayType() {
+    ranges.clear();
 }
 
 // Create a new dimension and set low/high values
-void Array::AddDimension(string low, string high) {
-	dimensions++;				// New dimension, increase dimensions by one
-	ranges.push_back(RangeStruct());	// Add RangeStruct to end
-	
-	// Set the low and high values in the new RangeStruct
-	ranges[dimensions - 1].low = low;
-	ranges[dimensions - 1].high = high;
+void ArrayType::AddDimension(int low, int high) {
+    ranges.push_back(Range(low, high));    // Add Range to end
 }
 
 
 // Set the type of the variable using the VariableType object
-bool Array::SetType(VariableType* varType) {
-	my_type = varType;
+void ArrayType::SetType(VariableType* varType) {
+    my_type = varType;
 }
-	
+    
 // Return a string representation of this object
-string Array::ToString() const {
-	// No valid type recorded
-	if ( strcmp(variable_value, "") == 0) 
-		return "ERROR: 'type' of " + identifier + " was not set.\n";
-	
-	string s = identifier + " ";
-	
-	// Creating "low..high, low..high, low..high"
-	for (int x = 0; x < ranges.size(); x++) {
-		s += ranges[x].low + ".." + ranges[x].high;
-		
-		if (x < dimensions-1)	// Smart commas
-			s += ", ";
-	}
-	
-	s += type;
-	
-	return s;
+string ArrayType::ToString() const {
+    // No valid type recorded
+    /*if ( VariableType == NULL ) 
+        return "ERROR: 'type' of " + identifier + " was not set.\n";*/
+    
+    string s = identifier + " ";
+    
+    // Creating "low..high, low..high, low..high"
+    for (int x = 0; x < ranges.size(); x++) {
+        s += ranges[x].low + ".." + ranges[x].high;
+        
+        if (x < ranges.size()-1)    // Smart commas
+            s += ", ";
+    }
+    
+    //s += type;
+    
+    return s;
 }
 
 // Return a C-formatted string representation of this object
-string Array::CString() const {
-	return "";
+string ArrayType::CString() const {
+    return "";
 }

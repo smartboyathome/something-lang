@@ -1,23 +1,38 @@
 // VariableType.h
 #pragma once
 #include "MetaType.h"
+using namespace std;
 
 // The four basic variable types
-enum VarType {
-	INTEGER,
-	BOOLEAN,
-	REAL,
-	CHAR
+struct VarTypes
+{
+    enum Type {
+        INTEGER,
+        BOOLEAN,
+        REAL,
+        CHAR,
+        ARRAY
+    };
 };
 
 class VariableType:public MetaType {
 public:
-	// Constructor takes a VarType, "INTEGER", "BOOLEAN", "REAL", or "CHAR"
-	VariableType(const VarType type);
-	~VariableType();
-	
-	string GetVarType();	// Returns a string representation of the type
-	
+    // Constructor takes a VarType, "INTEGER", "BOOLEAN", "REAL", or "CHAR"
+    VariableType(string name, const VarTypes::Type type);
+    ~VariableType();
+    
+    VarTypes::Type GetVarType();    // Returns a string representation of the type
+    
 private:
-	VarType var_type;
+    VarTypes::Type var_type;
+};
+
+class IntegerType : public VariableType
+{
+public:
+    IntegerType(string, int);
+    int GetValue();
+    void SetValue(int);
+private:
+    int value;
 };

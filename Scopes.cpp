@@ -252,7 +252,7 @@ void LocalScope::PushTempRanges(Range temp_range)
 Range LocalScope::PopTempRanges()
 {
     if (temporary_ints.empty())
-        return 0;
+        return Range(-1, -1);
     Range retval = temporary_ranges.top();
     temporary_ranges.pop();
     return retval;
