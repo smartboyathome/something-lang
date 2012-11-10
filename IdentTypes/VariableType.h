@@ -1,6 +1,7 @@
 // VariableType.h
 #pragma once
 #include "MetaType.h"
+#include <sstream>
 using namespace std;
 
 // The four basic variable types
@@ -23,6 +24,9 @@ public:
     
     VarTypes::Type GetVarType();    // Returns a string representation of the type
     
+    string ToString() const;
+    string CString() const;
+    
 private:
     VarTypes::Type var_type;
 };
@@ -34,6 +38,9 @@ public:
     IntegerType(string, int);
     int GetValue();
     void SetValue(int);
+    
+    string ToString() const;
+    string CString() const;
 private:
     int value;
 };
@@ -47,6 +54,9 @@ public:
     bool GetValue();
     void SetValue(string);
     void SetValue(int);
+    
+    string ToString() const;
+    string CString() const;
 private:
     bool value;
 };
@@ -59,6 +69,9 @@ public:
     RealType(string, double);
     double GetValue();
     void SetValue(double);  
+    
+    string ToString() const;
+    string CString() const;
 private:
     double value;
 };
@@ -71,6 +84,9 @@ public:
     StringType(string, string);
     string GetValue();
     void SetValue(string);
+    
+    string ToString() const;
+    string CString() const;
 private:
     string value;
     
