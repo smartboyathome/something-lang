@@ -13,6 +13,14 @@ GlobalScope::GlobalScope()
     
     BooleanType* Bool = new BooleanType("boolean");
     program_scopes.top()->Insert("boolean", Bool);
+    
+    BooleanType* True = new BooleanType("true", "true");
+    program_scopes.top()->Insert("true", True);
+    
+    BooleanType* False = new BooleanType("false", "false");
+    program_scopes.top()->Insert("false", False);
+    
+    // TODO: Strings/Chars and Reals and dummy functions
 }
 
 void GlobalScope::CreateNewScope()

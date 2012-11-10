@@ -240,9 +240,10 @@ ConstExpression    :  UnaryOperator ConstFactor
                                 value *= -1;    // Overrides the original sign of value
                           
                           current_scope->PushTempInts(value);
+                          // TODO: Fix so that it pushes a variable.
                       }
                    |  ConstFactor
-                   |  ystring
+                   |  ystring // TODO: handle strings
                    ;
 ConstFactor        :  yident
                       {
@@ -480,8 +481,18 @@ Term               :  Factor
                    |  Term  MultOperator  Factor
                    ;
 Factor             :  ynumber
+                      {
+                          int temp;
+                          stringstream(s) >> temp;
+                          IntegerType* Int = new IntegerType("", temp);
+                          global_scope.GetCurrentScope()->PushTempTypes(Int);
+                      }
                    |  ynil
                    |  ystring
+                      {
+                          StringType* String = new StringType("", s);
+                          global_scope.GetCurrentScope()->PushTempTypes(String);
+                      }
                    |  Designator
                    |  yleftparen  Expression  yrightparen
                    |  ynot Factor
@@ -495,13 +506,39 @@ Factor             :  ynumber
 FunctionCall       :  yident ActualParameters
                    ;
 Setvalue           :  yleftbracket ElementList  yrightbracket
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          ArrayType* array = new ArrayType("");
+                          Vector<int> temp;
+                          while(!current_scope->TempRangesEmpty())
+                          {
+                              Range range = current_scope->PopTempRanges();
+                              for(int i = range.intLow; i <= range.intHigh; ++i)
+                              {
+                                  temp.add(i);
+                              }
+                          }
+                          array.AddDimension(0, temp.size()-1);
+                          current_scope->PushTempTypes(array);
+                      }
                    |  yleftbracket yrightbracket
                    ;
 ElementList        :  Element  
                    |  ElementList  ycomma  Element
                    ;
 Element            :  ConstExpression  
+                      {
+                          // TODO: Handle string consts.
+                          int temp = global_scope.GetCurrentScope()->PopTempInts();
+                          global_scope.GetCurrentScope()->PushTempRange(Range(temp, temp));
+                      }
                    |  ConstExpression  ydotdot  ConstExpression 
+                      {
+                          // TODO: Handle string consts.
+                          int b = global_scope.GetCurrentScope()->PopTempInts();
+                          int a = global_scope.GetCurrentScope()->PopTempInts();
+                          global_scope.GetCurrentScope()->PushTempRange(Range(a, b));
+                      }
                    ;
 
 /***************************  Subprogram Stuff  ******************************/

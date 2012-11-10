@@ -14,7 +14,8 @@ struct AcceptedTypes {
 };
 
 // Range allows us to hold a vector of 'low' and 'high' values
-struct Range {
+class Range {
+public:
     char charLow;
     char charHigh;
     
