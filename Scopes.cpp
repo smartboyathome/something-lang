@@ -2,7 +2,7 @@
 #include "IdentTypes/MetaType.h"
 #include "IdentTypes/VariableType.h"
 #include <sstream>
-
+using namespace std;
 
 GlobalScope::GlobalScope()
 {

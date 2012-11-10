@@ -49,8 +49,9 @@ class BooleanType : public VariableType
 {
 public:
     BooleanType();          // defaults to true
-    BooleanType(string);    // String for 'true' and 'false'
-    BooleanType(int);       // for 0 and 1
+    BooleanType(string);
+    BooleanType(string, string);    // String for 'true' and 'false'
+    BooleanType(string, int);       // for 0 and 1
     bool GetValue();
     void SetValue(string);
     void SetValue(int);

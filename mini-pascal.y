@@ -3,6 +3,7 @@
 #include <cstring>
 #include <iostream>
 #include <stack>
+#include <vector>
 #include <sstream>
 #include "Scopes.h"
 #include "IdentTypes/MetaType.h"
@@ -509,16 +510,16 @@ Setvalue           :  yleftbracket ElementList  yrightbracket
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           ArrayType* array = new ArrayType("");
-                          Vector<int> temp;
+                          vector<int> temp;
                           while(!current_scope->TempRangesEmpty())
                           {
                               Range range = current_scope->PopTempRanges();
                               for(int i = range.intLow; i <= range.intHigh; ++i)
                               {
-                                  temp.add(i);
+                                  temp.push_back(i);
                               }
                           }
-                          array.AddDimension(0, temp.size()-1);
+                          array->AddDimension(0, temp.size()-1);
                           current_scope->PushTempTypes(array);
                       }
                    |  yleftbracket yrightbracket
@@ -530,14 +531,14 @@ Element            :  ConstExpression
                       {
                           // TODO: Handle string consts.
                           int temp = global_scope.GetCurrentScope()->PopTempInts();
-                          global_scope.GetCurrentScope()->PushTempRange(Range(temp, temp));
+                          global_scope.GetCurrentScope()->PushTempRanges(Range(temp, temp));
                       }
                    |  ConstExpression  ydotdot  ConstExpression 
                       {
                           // TODO: Handle string consts.
                           int b = global_scope.GetCurrentScope()->PopTempInts();
                           int a = global_scope.GetCurrentScope()->PopTempInts();
-                          global_scope.GetCurrentScope()->PushTempRange(Range(a, b));
+                          global_scope.GetCurrentScope()->PushTempRanges(Range(a, b));
                       }
                    ;
 

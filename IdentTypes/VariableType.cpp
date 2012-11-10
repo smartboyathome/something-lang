@@ -38,6 +38,10 @@ string IntegerType::CString() const {
 // BooleanType ----------------------------------------------------------------
 BooleanType::BooleanType() : VariableType("", VarTypes::BOOLEAN) {
     value = true;   // defaults to true
+}     
+
+BooleanType::BooleanType(string name) : VariableType(name, VarTypes::BOOLEAN) {
+    value = true;   // defaults to true
 }       
 
 // String for 'true' and 'false'
@@ -118,12 +122,12 @@ string StringType::GetValue() {return value;}
 
 void StringType::SetValue(string value) {this->value = value;}
 
-string IntegerType::ToString() const {
+string StringType::ToString() const {
     stringstream ss;
     ss << "\"" << value << "\"";
     return ss.str();
     
 }
-string IntegerType::CString() const {
+string StringType::CString() const {
     return "";
 }
