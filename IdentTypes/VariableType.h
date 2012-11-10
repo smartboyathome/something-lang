@@ -24,9 +24,6 @@ public:
     
     VarTypes::Type GetVarType();    // Returns a string representation of the type
     
-    string ToString() const;
-    string CString() const;
-    
 private:
     VarTypes::Type var_type;
 };
