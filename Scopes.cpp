@@ -1,10 +1,18 @@
 #include "Scopes.h"
 #include "IdentTypes/MetaType.h"
+#include "IdentTypes/VariableType.h"
 #include <sstream>
+
 
 GlobalScope::GlobalScope()
 {
     program_scopes.push(new LocalScope(program_scopes.size()-1));
+    
+    IntegerType* Int = new IntegerType("integer");
+    program_scopes.top()->Insert("integer", Int);
+    
+    BooleanType* Bool = new BooleanType("boolean");
+    program_scopes.top()->Insert("boolean", Bool);
 }
 
 void GlobalScope::CreateNewScope()

@@ -30,9 +30,48 @@ private:
 class IntegerType : public VariableType
 {
 public:
+    IntegerType(string);
     IntegerType(string, int);
     int GetValue();
     void SetValue(int);
 private:
     int value;
+};
+
+class BooleanType : public VariableType
+{
+public:
+    BooleanType();          // defaults to true
+    BooleanType(string);    // String for 'true' and 'false'
+    BooleanType(int);       // for 0 and 1
+    bool GetValue();
+    void SetValue(string);
+    void SetValue(int);
+private:
+    bool value;
+};
+
+class RealType : public VariableType
+{
+public:
+    RealType();
+    RealType(string);
+    RealType(string, double);
+    double GetValue();
+    void SetValue(double);  
+private:
+    double value;
+};
+
+class StringType : public VariableType
+{
+public:
+    StringType();
+    StringType(string);
+    StringType(string, string);
+    string GetValue();
+    void SetValue(string);
+private:
+    string value;
+    
 };
