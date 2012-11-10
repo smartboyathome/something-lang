@@ -9,15 +9,13 @@ using namespace std;
 // This is needed since in C++ there's no type checking.
 enum MetaTypeType
 {
-    ARRAY,
     CONSTANT,
     PROCEDURE,
     RANGE,
     VARIABLE,
     VARIABLE_TYPE,
     POINTER,
-    RECORD,
-    SET
+    RECORD
 };
 
 class MetaType {

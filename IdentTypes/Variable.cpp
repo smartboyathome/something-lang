@@ -18,13 +18,18 @@ Variable::~Variable() {
 }
 
 // Set the value
-bool Variable::SetValue(string value) {
+void Variable::SetValue(string value) {
     variable_value = value;
 }
 
 // Set the type of the variable using the VariableType object
-bool Variable::SetType(VariableType* varType) {
+void Variable::SetVarType(VariableType* varType) {
     my_type = varType;
+}
+
+VariableType* Variable::GetVarType()
+{
+    return my_type;
 }
 
 // Get a value
@@ -45,9 +50,4 @@ string Variable::ToString() const {
 // Return a C-formatted string representation of this object
 string Variable::CString() const {
     return "";
-}
-
-VariableType* Variable::GetType()
-{
-    return my_type;
 }

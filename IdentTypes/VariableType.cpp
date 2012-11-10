@@ -8,7 +8,7 @@ VariableType::VariableType(string name, const VarTypes::Type varType) : MetaType
 
 VariableType::~VariableType() {}
 
-VarTypes::Type VariableType::GetVarType() {return var_type;}
+VarTypes::Type VariableType::GetEnumType() {return var_type;}
 
 // IntegerType ----------------------------------------------------------------
 IntegerType::IntegerType(string name) : VariableType(name, VarTypes::INTEGER) 
@@ -130,4 +130,25 @@ string StringType::ToString() const {
 }
 string StringType::CString() const {
     return "";
+}
+
+// NilType --------------------------------------------------------------------
+NilType::NilType() : VariableType("", VarTypes::NIL)
+{
+    
+}
+
+NilType::NilType(string name) : VariableType(name, VarTypes::NIL)
+{
+    
+}
+
+string NilType::ToString() const
+{
+    return "nil";
+}
+
+string NilType::CString() const
+{
+    return "NULL";
 }

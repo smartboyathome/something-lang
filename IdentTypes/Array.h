@@ -14,7 +14,7 @@ struct AcceptedTypes {
 };
 
 // Range allows us to hold a vector of 'low' and 'high' values
-class Range {
+class Range : public MetaType {
 public:
     char charLow;
     char charHigh;
@@ -28,6 +28,7 @@ public:
     Range(char, char);
     
     string ToString() const;
+    string CString() const;
 };
 
 class ArrayType:public VariableType {

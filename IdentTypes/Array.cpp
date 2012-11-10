@@ -4,12 +4,12 @@
 #include <math.h>
 
 
-Range::Range() 
+Range::Range() : MetaType("", RANGE)
 {
     rangeType = AcceptedTypes::NONE;
 }
 
-Range::Range(int low, int high)
+Range::Range(int low, int high) : MetaType("", RANGE)
 {
     rangeType = AcceptedTypes::INT;
     if(low > high) {
@@ -21,7 +21,7 @@ Range::Range(int low, int high)
     intHigh = high;
 }
 
-Range::Range(char low, char high)
+Range::Range(char low, char high) : MetaType("", RANGE)
 {
     if (!('a' <= low && low <= 'z' && 'a' <= high && high <= 'z') 
 	|| !('A' <= low && low <= 'Z' && 'A' <= high && high <= 'Z'))
@@ -45,6 +45,11 @@ string Range::ToString() const {
         ss << "'" << charLow << "'..'" << charHigh << "'";
         
     return ss.str();
+}
+
+string Range::CString() const
+{
+    return "";
 }
 
 // Constructor

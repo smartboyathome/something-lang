@@ -9,9 +9,9 @@ public:
     Variable(const string name, const string value);
     ~Variable();
     
-    bool SetValue(string value);
-    bool SetType(VariableType* varType);
-    VariableType* GetType();
+    void SetValue(string value);
+    void SetVarType(VariableType* varType);
+    VariableType* GetVarType();
     string GetValue();
     
     string ToString() const;

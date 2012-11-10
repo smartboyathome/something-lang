@@ -217,7 +217,7 @@ comment_newline     \n
 %}
 
 {number}            { s = yytext; return ynumber; }
-{identifier}        { s = yytext; for(int i = 0; i < s.length(); ++i) s[i] = tolower(s[i]); return yident; }
+{identifier}        { s = yytext; for(int i = 0; i < s.length(); ++i) s[i] = tolower(s[i]); cout << "LEX IDENTIFIER " << s << endl; return yident; }
 
 %{
 /* Strings start with either a single or double quote, therefore these start

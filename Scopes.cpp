@@ -29,8 +29,10 @@ void GlobalScope::CreateNewScope()
     LocalScope* top_scope = program_scopes.top();
     map<string, MetaType*> new_parent_scope = top_scope->GetLocalScope();
     map<string, MetaType*> old_parent_scope = top_scope->GetParentScope();
+    cout << "GLOBAL SCOPE PARENT STUFF" << endl;
     for(iterator i = old_parent_scope.begin(); i != old_parent_scope.end(); ++i)
     {
+        cout << i->first << endl;
         new_parent_scope.insert(pair<string, MetaType*>(i->first, i->second)); // This will only insert if the ident doesn't exist.
     }
     program_scopes.push(new LocalScope(program_scopes.size()-1, new_parent_scope));
@@ -73,11 +75,23 @@ LocalScope::LocalScope(int level, map<string, MetaType*> new_parent_scope)
     scope_level = level;
     cout << "LEVEL " << level << endl;
     parent_scope = new_parent_scope;
+    cout << "PARENT SCOPE:" << endl;
+    typedef map<string, MetaType*>::iterator iterator;
+    for(iterator i = parent_scope.begin(); i != parent_scope.end(); ++i)
+    {
+        cout << i->first << endl;
+    }
 }
 
 bool LocalScope::IsInScope(string identifier)
 {
-    return local_scope.count(identifier) > 0 or parent_scope.count(identifier) > 0;
+    cout << "IS " << identifier << " IN SCOPE? ";
+    bool retval = local_scope.count(identifier) > 0 or parent_scope.count(identifier) > 0;
+    if(retval)
+        cout << "YES, IT IS!" << endl;
+    else
+        cout << "NO ITS NOT!!!" << endl;
+    return retval;
 }
 
 bool LocalScope::IsInLocalScope(string identifier)

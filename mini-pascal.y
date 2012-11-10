@@ -15,6 +15,7 @@ using namespace std;
 // stuff from flex that bison needs to know about:
 extern "C" int yylex();
 extern "C" FILE *yyin;
+extern "C" char* yytext;
 extern string s; // This is the metadata, such a s an int or string value.
 extern int line_num; // And this is the line number that flex is on.
 void yyerror(const char *s) {
@@ -222,7 +223,7 @@ VariableDecl       :  IdentList  ycolon  Type
                           {
                               cout << "TEST VARIABLE DECLARE 1" << endl;
                               Variable* var = current_scope->PopTempVars();
-                              var->SetType(type);
+                              var->SetVarType(type);
                               current_scope->Insert(var->GetName(), var);
                               cout << "TEST VARIABLE DECLARE 2" << endl;
                           }
@@ -262,7 +263,7 @@ ConstFactor        :  yident
                                   yyerror(("NOT A TYPE: " + s).c_str());
                                   YYERROR;
                               }
-                              else if(((VariableType*)var)->GetVarType() != VarTypes::INTEGER)
+                              else if(((VariableType*)var)->GetEnumType() != VarTypes::INTEGER)
                               {
                                   yyerror(("NOT OF TYPE INTEGER " + s).c_str());
                                   YYERROR;
@@ -414,6 +415,38 @@ Statement          :  Assignment
                    |  /*** empty ***/
                    ;
 Assignment         :  Designator yassign Expression
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          string identifier = current_scope->PopTempStrings();
+                          Variable* var = current_scope->PopTempVars();
+                          if(!current_scope->IsInScope(identifier))
+                          {
+                              yyerror(("UNDEFINED " + identifier).c_str());
+                              YYERROR;
+                          }
+                          else
+                          {
+                              MetaType* origtype = current_scope->Get(identifier);
+                              if(origtype->GetType() != VARIABLE)
+                              {
+                                  yyerror(("NOT A VARIABLE " + identifier).c_str());
+                                  YYERROR;
+                              }
+                              else
+                              {
+                                  Variable* origvar = (Variable*)origtype;
+                                  if(var->GetVarType() != origvar->GetVarType())
+                                  {
+                                      yyerror((("VAR TYPES DO NOT MATCH " + identifier)).c_str());
+                                      YYERROR;
+                                  }
+                                  else
+                                  {
+                                      origvar->SetVarType(var->GetVarType());
+                                  }
+                              }
+                          }
+                      }
                    ;
 ProcedureCall      :  yident 
                    |  yident ActualParameters
@@ -446,7 +479,16 @@ WhichWay           :  yto  |  ydownto
 
 /***************************  Designator Stuff  ******************************/
 
-Designator         :  yident  DesignatorStuff 
+Designator         :  yident
+                      {
+                          if(s == "")
+                              cout << "BLANK DESIGNATOR" << endl;
+                          else
+                              cout << "DESIGNATOR " << s << endl;
+                          cout << "YYTEXT " << yytext << endl;
+                          global_scope.GetCurrentScope()->PushTempStrings(s);
+                      }
+                      DesignatorStuff 
                    ;
 DesignatorStuff    :  /*** empty ***/
                    |  DesignatorStuff  theDesignatorStuff
@@ -474,11 +516,11 @@ TermExpr           :  Term
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           Variable* newvar = new Variable("");
-                          newvar->SetType(current_scope->PopTempTypes());
+                          newvar->SetVarType(current_scope->PopTempTypes());
                           if(!current_scope->TempVarsEmpty())
                           {
                               Variable* oldvar = current_scope->PopTempVars();
-                              if(newvar->GetType()->GetVarType() != oldvar->GetType()->GetVarType())
+                              if(newvar->GetVarType()->GetEnumType() != oldvar->GetVarType()->GetEnumType())
                               {
                                   yyerror("TYPES DO NOT MATCH");
                                   YYERROR;
@@ -495,15 +537,21 @@ TermExpr           :  Term
                       }
                    ;
 Term               :  Factor  
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          Variable* var = new Variable("");
+                          var->SetVarType(current_scope->PopTempTypes());
+                          current_scope->PushTempVars(var);
+                      }
                    |  Term  MultOperator  Factor
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           Variable* newvar = new Variable("");
-                          newvar->SetType(current_scope->PopTempTypes());
+                          newvar->SetVarType(current_scope->PopTempTypes());
                           if(!current_scope->TempVarsEmpty())
                           {
                               Variable* oldvar = current_scope->PopTempVars();
-                              if(newvar->GetType()->GetVarType() != oldvar->GetType()->GetVarType())
+                              if(newvar->GetVarType()->GetEnumType() != oldvar->GetVarType()->GetEnumType())
                               {
                                   yyerror("TYPES DO NOT MATCH");
                                   YYERROR;
@@ -533,7 +581,42 @@ Factor             :  ynumber
                           global_scope.GetCurrentScope()->PushTempTypes(String);
                       }
                    |  Designator
-                   |  yleftparen  Expression  yrightparen
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          string temp = current_scope->PopTempStrings();
+                          if(!current_scope->IsInScope(temp))
+                          {
+                              yyerror(("UNDEFINED VAR " + temp).c_str());
+                              YYERROR;
+                          }
+                          else
+                          {
+                              MetaType* var = current_scope->Get(temp);
+                              if(var->GetType() == VARIABLE_TYPE || var->GetType() == RECORD || var->GetType() == RANGE)
+                              {
+                                  yyerror("BAD TYPE FOR OPERATION");
+                                  YYERROR;
+                              }
+                              else if(var->GetType() == VARIABLE)
+                              {
+                                  current_scope->PushTempTypes(((Variable*)var)->GetVarType());
+                              }
+                              else if(var->GetType() == PROCEDURE)
+                              {
+                                  current_scope->PushTempTypes(((Procedure*)var)->GetReturnType());
+                              }
+                              else if(var->GetType() == POINTER)
+                              {
+                                  // TODO: Implement this.
+                              }
+                          }
+                      }
+                   |  yleftparen  Expression
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          current_scope->PushTempTypes(current_scope->PopTempVars()->GetVarType());
+                      }
+                      yrightparen
                    |  ynot Factor
                    |  Setvalue
                    |  FunctionCall
@@ -542,7 +625,29 @@ Factor             :  ynumber
 /*  to handle that in FunctionCall because it is handled by Designator.     */
 /*  A FunctionCall has at least one parameter in parens, more are           */
 /*  separated with commas.                                                  */
-FunctionCall       :  yident ActualParameters
+FunctionCall       :  yident
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          if(!current_scope->IsInScope(s))
+                          {
+                              yyerror(("UNDEFINED PROCEDURE " + s).c_str());
+                              YYERROR;
+                          }
+                          else
+                          {
+                              MetaType* var = current_scope->Get(s);
+                              if(var->GetType() != PROCEDURE)
+                              {
+                                  yyerror(("NON-PROCEDURAL OBJECT " + s).c_str());
+                                  YYERROR;
+                              }
+                              else
+                              {
+                                  current_scope->PushTempTypes(((Procedure*)var)->GetReturnType());
+                              }
+                          }
+                      }
+                      ActualParameters
                    ;
 Setvalue           :  yleftbracket ElementList  yrightbracket
                       {

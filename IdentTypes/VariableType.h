@@ -8,6 +8,7 @@ using namespace std;
 struct VarTypes
 {
     enum Type {
+        NIL,
         INTEGER,
         BOOLEAN,
         REAL,
@@ -22,7 +23,7 @@ public:
     VariableType(string name, const VarTypes::Type type);
     ~VariableType();
     
-    VarTypes::Type GetVarType();    // Returns a string representation of the type
+    VarTypes::Type GetEnumType();    // Returns a string representation of the type
     
 private:
     VarTypes::Type var_type;
@@ -88,4 +89,13 @@ public:
 private:
     string value;
     
+};
+
+class NilType : public VariableType
+{
+public:
+    NilType();
+    NilType(string);
+    string ToString() const;
+    string CString() const;
 };

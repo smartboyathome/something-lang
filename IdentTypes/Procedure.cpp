@@ -1,8 +1,11 @@
 // Procedure.cpp
 #include "Procedure.h"
+#include "VariableType.h"
 
 // Constructor
-Procedure::Procedure(const string name) : MetaType(name, PROCEDURE) {
+Procedure::Procedure(const string name) : MetaType(name, PROCEDURE)
+{
+    return_type = new NilType();
 }
 
 // Destructor
@@ -33,6 +36,16 @@ bool Procedure::HasDuplicateParameter(const Variable* checkedParam) {
             return true;    // A duplicate was found!
     }
     return false;            // No duplicate was found.
+}
+
+VariableType* Procedure::GetReturnType()
+{
+    return return_type;
+}
+
+void Procedure::SetReturnType(VariableType* type)
+{
+    return_type = type;
 }
 
 // Return a string representation of this object
