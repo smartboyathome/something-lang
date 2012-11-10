@@ -25,6 +25,16 @@ int IntegerType::GetValue() {return value;}
 
 void IntegerType::SetValue(int value) {this->value = value;}
 
+string IntegerType::ToString() const {
+    stringstream ss;
+    ss << value;
+    return ss.str();
+}
+
+string IntegerType::CString() const {
+    return "";
+}
+
 // BooleanType ----------------------------------------------------------------
 BooleanType::BooleanType() : VariableType("", VarTypes::BOOLEAN) {
     value = true;   // defaults to true
@@ -56,6 +66,15 @@ void BooleanType::SetValue(string input) {
         value = true;
 }
 
+string BooleanType::ToString() const {
+    stringstream ss;
+    ss << boolalpha << value;
+    return ss.str();
+}
+
+string BooleanType::CString() const {
+    return "";
+}
 
 // RealType -------------------------------------------------------------------
 RealType::RealType() : VariableType("", VarTypes::REAL) {
@@ -74,6 +93,15 @@ double RealType::GetValue() {return value;}
 
 void RealType::SetValue(double value) {this->value = value;}
 
+string RealType::ToString() const {
+    stringstream ss;
+    ss << value;
+    return ss.str();
+}
+string RealType::CString() const {
+    return "";
+}
+
 // StringType -----------------------------------------------------------------
 StringType::StringType() : VariableType("", VarTypes::CHAR) {
     value = "";
@@ -89,3 +117,13 @@ StringType::StringType(string name, string value) : VariableType(name, VarTypes:
 string StringType::GetValue() {return value;}
 
 void StringType::SetValue(string value) {this->value = value;}
+
+string IntegerType::ToString() const {
+    stringstream ss;
+    ss << "\"" << value << "\"";
+    return ss.str();
+    
+}
+string IntegerType::CString() const {
+    return "";
+}
