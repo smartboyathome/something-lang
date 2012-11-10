@@ -11,6 +11,7 @@ public:
     
     bool SetValue(string value);
     bool SetType(VariableType* varType);
+    VariableType* GetType();
     string GetValue();
     
     string ToString() const;

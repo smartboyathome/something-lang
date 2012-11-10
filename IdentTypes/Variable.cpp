@@ -46,3 +46,8 @@ string Variable::ToString() const {
 string Variable::CString() const {
     return "";
 }
+
+VariableType* Variable::GetType()
+{
+    return my_type;
+}

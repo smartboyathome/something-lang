@@ -470,10 +470,54 @@ SimpleExpression   :  TermExpr
                    |  UnaryOperator  TermExpr
                    ;
 TermExpr           :  Term  
-                   |  TermExpr  AddOperator  Term
+                   |  TermExpr AddOperator  Term
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          Variable* newvar = new Variable("");
+                          newvar->SetType(current_scope->PopTempTypes());
+                          if(!current_scope->TempVarsEmpty())
+                          {
+                              Variable* oldvar = current_scope->PopTempVars();
+                              if(newvar->GetType()->GetVarType() != oldvar->GetType()->GetVarType())
+                              {
+                                  yyerror("TYPES DO NOT MATCH");
+                                  YYERROR;
+                              }
+                              else
+                              {
+                                  current_scope->PushTempVars(newvar);
+                              }
+                          }
+                          else
+                          {
+                              current_scope->PushTempVars(newvar);
+                          }
+                      }
                    ;
 Term               :  Factor  
                    |  Term  MultOperator  Factor
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          Variable* newvar = new Variable("");
+                          newvar->SetType(current_scope->PopTempTypes());
+                          if(!current_scope->TempVarsEmpty())
+                          {
+                              Variable* oldvar = current_scope->PopTempVars();
+                              if(newvar->GetType()->GetVarType() != oldvar->GetType()->GetVarType())
+                              {
+                                  yyerror("TYPES DO NOT MATCH");
+                                  YYERROR;
+                              }
+                              else
+                              {
+                                  current_scope->PushTempVars(newvar);
+                              }
+                          }
+                          else
+                          {
+                              current_scope->PushTempVars(newvar);
+                          }
+                      }
                    ;
 Factor             :  ynumber
                       {
