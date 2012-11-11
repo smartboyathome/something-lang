@@ -4,6 +4,7 @@ program setstuff(input, output);
 
 type
    Digit = set of 0..9;
+   int3d = array[1..3, 4..6, 7..9] of integer;
 
 var
    odds, evens, stuff, morestuff: Digit;

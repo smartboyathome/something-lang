@@ -54,7 +54,7 @@ string Range::CString() const
 
 // Constructor
 ArrayType::ArrayType(const string name) : VariableType(name, VarTypes::ARRAY) {
-    my_type = NULL;
+    my_type = new NilType("nil");
 }
 
 // Destructor
@@ -104,16 +104,21 @@ bool ArrayType::AddDimension(Range range) {
         return false;
 }
 
+VariableType* ArrayType::GetArrayType()
+{
+    return my_type;
+}
+
 // Set the type of the variable using the VariableType object
-void ArrayType::SetType(VariableType* varType) {
+void ArrayType::SetArrayType(VariableType* varType) {
     my_type = varType;
 }
     
 // Return a string representation of this object
 string ArrayType::ToString() const {
     // No valid type recorded
-    /*if ( VariableType == NULL ) 
-        return "ERROR: 'type' of " + identifier + " was not set.\n";*/
+    if ( my_type == NULL ) 
+        return "ERROR: 'type' of " + identifier + " was not set.\n";
     
     stringstream ss;
     
@@ -126,6 +131,8 @@ string ArrayType::ToString() const {
         if (x < ranges.size()-1)    // Smart commas
             ss << ", ";
     }
+    
+    ss << " of " << my_type->GetName();
     
     return ss.str();
 }

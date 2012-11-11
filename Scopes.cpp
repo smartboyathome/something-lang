@@ -1,6 +1,7 @@
 #include "Scopes.h"
 #include "IdentTypes/MetaType.h"
 #include "IdentTypes/VariableType.h"
+#include "IdentTypes/Procedure.h"
 #include <sstream>
 using namespace std;
 
@@ -20,6 +21,16 @@ GlobalScope::GlobalScope()
     BooleanType* False = new BooleanType("false", "false");
     program_scopes.top()->Insert("false", False);
     
+    string procs [] = {"abs", "arctan", "chr", "cos", "eof", "eoln", "exp", "ln", "odd",
+                      "ord", "pred", "round", "sin", "sqr", "sqrt", "succ", "trunc",
+                      "get", "new", "dispose", "pack", "page", "put", "read", "readln",
+                      "reset", "rewrite", "unpack", "write", "writeln"};
+    for(int i = 0; i < 30; ++i)
+    {
+        Procedure* proc = new Procedure(procs[i]);
+        program_scopes.top()->Insert(procs[i], proc);
+    }
+    
     // TODO: Strings/Chars and Reals and dummy functions
 }
 
@@ -29,10 +40,8 @@ void GlobalScope::CreateNewScope()
     LocalScope* top_scope = program_scopes.top();
     map<string, MetaType*> new_parent_scope = top_scope->GetLocalScope();
     map<string, MetaType*> old_parent_scope = top_scope->GetParentScope();
-    cout << "GLOBAL SCOPE PARENT STUFF" << endl;
     for(iterator i = old_parent_scope.begin(); i != old_parent_scope.end(); ++i)
     {
-        cout << i->first << endl;
         new_parent_scope.insert(pair<string, MetaType*>(i->first, i->second)); // This will only insert if the ident doesn't exist.
     }
     program_scopes.push(new LocalScope(program_scopes.size()-1, new_parent_scope));
@@ -75,12 +84,6 @@ LocalScope::LocalScope(int level, map<string, MetaType*> new_parent_scope)
     scope_level = level;
     cout << "LEVEL " << level << endl;
     parent_scope = new_parent_scope;
-    cout << "PARENT SCOPE:" << endl;
-    typedef map<string, MetaType*>::iterator iterator;
-    for(iterator i = parent_scope.begin(); i != parent_scope.end(); ++i)
-    {
-        cout << i->first << endl;
-    }
 }
 
 bool LocalScope::IsInScope(string identifier)
@@ -294,6 +297,29 @@ Range LocalScope::PopTempRanges()
 bool LocalScope::TempRangesEmpty()
 {
     return temporary_ranges.empty();
+}
+
+void LocalScope::PushTempProcParams(Variable* temp_proc_param)
+{
+    temporary_proc_params.push(temp_proc_param);
+}
+
+Variable* LocalScope::PopTempProcParams()
+{
+    if (temporary_proc_params.empty())
+    {
+        Variable* var = new Variable("nil");
+        var->SetVarType(new NilType());
+        return var;
+    }
+    Variable* retval = temporary_proc_params.top();
+    temporary_proc_params.pop();
+    return retval;
+}
+
+bool LocalScope::TempProcParamsEmpty()
+{
+    return temporary_proc_params.empty();
 }
 
 bool LocalScope::AllTempsEmpty()

@@ -40,7 +40,8 @@ public:
 	bool AddDimension(char, char);
     bool AddDimension(Range);
 	
-	void SetType(VariableType* varType);
+	VariableType* GetArrayType();
+	void SetArrayType(VariableType* varType);
     int get_array_dimensions();
 	
 	string ToString() const;

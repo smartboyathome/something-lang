@@ -20,6 +20,7 @@ private:
     stack<VariableType*> temporary_types;
     stack<int> temporary_ints;
     stack<Range> temporary_ranges;
+    stack<Variable*> temporary_proc_params;
     
     // This is for outputting Zander-style strings.
     int scope_level;
@@ -60,6 +61,10 @@ public:
     void PushTempRanges(Range);
     Range PopTempRanges();
     bool TempRangesEmpty();
+    
+    void PushTempProcParams(Variable*);
+    Variable* PopTempProcParams();
+    bool TempProcParamsEmpty();
     
     bool AllTempsEmpty();
 };

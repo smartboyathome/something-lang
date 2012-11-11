@@ -133,6 +133,12 @@ Block              :  Declarations  ybegin
                           {
                               cout << "TEST BEGIN BLOCK 1" << endl;
                               global_scope.CreateNewScope();
+                              LocalScope* new_scope = global_scope.GetCurrentScope();
+                              while(!current_scope->TempProcParamsEmpty())
+                              {
+                                  Variable* param = current_scope->PopTempProcParams();
+                                  current_scope->Insert(param->GetName(), param);
+                              }
                               cout << "TEST BEGIN BLOCK 2" << endl;
                           }
                       }
@@ -315,24 +321,6 @@ Type               :  yident
                           cout << "TEST TYPE IDENT 4" << endl;
                       }
                    |  ArrayType
-                      {
-                          cout << "TEST TYPE ARRAY 0" << endl;
-                          ArrayType* array = new ArrayType("");
-                          stack<Range> reversed; // Needed since the ranges will be backwards
-                          LocalScope* current_scope = global_scope.GetCurrentScope();
-                          while(!current_scope->TempRangesEmpty())
-                          {
-                              reversed.push(current_scope->PopTempRanges());
-                          }
-                          while(!reversed.empty())
-                          {
-                              Range range = reversed.top();
-                              reversed.pop();
-                              array->AddDimension(range);
-                          }
-                          current_scope->PushTempTypes(array);
-                          cout << "TEST TYPE ARRAY 1" << endl;
-                      }
                    |  PointerType
                    |  RecordType
                    |  SetType
@@ -350,6 +338,26 @@ Type               :  yident
                    ;
 ArrayType          :  yarray yleftbracket Subrange SubrangeList 
                       yrightbracket  yof Type
+                      {
+                          cout << "TEST TYPE ARRAY 0" << endl;
+                          ArrayType* array = new ArrayType("");
+                          stack<Range> reversed; // Needed since the ranges will be backwards
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          while(!current_scope->TempRangesEmpty())
+                          {
+                              reversed.push(current_scope->PopTempRanges());
+                          }
+                          while(!reversed.empty())
+                          {
+                              Range range = reversed.top();
+                              reversed.pop();
+                              array->AddDimension(range);
+                          }
+                          VariableType* type = current_scope->PopTempTypes();
+                          array->SetArrayType(type);
+                          current_scope->PushTempTypes(array);
+                          cout << "TEST TYPE ARRAY 1" << endl;
+                      }
                    ;
 SubrangeList       :  /*** empty ***/
                    |  SubrangeList ycomma Subrange 
@@ -414,15 +422,17 @@ Statement          :  Assignment
                    |  ybegin StatementSequence yend
                    |  /*** empty ***/
                    ;
-Assignment         :  Designator yassign Expression
+Assignment         :  Designator  yassign Expression
                       {
+                          cout << "TEST ASSIGNMENT" << endl;
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           string identifier = current_scope->PopTempStrings();
                           Variable* var = current_scope->PopTempVars();
                           if(!current_scope->IsInScope(identifier))
                           {
-                              yyerror(("UNDEFINED " + identifier).c_str());
-                              YYERROR;
+                              // This breaks because of the broken designator.
+                              //yyerror(("UNDEFINED " + identifier).c_str());
+                              //YYERROR;
                           }
                           else
                           {
@@ -449,12 +459,56 @@ Assignment         :  Designator yassign Expression
                       }
                    ;
 ProcedureCall      :  yident 
-                   |  yident ActualParameters
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          if(!current_scope->IsInScope(s))
+                          {
+                               // This is the same problem as with Designator
+                               //yyerror(("UNDEFINED " + s).c_str());
+                               //YYERROR;
+                          }
+                          else if(current_scope->Get(s)->GetType() != PROCEDURE)
+                          {
+                              yyerror("NOT A PROCEDURE");
+                              YYERROR;
+                          }
+                      }
+                   |  yident
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          if(!current_scope->IsInScope(s))
+                          {
+                               // This is the same problem as with Designator
+                               //yyerror(("UNDEFINED " + s).c_str());
+                               //YYERROR;
+                          }
+                          else if(current_scope->Get(s)->GetType() != PROCEDURE)
+                          {
+                              yyerror("NOT A PROCEDURE");
+                              YYERROR;
+                          }
+                      }
+                      ActualParameters
                    ;
-IfStatement        :  yif  Expression  ythen  Statement  ElsePart
+IfStatement        :  yif  Expression
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          Variable* var = current_scope->PopTempVars();
+                          if(var->GetVarType() == NULL)
+                          {
+                              // I don't know why it'd be null, but apparently
+                              // it is if it gets here.
+                          }
+                          else if(var->GetVarType()->GetEnumType() != VarTypes::BOOLEAN)
+                          {
+                              yyerror("NOT A BOOLEAN");
+                              YYERROR;
+                          }
+                      }
+                      ythen  Statement  ElsePart
                    ;
 ElsePart           :  /*** empty ***/
-                   |  yelse  Statement  
+                   |  yelse  Statement
                    ;
 CaseStatement      :  ycase  Expression  yof  CaseList  yend
                    ;
@@ -466,7 +520,22 @@ Case               :  CaseLabelList  ycolon  Statement
 CaseLabelList      :  ConstExpression  
                    |  CaseLabelList  ycomma  ConstExpression   
                    ;
-WhileStatement     :  ywhile  Expression  ydo  Statement  
+WhileStatement     :  ywhile  Expression
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          Variable* var = current_scope->PopTempVars();
+                          if(var->GetVarType() == NULL)
+                          {
+                              // I don't know why it'd be null, but apparently
+                              // it is.
+                          }
+                          else if(var->GetVarType()->GetEnumType() != VarTypes::BOOLEAN)
+                          {
+                              yyerror("NOT A BOOLEAN");
+                              YYERROR;
+                          }
+                      }
+                      ydo  Statement  
                    ;
 RepeatStatement    :  yrepeat  StatementSequence  yuntil  Expression
                    ;
@@ -481,6 +550,11 @@ WhichWay           :  yto  |  ydownto
 
 Designator         :  yident
                       {
+                          // This is broken, for some reason yident reduces to
+                          // the next token before running this code. This
+                          // breaks any rule that uses designator, and this
+                          // problem shows up other places in the code.
+                          cout << "TEST DESIGNATOR" << endl;
                           if(s == "")
                               cout << "BLANK DESIGNATOR" << endl;
                           else
@@ -507,6 +581,12 @@ ExpList            :  Expression
 
 Expression         :  SimpleExpression  
                    |  SimpleExpression  Relation  SimpleExpression 
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          Variable* var = current_scope->PopTempVars();
+                          var->SetVarType(new BooleanType());
+                          current_scope->PushTempVars(var);
+                      }
                    ;
 SimpleExpression   :  TermExpr
                    |  UnaryOperator  TermExpr
@@ -514,12 +594,21 @@ SimpleExpression   :  TermExpr
 TermExpr           :  Term  
                    |  TermExpr AddOperator  Term
                       {
+                          cout << "TEST ADD OPERATOR" << endl;
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           Variable* newvar = new Variable("");
                           newvar->SetVarType(current_scope->PopTempTypes());
-                          if(!current_scope->TempVarsEmpty())
+                          if(newvar->GetVarType() == NULL)
+                          {
+                              // This is because designator DOES NOT WORK
+                          }
+                          else if(!current_scope->TempVarsEmpty())
                           {
                               Variable* oldvar = current_scope->PopTempVars();
+                              if(oldvar->GetVarType() == NULL)
+                                  cout << "OLDVAR'S VARTYPE IS NULL" << endl;
+                              if(newvar->GetVarType() == NULL)
+                                  cout << "NEWVAR'S VARTYPE IS NULL" << endl;
                               if(newvar->GetVarType()->GetEnumType() != oldvar->GetVarType()->GetEnumType())
                               {
                                   yyerror("TYPES DO NOT MATCH");
@@ -538,6 +627,7 @@ TermExpr           :  Term
                    ;
 Term               :  Factor  
                       {
+                          cout << "TEST TERM FACTOR" << endl;
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           Variable* var = new Variable("");
                           var->SetVarType(current_scope->PopTempTypes());
@@ -545,10 +635,15 @@ Term               :  Factor
                       }
                    |  Term  MultOperator  Factor
                       {
+                          cout << "TEST MULTIPLY OPERATOR" << endl;
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           Variable* newvar = new Variable("");
                           newvar->SetVarType(current_scope->PopTempTypes());
-                          if(!current_scope->TempVarsEmpty())
+                          if(newvar->GetVarType() == NULL)
+                          {
+                              // This is because designator DOES NOT WORK
+                          }
+                          else if(!current_scope->TempVarsEmpty())
                           {
                               Variable* oldvar = current_scope->PopTempVars();
                               if(newvar->GetVarType()->GetEnumType() != oldvar->GetVarType()->GetEnumType())
@@ -569,6 +664,7 @@ Term               :  Factor
                    ;
 Factor             :  ynumber
                       {
+                          cout << "TEST FACTOR NUMBER" << endl;
                           int temp;
                           stringstream(s) >> temp;
                           IntegerType* Int = new IntegerType("", temp);
@@ -577,20 +673,23 @@ Factor             :  ynumber
                    |  ynil
                    |  ystring
                       {
+                          cout << "TEST FACTOR STRING" << endl;
                           StringType* String = new StringType("", s);
                           global_scope.GetCurrentScope()->PushTempTypes(String);
                       }
                    |  Designator
                       {
+                          cout << "TEST FACTOR DESIGNATOR" << endl;
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           string temp = current_scope->PopTempStrings();
                           if(!current_scope->IsInScope(temp))
                           {
-                              yyerror(("UNDEFINED VAR " + temp).c_str());
-                              YYERROR;
+                              //yyerror(("UNDEFINED VAR " + temp).c_str());
+                              //YYERROR;
                           }
                           else
                           {
+                              cout << "Designator somehow succeeded on line " << line_num << endl;
                               MetaType* var = current_scope->Get(temp);
                               if(var->GetType() == VARIABLE_TYPE || var->GetType() == RECORD || var->GetType() == RANGE)
                               {
@@ -613,6 +712,7 @@ Factor             :  ynumber
                       }
                    |  yleftparen  Expression
                       {
+                          cout << "TEST FACTOR EXPRESSION" << endl;
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           current_scope->PushTempTypes(current_scope->PopTempVars()->GetVarType());
                       }
@@ -627,6 +727,7 @@ Factor             :  ynumber
 /*  separated with commas.                                                  */
 FunctionCall       :  yident
                       {
+                          cout << "TEST FUNCTION CALL" << endl;
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           if(!current_scope->IsInScope(s))
                           {
@@ -651,6 +752,7 @@ FunctionCall       :  yident
                    ;
 Setvalue           :  yleftbracket ElementList  yrightbracket
                       {
+                          cout << "TEST SET VALUE" << endl;
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           ArrayType* array = new ArrayType("");
                           vector<int> temp;
@@ -672,12 +774,14 @@ ElementList        :  Element
                    ;
 Element            :  ConstExpression  
                       {
+                          cout << "TEST ELEMENT CONST" << endl;
                           // TODO: Handle string consts.
                           int temp = global_scope.GetCurrentScope()->PopTempInts();
                           global_scope.GetCurrentScope()->PushTempRanges(Range(temp, temp));
                       }
                    |  ConstExpression  ydotdot  ConstExpression 
                       {
+                          cout << "TEST ELEMENT DOTDOT" << endl;
                           // TODO: Handle string consts.
                           int b = global_scope.GetCurrentScope()->PopTempInts();
                           int a = global_scope.GetCurrentScope()->PopTempInts();
@@ -696,10 +800,75 @@ ProcedureDecl      :  ProcedureHeading  ysemicolon  Block
 FunctionDecl       :  FunctionHeading  ycolon  yident  ysemicolon  Block
                    ;
 ProcedureHeading   :  yprocedure  yident  
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          if(current_scope->IsInScope(s))
+                          {
+                              yyerror(("REDEFINITION " + s).c_str());
+                              YYERROR;
+                          }
+                          Procedure* procedure = new Procedure(s);
+                          current_scope->Insert(s, procedure);
+                      }
                    |  yprocedure  yident  FormalParameters
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          if(current_scope->IsInScope(s))
+                          {
+                              yyerror(("REDEFINITION " + s).c_str());
+                              YYERROR;
+                          }
+                          Procedure* procedure = new Procedure(s);
+                          stack<Variable*> reversed;
+                          while(!current_scope->TempProcParamsEmpty())
+                          {
+                              reversed.push(current_scope->PopTempProcParams());
+                          }
+                          while(!reversed.empty())
+                          {
+                              LocalScope* current_scope = global_scope.GetCurrentScope();
+                              Variable* param = reversed.top();
+                              reversed.pop();
+                              procedure->InsertParameter(param);
+                              current_scope->PushTempProcParams(param);
+                          }
+                          current_scope->Insert(s, procedure);
+                      }
                    ;
 FunctionHeading    :  yfunction  yident  
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          if(current_scope->IsInScope(s))
+                          {
+                              yyerror(("REDEFINITION " + s).c_str());
+                              YYERROR;
+                          }
+                          Procedure* procedure = new Procedure(s);
+                          current_scope->Insert(s, procedure);
+                      }
                    |  yfunction  yident  FormalParameters
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          if(current_scope->IsInScope(s))
+                          {
+                              yyerror(("REDEFINITION " + s).c_str());
+                              YYERROR;
+                          }
+                          Procedure* procedure = new Procedure(s);
+                          stack<Variable*> reversed;
+                          while(!current_scope->TempProcParamsEmpty())
+                          {
+                              reversed.push(current_scope->PopTempProcParams());
+                          }
+                          while(!reversed.empty())
+                          {
+                              Variable* param = reversed.top();
+                              reversed.pop();
+                              procedure->InsertParameter(param);
+                              current_scope->PushTempProcParams(param);
+                          }
+                          current_scope->Insert(s, procedure);
+                      }
                    ;
 FormalParameters   :  yleftparen FormalParamList yrightparen 
                    ;
@@ -707,6 +876,33 @@ FormalParamList    :  OneFormalParam
                    |  FormalParamList ysemicolon OneFormalParam
                    ;
 OneFormalParam     :  yvar  IdentList  ycolon  yident
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          if(!current_scope->IsInScope(s))
+                          {
+                              yyerror(("UNDEFINED " + s).c_str());
+                              YYERROR;
+                          }
+                          else
+                          {
+                              MetaType* var = current_scope->Get(s);
+                              if(!var->GetType() == VARIABLE_TYPE)
+                              {
+                                  yyerror(("NOT A TYPE " + s).c_str());
+                                  YYERROR;
+                              }
+                              else
+                              {
+                                  VariableType* type = (VariableType*)var;
+                                  while(!current_scope->TempVarsEmpty())
+                                  {
+                                      Variable* param = current_scope->PopTempVars();
+                                      param->SetVarType(type);
+                                      current_scope->PushTempProcParams(param);
+                                  }
+                              }
+                          }
+                      }
                    |  IdentList  ycolon  yident
                    ;
 
@@ -714,10 +910,12 @@ OneFormalParam     :  yvar  IdentList  ycolon  yident
 
 UnaryOperator      :  yplus
                       {
+                          cout << "TEST UNARY PLUS" << endl;
                           global_scope.GetCurrentScope()->PushTempStrings("+");
                       }
                    |  yminus
                       {
+                          cout << "TEST UNARY MINUS" << endl;
                           global_scope.GetCurrentScope()->PushTempStrings("-");
                       }
                    ;
