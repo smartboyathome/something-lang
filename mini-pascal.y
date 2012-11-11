@@ -137,6 +137,7 @@ Block              :  Declarations  ybegin
                               while(!current_scope->TempProcParamsEmpty())
                               {
                                   Variable* param = current_scope->PopTempProcParams();
+                                  cout << "INSERTING PARAM " << param->GetName() << endl;
                                   current_scope->Insert(param->GetName(), param);
                               }
                               cout << "TEST BEGIN BLOCK 2" << endl;
@@ -439,8 +440,8 @@ Assignment         :  Designator  yassign Expression
                               MetaType* origtype = current_scope->Get(identifier);
                               if(origtype->GetType() != VARIABLE)
                               {
-                                  yyerror(("NOT A VARIABLE " + identifier).c_str());
-                                  YYERROR;
+                                  yyerror(("NOT A VARIABLE '" + identifier + "'").c_str());
+                                  //YYERROR;
                               }
                               else
                               {
@@ -681,6 +682,10 @@ Factor             :  ynumber
                       {
                           cout << "TEST FACTOR DESIGNATOR" << endl;
                           LocalScope* current_scope = global_scope.GetCurrentScope();
+                          if(current_scope->TempStringsEmpty())
+                          {
+                              yyerror("Temp strings is empty!");
+                          }
                           string temp = current_scope->PopTempStrings();
                           if(!current_scope->IsInScope(temp))
                           {
@@ -807,18 +812,32 @@ ProcedureHeading   :  yprocedure  yident
                               yyerror(("REDEFINITION " + s).c_str());
                               YYERROR;
                           }
+                          if(s == "")
+                          {
+                              yyerror((string("THAR BE BLANK NAMES HERE! THE TOKEN IS ") + string(yytext)).c_str());
+                          }
                           Procedure* procedure = new Procedure(s);
                           current_scope->Insert(s, procedure);
                       }
-                   |  yprocedure  yident  FormalParameters
+                   |  yprocedure  yident
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
-                          if(current_scope->IsInScope(s))
+                          current_scope->PushTempStrings(s);
+                      }
+                      FormalParameters
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          string identifier = current_scope->PopTempStrings();
+                          if(current_scope->IsInScope(identifier))
                           {
-                              yyerror(("REDEFINITION " + s).c_str());
+                              yyerror(("REDEFINITION " + identifier).c_str());
                               YYERROR;
                           }
-                          Procedure* procedure = new Procedure(s);
+                          if(identifier == "")
+                          {
+                              yyerror((string("THAR BE BLANK NAMES HERE! THE TOKEN IS ") + string(yytext)).c_str());
+                          }
+                          Procedure* procedure = new Procedure(identifier);
                           stack<Variable*> reversed;
                           while(!current_scope->TempProcParamsEmpty())
                           {
@@ -832,7 +851,7 @@ ProcedureHeading   :  yprocedure  yident
                               procedure->InsertParameter(param);
                               current_scope->PushTempProcParams(param);
                           }
-                          current_scope->Insert(s, procedure);
+                          current_scope->Insert(identifier, procedure);
                       }
                    ;
 FunctionHeading    :  yfunction  yident  
@@ -843,18 +862,32 @@ FunctionHeading    :  yfunction  yident
                               yyerror(("REDEFINITION " + s).c_str());
                               YYERROR;
                           }
+                          if(s == "")
+                          {
+                              yyerror((string("THAR BE BLANK NAMES HERE! THE TOKEN IS ") + string(yytext)).c_str());
+                          }
                           Procedure* procedure = new Procedure(s);
                           current_scope->Insert(s, procedure);
                       }
-                   |  yfunction  yident  FormalParameters
+                   |  yfunction  yident
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
-                          if(current_scope->IsInScope(s))
+                          current_scope->PushTempStrings(s);
+                      }
+                      FormalParameters
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          string identifier = current_scope->PopTempStrings();
+                          if(current_scope->IsInScope(identifier))
                           {
-                              yyerror(("REDEFINITION " + s).c_str());
+                              yyerror(("REDEFINITION " + identifier).c_str());
                               YYERROR;
                           }
-                          Procedure* procedure = new Procedure(s);
+                          if(identifier == "")
+                          {
+                              yyerror((string("THAR BE BLANK NAMES HERE! THE TOKEN IS ") + string(yytext)).c_str());
+                          }
+                          Procedure* procedure = new Procedure(identifier);
                           stack<Variable*> reversed;
                           while(!current_scope->TempProcParamsEmpty())
                           {
@@ -862,12 +895,13 @@ FunctionHeading    :  yfunction  yident
                           }
                           while(!reversed.empty())
                           {
+                              LocalScope* current_scope = global_scope.GetCurrentScope();
                               Variable* param = reversed.top();
                               reversed.pop();
                               procedure->InsertParameter(param);
                               current_scope->PushTempProcParams(param);
                           }
-                          current_scope->Insert(s, procedure);
+                          current_scope->Insert(identifier, procedure);
                       }
                    ;
 FormalParameters   :  yleftparen FormalParamList yrightparen 
@@ -904,6 +938,33 @@ OneFormalParam     :  yvar  IdentList  ycolon  yident
                           }
                       }
                    |  IdentList  ycolon  yident
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          if(!current_scope->IsInScope(s))
+                          {
+                              yyerror(("UNDEFINED " + s).c_str());
+                              YYERROR;
+                          }
+                          else
+                          {
+                              MetaType* var = current_scope->Get(s);
+                              if(!var->GetType() == VARIABLE_TYPE)
+                              {
+                                  yyerror(("NOT A TYPE " + s).c_str());
+                                  YYERROR;
+                              }
+                              else
+                              {
+                                  VariableType* type = (VariableType*)var;
+                                  while(!current_scope->TempVarsEmpty())
+                                  {
+                                      Variable* param = current_scope->PopTempVars();
+                                      param->SetVarType(type);
+                                      current_scope->PushTempProcParams(param);
+                                  }
+                              }
+                          }
+                      }
                    ;
 
 /***************************  More Operators  ********************************/

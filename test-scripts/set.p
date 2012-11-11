@@ -8,6 +8,12 @@ type
 
 var
    odds, evens, stuff, morestuff: Digit;
+   squareresult: integer;
+
+Procedure Square(Index : Integer; Var Result : Integer);
+Begin
+    Result := Index * Index;
+End;
 
 begin
    odds := [1, 3, 5, 7, 9];
@@ -16,7 +22,11 @@ begin
    morestuff := odds + [2];    (* union of 2 sets *)
 
    if 3 in morestuff then
+   begin
       writeln("3 in the set")
+      Square(3, squareresult)
+      write(squareresult)
+   end;
    else
       writeln("3 not in the set");
 
