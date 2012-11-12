@@ -107,14 +107,14 @@ string RealType::CString() const {
 }
 
 // StringType -----------------------------------------------------------------
-StringType::StringType() : VariableType("", VarTypes::CHAR) {
+StringType::StringType() : VariableType("", VarTypes::STRING) {
     value = "";
 }
-StringType::StringType(string name) : VariableType(name, VarTypes::CHAR) {
+StringType::StringType(string name) : VariableType(name, VarTypes::STRING) {
     value = "";
 }
 
-StringType::StringType(string name, string value) : VariableType(name, VarTypes::CHAR) {
+StringType::StringType(string name, string value) : VariableType(name, VarTypes::STRING) {
     this->value = value;
 }
     

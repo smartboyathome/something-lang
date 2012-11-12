@@ -6,6 +6,7 @@
 #include "IdentTypes/Variable.h"
 #include "IdentTypes/VariableType.h"
 #include "IdentTypes/Array.h"
+#include "IdentTypes/Pointer.h"
 using namespace std;
 
 class LocalScope
@@ -21,6 +22,8 @@ private:
     stack<int> temporary_ints;
     stack<Range> temporary_ranges;
     stack<Variable*> temporary_proc_params;
+    stack<Pointer*> temporary_pointers;
+    stack<VariableType*> temporary_constants;
     
     // This is for outputting Zander-style strings.
     int scope_level;
@@ -65,6 +68,14 @@ public:
     void PushTempProcParams(Variable*);
     Variable* PopTempProcParams();
     bool TempProcParamsEmpty();
+    
+    void PushTempPointers(Pointer*);
+    Pointer* PopTempPointers();
+    bool TempPointersEmpty();
+    
+    void PushTempConstants(VariableType*);
+    VariableType* PopTempConstants();
+    bool TempConstantsEmpty();
     
     bool AllTempsEmpty();
 };

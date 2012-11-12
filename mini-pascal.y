@@ -161,6 +161,33 @@ ConstantDefList    :  ConstantDefList ConstantDef ysemicolon
                    ;
 TypeDefBlock       :  /*** empty ***/
                    |  ytype  TypeDefList          
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          while(!current_scope->TempPointersEmpty())
+                          {
+                              Pointer* pointer = current_scope->PopTempPointers();
+                              string identifier = pointer->GetTypeIdentifier();
+                              if(!current_scope->IsInScope(identifier))
+                              {
+                                  yyerror("This is not the type you're looking for...");
+                                  YYERROR;
+                              }
+                              else
+                              {
+                                  MetaType* var = current_scope->Get(identifier);
+                                  if(var->GetType() != VARIABLE_TYPE)
+                                  {
+                                      yyerror("It's a trap, not a type!");
+                                      YYERROR;
+                                  }
+                                  else
+                                  {
+                                      VariableType* type = (VariableType*)var;
+                                      pointer->SetTypePtr(type);
+                                  }
+                              }
+                          }
+                      }
                    ;
 TypeDefList        :  TypeDef  ysemicolon
                    |  TypeDefList TypeDef ysemicolon  
@@ -190,7 +217,9 @@ ConstantDef        :  yident
                           else
                           {
                               cout << "TEST AFTER ConstDef 1" << endl;
-                              VariableType* type = current_scope->PopTempTypes();
+                              if(current_scope->TempConstantsEmpty())
+                                  cout << "TEST AFTER ConstDef 1a" << endl;
+                              VariableType* type = current_scope->PopTempConstants();
                               type->SetName(identifier);
                               current_scope->Insert(identifier, type);
                               cout << "TEST AFTER ConstDef 2" << endl;
@@ -217,6 +246,28 @@ TypeDef            :  yident
                               VariableType* type = current_scope->PopTempTypes();
                               type->SetName(identifier);
                               current_scope->Insert(identifier, type);
+                              if(type->GetEnumType() == VarTypes::POINTER)
+                              {
+                                  Pointer* ptr = (Pointer*)type;
+                                  string type_identifier = ptr->GetTypeIdentifier();
+                                  if(current_scope->IsInLocalScope(type_identifier))
+                                  {
+                                      MetaType* ptr_type = current_scope->GetFromLocal(type_identifier);
+                                      if(ptr_type->GetType() != VARIABLE_TYPE)
+                                      {
+                                          yyerror(("NOT A TYPE " + type_identifier).c_str());
+                                          YYERROR;
+                                      }
+                                      else
+                                      {
+                                          ptr->SetTypePtr((VariableType*)ptr_type);
+                                      }
+                                  }
+                                  else
+                                  {
+                                      current_scope->PushTempPointers(ptr);
+                                  }
+                              }
                               cout << "TEST AFTER TYPE 2" << endl;
                           }
                       }
@@ -248,11 +299,19 @@ ConstExpression    :  UnaryOperator ConstFactor
                           if ((op == "+" && value < 0) || (op == "-" && value > 0))
                                 value *= -1;    // Overrides the original sign of value
                           
-                          current_scope->PushTempInts(value);
+                          current_scope->PushTempConstants(new IntegerType("", value));
                           // TODO: Fix so that it pushes a variable.
                       }
                    |  ConstFactor
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          current_scope->PushTempConstants(new IntegerType("", current_scope->PopTempInts()));
+                      }
                    |  ystring // TODO: handle strings
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          current_scope->PushTempConstants(new StringType("", s));
+                      }
                    ;
 ConstFactor        :  yident
                       {
@@ -401,6 +460,11 @@ RecordType         :  yrecord  FieldListSequence  yend
 SetType            :  yset  yof  Subrange
                    ;
 PointerType        :  ycaret  yident 
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          Pointer* pointer = new Pointer("", s);
+                          current_scope->PushTempTypes(pointer);
+                      }
                    ;
 FieldListSequence  :  FieldList  
                    |  FieldListSequence  ysemicolon  FieldList
@@ -781,16 +845,61 @@ Element            :  ConstExpression
                       {
                           cout << "TEST ELEMENT CONST" << endl;
                           // TODO: Handle string consts.
-                          int temp = global_scope.GetCurrentScope()->PopTempInts();
-                          global_scope.GetCurrentScope()->PushTempRanges(Range(temp, temp));
+                          VariableType* temp = global_scope.GetCurrentScope()->PopTempConstants();
+                          if(temp->GetEnumType() == VarTypes::INTEGER)
+                          {
+                              int temp_val = ((IntegerType*)temp)->GetValue();
+                              global_scope.GetCurrentScope()->PushTempRanges(Range(temp_val, temp_val));
+                          }
+                          else if(temp->GetEnumType() == VarTypes::STRING)
+                          {
+                              string temp_val = ((StringType*)temp)->GetValue();
+                              if(temp_val.size() != 1)
+                              {
+                                  yyerror("STRING MUST BE 1 CHARACTER LONG!");
+                                  YYERROR;
+                              }
+                              else
+                              {
+                                  global_scope.GetCurrentScope()->PushTempRanges(Range(temp_val[0], temp_val[0]));
+                              }
+                          }
                       }
                    |  ConstExpression  ydotdot  ConstExpression 
                       {
                           cout << "TEST ELEMENT DOTDOT" << endl;
                           // TODO: Handle string consts.
-                          int b = global_scope.GetCurrentScope()->PopTempInts();
-                          int a = global_scope.GetCurrentScope()->PopTempInts();
-                          global_scope.GetCurrentScope()->PushTempRanges(Range(a, b));
+                          VariableType* b = global_scope.GetCurrentScope()->PopTempConstants();
+                          VariableType* a = global_scope.GetCurrentScope()->PopTempConstants();
+                          if(a->GetEnumType() != b->GetEnumType())
+                          {
+                              yyerror("Range types must match!");
+                              YYERROR;
+                          }
+                          else if(a->GetEnumType() == VarTypes::INTEGER)
+                          {
+                              IntegerType* a_int = (IntegerType*)a;
+                              IntegerType* b_int = (IntegerType*)b;
+                              int a_val = a_int->GetValue();
+                              int b_val = b_int->GetValue();
+                              global_scope.GetCurrentScope()->PushTempRanges(Range(a_val, b_val));
+                          }
+                          else if(a->GetEnumType() == VarTypes::STRING)
+                          {
+                              StringType* a_str = (StringType*)a;
+                              StringType* b_str = (StringType*)b;
+                              string a_val = a_str->GetValue();
+                              string b_val = b_str->GetValue();
+                              if(a_val.size() != b_val.size() || a_val.size() != 1)
+                              {
+                                  yyerror("STRINGS MUST BE 1 CHARACTER LONG!");
+                                  YYERROR;
+                              }
+                              else
+                              {
+                                  global_scope.GetCurrentScope()->PushTempRanges(Range(a_val[0], b_val[0]));
+                              }
+                          }
                       }
                    ;
 

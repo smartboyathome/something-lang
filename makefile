@@ -9,7 +9,8 @@ METATYPE_FILE = IdentTypes/MetaType.cpp
 PROCEDURE_FILE = IdentTypes/Procedure.cpp
 VARIABLE_FILE = IdentTypes/Variable.cpp
 VARIABLETYPE_FILE = IdentTypes/VariableType.cpp
-OBJ_FILES = y.tab.o lex.yy.o main.o scopes.o IdentTypes/array.o IdentTypes/constant.o IdentTypes/metatype.o IdentTypes/procedure.o IdentTypes/variable.o IdentTypes/variabletype.o
+POINTER_FILE = IdentTypes/Pointer.cpp
+OBJ_FILES = y.tab.o lex.yy.o main.o scopes.o IdentTypes/array.o IdentTypes/constant.o IdentTypes/metatype.o IdentTypes/pointer.o IdentTypes/procedure.o IdentTypes/variable.o IdentTypes/variabletype.o
 COMPILER_FLAGS = -lfl -g
 
 mini-pascal: $(OBJ_FILES)
@@ -29,6 +30,9 @@ IdentTypes/constant.o: $(CONSTANT_FILE)
 
 IdentTypes/metatype.o: $(METATYPE_FILE)
 	g++ -c $(METATYPE_FILE) -o IdentTypes/metatype.o
+	
+IdentTypes/pointer.o: $(POINTER_FILE)
+	g++ -c $(POINTER_FILE) -o IdentTypes/pointer.o
 
 IdentTypes/procedure.o: $(PROCEDURE_FILE)
 	g++ -c $(PROCEDURE_FILE) -o IdentTypes/procedure.o

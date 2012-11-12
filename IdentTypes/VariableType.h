@@ -12,8 +12,9 @@ struct VarTypes
         INTEGER,
         BOOLEAN,
         REAL,
-        CHAR,
-        ARRAY
+        STRING,
+        ARRAY,
+        POINTER
     };
 };
 

@@ -2,6 +2,7 @@
 #include "IdentTypes/MetaType.h"
 #include "IdentTypes/VariableType.h"
 #include "IdentTypes/Procedure.h"
+#include "IdentTypes/Pointer.h"
 #include <sstream>
 using namespace std;
 
@@ -138,7 +139,8 @@ bool LocalScope::Insert(string identifier, MetaType* type)
     if (local_scope.count(identifier) > 0)
         return false;
     local_scope.insert(pair<string, MetaType*>(identifier, type));
-    cout << make_indent() << type->ToString() << endl;
+    if(scope_level != -1) // If this isn't the S.I.T.
+        cout << make_indent() << type->ToString() << endl;
     return true;
 }
 
@@ -320,6 +322,51 @@ Variable* LocalScope::PopTempProcParams()
 bool LocalScope::TempProcParamsEmpty()
 {
     return temporary_proc_params.empty();
+}
+
+void LocalScope::PushTempPointers(Pointer* temp_pointer)
+{
+    temporary_pointers.push(temp_pointer);
+}
+
+Pointer* LocalScope::PopTempPointers()
+{
+    if (temporary_pointers.empty())
+    {
+        Pointer* var = new Pointer("", "nil");
+        var->SetTypePtr(new NilType());
+        return var;
+    }
+    Pointer* retval = temporary_pointers.top();
+    temporary_pointers.pop();
+    return retval;
+}
+
+bool LocalScope::TempPointersEmpty()
+{
+    return temporary_pointers.empty();
+}
+
+void LocalScope::PushTempConstants(VariableType* temp_const)
+{
+    temporary_constants.push(temp_const);
+}
+
+VariableType* LocalScope::PopTempConstants()
+{
+    if (temporary_constants.empty())
+    {
+        VariableType* var = new NilType();
+        return var;
+    }
+    VariableType* retval = temporary_constants.top();
+    temporary_constants.pop();
+    return retval;
+}
+
+bool LocalScope::TempConstantsEmpty()
+{
+    return temporary_constants.empty();
 }
 
 bool LocalScope::AllTempsEmpty()

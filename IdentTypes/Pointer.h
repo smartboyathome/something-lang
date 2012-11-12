@@ -1,18 +1,21 @@
 // Pointer.h
 #pragma once
 #include "MetaType.h"
+#include "VariableType.h"
 
-class Pointer:public MetaType {
+class Pointer:public VariableType {
 public:
-    Pointer(const string name);
+    Pointer(const string name, const string type);
     ~Pointer();
     
-    void SetObjectPtr(MetaType *obj);
+    string GetTypeIdentifier();
+    void SetTypePtr(VariableType *type);
     
     string ToString() const;
     string CString() const;
 
 private:
     string name;
-    MetaType* obj_ptr;
+    string type_identifier;
+    VariableType* my_type;
 };
