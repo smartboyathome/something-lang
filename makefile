@@ -3,14 +3,18 @@ YACC_FILE = mini-pascal.y
 MAIN_FILE = main.cpp
 BINARY_FILE = mini-pascal
 SCOPES_FILE = Scopes.cpp
+
 ARRAY_FILE = IdentTypes/Array.cpp
 CONSTANT_FILE = IdentTypes/Constant.cpp
 METATYPE_FILE = IdentTypes/MetaType.cpp
+POINTER_FILE = IdentTypes/Pointer.cpp
 PROCEDURE_FILE = IdentTypes/Procedure.cpp
+RECORD_FILE = IdentTypes/Record.cpp
 VARIABLE_FILE = IdentTypes/Variable.cpp
 VARIABLETYPE_FILE = IdentTypes/VariableType.cpp
-POINTER_FILE = IdentTypes/Pointer.cpp
-OBJ_FILES = y.tab.o lex.yy.o main.o scopes.o IdentTypes/array.o IdentTypes/constant.o IdentTypes/metatype.o IdentTypes/pointer.o IdentTypes/procedure.o IdentTypes/variable.o IdentTypes/variabletype.o
+
+OBJ_FILES = y.tab.o lex.yy.o main.o scopes.o IdentTypes/array.o IdentTypes/constant.o IdentTypes/metatype.o IdentTypes/pointer.o IdentTypes/procedure.o IdentTypes/record.o IdentTypes/variable.o IdentTypes/variabletype.o
+
 COMPILER_FLAGS = -lfl -g
 
 mini-pascal: $(OBJ_FILES)
@@ -36,6 +40,9 @@ IdentTypes/pointer.o: $(POINTER_FILE)
 
 IdentTypes/procedure.o: $(PROCEDURE_FILE)
 	g++ -c $(PROCEDURE_FILE) -o IdentTypes/procedure.o
+	
+IdentTypes/record.o: $(RECORD_FILE)
+	g++ -c $(RECORD_FILE) -o IdentTypes/record.o
 
 IdentTypes/variable.o: $(VARIABLE_FILE)
 	g++ -c $(VARIABLE_FILE) -o IdentTypes/variable.o

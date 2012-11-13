@@ -4,7 +4,7 @@
 // This object is built almost identically to a procedure object
 
 // Constructor
-Record::Record(const string name) : MetaType(name, RECORD) {
+Record::Record(const string name) : VariableType(name, VarTypes::RECORD) {
 
 }
 
@@ -40,7 +40,7 @@ bool Record::HasDuplicateMember(const Variable* checkedMember) {
 // Return a string representation of this object
 string Record::ToString() const {
     
-                    // I am not sure that this is the way we SHOULD do this...
+    // I am not sure that this is the way we SHOULD do this...
     string s = identifier;
     for (int x = 0; x < members.size(); x++) {
         s += ( "   " + members[x]->ToString() + "\n");

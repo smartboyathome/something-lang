@@ -140,7 +140,12 @@ bool LocalScope::Insert(string identifier, MetaType* type)
         return false;
     local_scope.insert(pair<string, MetaType*>(identifier, type));
     if(scope_level != -1) // If this isn't the S.I.T.
-        cout << make_indent() << type->ToString() << endl;
+    {
+        istringstream ss(type->ToString());
+        string output_line;
+        while(getline(ss, output_line))
+            cout << make_indent() << output_line << endl;
+    }
     return true;
 }
 

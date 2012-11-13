@@ -2,9 +2,10 @@
 #pragma once
 #include "MetaType.h"
 #include "Variable.h"
+#include "VariableType.h"
 #include <vector>
 
-class Record:public MetaType {
+class Record:public VariableType {
 public:
     Record(const string name);
     ~Record();

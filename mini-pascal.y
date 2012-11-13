@@ -9,6 +9,7 @@
 #include "IdentTypes/MetaType.h"
 #include "IdentTypes/Procedure.h"
 #include "IdentTypes/Variable.h"
+#include "IdentTypes/Record.h"
 using namespace std;
 #define YYDEBUG 1
 
@@ -198,8 +199,6 @@ VariableDeclBlock  :  /*** empty ***/
 VariableDeclList   :  VariableDeclList VariableDecl ysemicolon
                    |  VariableDecl ysemicolon
                    ;  
-/*ConstantDef        :  yident  yequal  ConstExpression
-                   ;*/
 ConstantDef        :  yident
                       {
                           global_scope.GetCurrentScope()->PushTempStrings(s);
@@ -245,7 +244,9 @@ TypeDef            :  yident
                               cout << "TEST AFTER TYPE 1" << endl;
                               VariableType* type = current_scope->PopTempTypes();
                               type->SetName(identifier);
+                              cout << "TEST AFTER TYPE 1A identifier '" << identifier << "'" << endl;
                               current_scope->Insert(identifier, type);
+                              cout << "TEST AFTER TYPE 1B" << endl;
                               if(type->GetEnumType() == VarTypes::POINTER)
                               {
                                   Pointer* ptr = (Pointer*)type;
@@ -455,7 +456,13 @@ Subrange           :  ConstFactor ydotdot ConstFactor
                           }
                       }
                    ;
-RecordType         :  yrecord  FieldListSequence  yend
+RecordType         :  yrecord
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          Record* record = new Record("");
+                          current_scope->PushTempTypes(record);
+                      }
+                      FieldListSequence  yend
                    ;
 SetType            :  yset  yof  Subrange
                    ;
@@ -470,6 +477,18 @@ FieldListSequence  :  FieldList
                    |  FieldListSequence  ysemicolon  FieldList
                    ;
 FieldList          :  IdentList  ycolon  Type
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          VariableType* var_type = current_scope->PopTempTypes();
+                          Record* record = (Record*)current_scope->PopTempTypes();
+                          while(!current_scope->TempVarsEmpty())
+                          {
+                              Variable* var = current_scope->PopTempVars();
+                              var->SetVarType(var_type);
+                              record->InsertMember(var);
+                          }
+                          current_scope->PushTempTypes(record);
+                      }
                    ;
 
 /***************************  Statements  ************************************/
@@ -670,11 +689,14 @@ TermExpr           :  Term
                           else if(!current_scope->TempVarsEmpty())
                           {
                               Variable* oldvar = current_scope->PopTempVars();
+                              VarTypes::Type newvartype = newvar->GetVarType()->GetEnumType();
+                              VarTypes::Type oldvartype = oldvar->GetVarType()->GetEnumType();
+                              bool is_pointer_null = (newvartype == VarTypes::POINTER && oldvartype == VarTypes::NIL) || (newvartype == VarTypes::NIL && oldvartype == VarTypes::POINTER);
                               if(oldvar->GetVarType() == NULL)
                                   cout << "OLDVAR'S VARTYPE IS NULL" << endl;
                               if(newvar->GetVarType() == NULL)
                                   cout << "NEWVAR'S VARTYPE IS NULL" << endl;
-                              if(newvar->GetVarType()->GetEnumType() != oldvar->GetVarType()->GetEnumType())
+                              if(!is_pointer_null && newvar->GetVarType()->GetEnumType() != oldvar->GetVarType()->GetEnumType())
                               {
                                   yyerror("TYPES DO NOT MATCH");
                                   YYERROR;
@@ -711,7 +733,10 @@ Term               :  Factor
                           else if(!current_scope->TempVarsEmpty())
                           {
                               Variable* oldvar = current_scope->PopTempVars();
-                              if(newvar->GetVarType()->GetEnumType() != oldvar->GetVarType()->GetEnumType())
+                              VarTypes::Type newvartype = newvar->GetVarType()->GetEnumType();
+                              VarTypes::Type oldvartype = oldvar->GetVarType()->GetEnumType();
+                              bool is_pointer_null = (newvartype == VarTypes::POINTER && oldvartype == VarTypes::NIL) || (newvartype == VarTypes::NIL && oldvartype == VarTypes::POINTER);
+                              if(!is_pointer_null && newvar->GetVarType()->GetEnumType() != oldvar->GetVarType()->GetEnumType())
                               {
                                   yyerror("TYPES DO NOT MATCH");
                                   YYERROR;
@@ -787,6 +812,13 @@ Factor             :  ynumber
                       }
                       yrightparen
                    |  ynot Factor
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          current_scope->PopTempVars();
+                          Variable* var = new Variable("");
+                          var->SetVarType(new BooleanType());
+                          current_scope->PushTempVars(var);
+                      }
                    |  Setvalue
                    |  FunctionCall
                    ;

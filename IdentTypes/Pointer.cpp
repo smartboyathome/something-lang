@@ -22,7 +22,7 @@ string Pointer::GetTypeIdentifier()
 
 // Return a string representation of this object
 string Pointer::ToString() const {
-    return identifier + " ^" + my_type->GetName();
+    return identifier + " ^" + type_identifier;
 }
 
 // Return a C-formatted string representation of this object

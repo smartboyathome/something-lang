@@ -14,7 +14,8 @@ struct VarTypes
         REAL,
         STRING,
         ARRAY,
-        POINTER
+        POINTER,
+        RECORD
     };
 };
 
