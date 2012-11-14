@@ -101,12 +101,7 @@ LocalScope::LocalScope(int level, map<string, MetaType*> new_parent_scope)
 
 bool LocalScope::IsInScope(string identifier)
 {
-    cout << "IS " << identifier << " IN SCOPE? ";
     bool retval = local_scope.count(identifier) > 0 or parent_scope.count(identifier) > 0;
-    if(retval)
-        cout << "YES, IT IS!" << endl;
-    else
-        cout << "NO ITS NOT!!!" << endl;
     return retval;
 }
 
