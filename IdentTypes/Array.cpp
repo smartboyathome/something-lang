@@ -1,5 +1,6 @@
 // Array.cpp
 #include "Array.h"
+#include "Pointer.h"
 #include <sstream>
 #include <math.h>
 
@@ -122,8 +123,6 @@ string ArrayType::ToString() const {
     
     stringstream ss;
     
-    ss << identifier + " ";
-    
     // Creating "low..high, low..high, low..high"
     for (int x = 0; x < ranges.size(); x++) {
         ss << ranges[x].ToString();
@@ -142,8 +141,21 @@ string ArrayType::CString() const {
     return "";
 }
 
+int ArrayType::GetArrayDimensions()
+{
+    return ranges.size();
+}
+
+AcceptedTypes::Types ArrayType::GetAcceptedType()
+{
+    if(ranges.size() == 0)
+        return AcceptedTypes::NONE;
+    else
+        return ranges[0].rangeType;
+}
+
 // Find the size of a multi-dimensional array
-int ArrayType::get_array_dimensions() {	
+int ArrayType::GetArrayFlattenedSize() {	
 	if (ranges.size() == 0) 
 		return 0;	// No work needed
 		

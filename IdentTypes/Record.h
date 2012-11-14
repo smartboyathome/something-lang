@@ -12,6 +12,8 @@ public:
     
     bool InsertMember(Variable*);
     bool HasDuplicateMember(const Variable*);
+    bool HasMember(string);
+    Variable* GetMember(string);
     
     string ToString() const;
     string CString() const;

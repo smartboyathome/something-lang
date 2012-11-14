@@ -1,6 +1,7 @@
 // Procedure.cpp
 #include "Procedure.h"
 #include "VariableType.h"
+#include "Pointer.h"
 
 // Constructor
 Procedure::Procedure(const string name) : MetaType(name, PROCEDURE)
@@ -52,9 +53,9 @@ void Procedure::SetReturnType(VariableType* type)
 string Procedure::ToString() const {
     
                     // I am not sure that this is the way we SHOULD do this...
-    string s = identifier;
+    string s = "\n";
     for (int x = 0; x < parameters.size(); x++) {
-        s += ( "   " + parameters[x]->ToString() + "\n");
+        s += ( "   " + parameters[x]->GetName() + " " + parameters[x]->ToString() + "\n");
     }
     return s;
 }

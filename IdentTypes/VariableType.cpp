@@ -1,6 +1,21 @@
 // VariableType.cpp
 #include "VariableType.h"
 
+string VarTypes::ToString(Type type)
+{
+    string StringTypes[] = {
+        "NIL",
+        "INTEGER",
+        "BOOLEAN",
+        "REAL",
+        "STRING",
+        "ARRAY",
+        "POINTER",
+        "RECORD"
+    };
+    return StringTypes[type];
+}
+
 // Constructor
 VariableType::VariableType(string name, const VarTypes::Type varType) : MetaType(name, VARIABLE_TYPE) {
     this->var_type = varType;
@@ -130,25 +145,4 @@ string StringType::ToString() const {
 }
 string StringType::CString() const {
     return "";
-}
-
-// NilType --------------------------------------------------------------------
-NilType::NilType() : VariableType("", VarTypes::NIL)
-{
-    
-}
-
-NilType::NilType(string name) : VariableType(name, VarTypes::NIL)
-{
-    
-}
-
-string NilType::ToString() const
-{
-    return "nil";
-}
-
-string NilType::CString() const
-{
-    return "NULL";
 }

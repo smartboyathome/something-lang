@@ -13,11 +13,14 @@ public:
     void SetVarType(VariableType* varType);
     VariableType* GetVarType();
     string GetValue();
+    void ToggleConst();
+    bool IsConst();
     
     string ToString() const;
     string CString() const;
     
 private:
+    bool is_const;
     string variable_value;
     VariableType* my_type;
 };

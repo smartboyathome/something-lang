@@ -17,11 +17,11 @@ struct VarTypes
         POINTER,
         RECORD
     };
+    static string ToString(Type);
 };
 
 class VariableType:public MetaType {
 public:
-    // Constructor takes a VarType, "INTEGER", "BOOLEAN", "REAL", or "CHAR"
     VariableType(string name, const VarTypes::Type type);
     ~VariableType();
     
@@ -91,13 +91,4 @@ public:
 private:
     string value;
     
-};
-
-class NilType : public VariableType
-{
-public:
-    NilType();
-    NilType(string);
-    string ToString() const;
-    string CString() const;
 };

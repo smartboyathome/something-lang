@@ -42,7 +42,9 @@ public:
 	
 	VariableType* GetArrayType();
 	void SetArrayType(VariableType* varType);
-    int get_array_dimensions();
+    int GetArrayDimensions();
+    int GetArrayFlattenedSize();
+    AcceptedTypes::Types GetAcceptedType();
 	
 	string ToString() const;
 	string CString() const;

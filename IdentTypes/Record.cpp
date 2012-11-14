@@ -1,5 +1,6 @@
 // Record.cpp
 #include "Record.h"
+#include "Pointer.h"
 
 // This object is built almost identically to a procedure object
 
@@ -37,13 +38,35 @@ bool Record::HasDuplicateMember(const Variable* checkedMember) {
     return false;            // No duplicate was found.
 }
 
+bool Record::HasMember(string name)
+{
+    for(int i = 0; i < members.size(); ++i)
+    {
+        if(members[i]->GetName() == name)
+            return true;
+    }
+    return false;
+}
+
+Variable* Record::GetMember(string name)
+{
+    for(int i = 0; i < members.size(); ++i)
+    {
+        if(members[i]->GetName() == name)
+            return members[i];
+    }
+    Variable* var = new Variable("nil");
+    var->SetVarType(new NilType());
+    return var;
+}
+
 // Return a string representation of this object
 string Record::ToString() const {
     
     // I am not sure that this is the way we SHOULD do this...
-    string s = identifier;
+    string s = "\n";
     for (int x = 0; x < members.size(); x++) {
-        s += ( "   " + members[x]->ToString() + "\n");
+        s += ( "   " + members[x]->GetName() + " " + members[x]->ToString() + "\n");
     }
     return s;
 }

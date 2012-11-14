@@ -151,65 +151,65 @@ comment_newline     \n
 /* Operator rules come first. Rules are checked from top to bottom. */
 %}
 
-{plus}              { s = ""; return yplus; }
-{minus}             { s = ""; return yminus; }
-{multiply}          { s = ""; return ymultiply; }
-{divide}            { s = ""; return ydivide; }
-{assignment}        { s = ""; return yassign; }
-{div}               { s = ""; return ydiv; }
-{mod}               { s = ""; return ymod; }
-{equal}             { s = ""; return yequal; }
-{unequal}           { s = ""; return ynotequal; }
-{less}              { s = ""; return yless; }
-{less_equal}        { s = ""; return ylessequal; }
-{greater}           { s = ""; return ygreater; }
-{greater_equal}     { s = ""; return ygreaterequal; }
+{plus}              { return yplus; }
+{minus}             { return yminus; }
+{multiply}          { return ymultiply; }
+{divide}            { return ydivide; }
+{assignment}        { return yassign; }
+{div}               { return ydiv; }
+{mod}               { return ymod; }
+{equal}             { return yequal; }
+{unequal}           { return ynotequal; }
+{less}              { return yless; }
+{less_equal}        { return ylessequal; }
+{greater}           { return ygreater; }
+{greater_equal}     { return ygreaterequal; }
 
-{semicolon}         { s = ""; return ysemicolon; }
-{double_dot}        { s = ""; return ydotdot; }
-{dot}               { s = ""; return ydot; }
-{comma}             { s = ""; return ycomma; }
-{colon}             { s = ""; return ycolon; }
-{caret}             { s = ""; return ycaret; }
+{semicolon}         { return ysemicolon; }
+{double_dot}        { return ydotdot; }
+{dot}               { return ydot; }
+{comma}             { return ycomma; }
+{colon}             { return ycolon; }
+{caret}             { return ycaret; }
 
-{left_parentheses}  { s = ""; return yleftparen; }
-{right_parentheses} { s = ""; return yrightparen; }
-{left_bracket}      { s = ""; return yleftbracket; }
-{right_bracket}     { s = ""; return yrightbracket; }
+{left_parentheses}  { return yleftparen; }
+{right_parentheses} { return yrightparen; }
+{left_bracket}      { return yleftbracket; }
+{right_bracket}     { return yrightbracket; }
 
 %{
 /* Keywords come next. They are string literals, so they are applied before
    any dynamic rules. */
 %}
 
-{and}               { s = ""; return yand; }
-{array}             { s = ""; return yarray; }
-{begin}             { s = ""; return ybegin; }
-{case}              { s = ""; return ycase; }
-{const}             { s = ""; return yconst; }
-{do}                { s = ""; return ydo; }
-{downto}            { s = ""; return ydownto; }
-{else}              { s = ""; return yelse; }
-{end}               { s = ""; return yend; }
-{for}               { s = ""; return yfor; }
-{function}          { s = ""; return yfunction; }
-{if}                { s = ""; return yif; }
-{in}                { s = ""; return yin; }
-{nil}               { s = ""; return ynil; }
-{not}               { s = ""; return ynot; }
-{of}                { s = ""; return yof; }
-{or}                { s = ""; return yor; }
-{procedure}         { s = ""; return yprocedure; }
-{program}           { s = ""; return yprogram; }
-{record}            { s = ""; return yrecord; }
-{repeat}            { s = ""; return yrepeat; }
-{set}               { s = ""; return yset; }
-{then}              { s = ""; return ythen; }
-{to}                { s = ""; return yto; }
-{type}              { s = ""; return ytype; }
-{until}             { s = ""; return yuntil; }
-{var}               { s = ""; return yvar; }
-{while}             { s = ""; return ywhile; }
+{and}               { return yand; }
+{array}             { return yarray; }
+{begin}             { return ybegin; }
+{case}              { return ycase; }
+{const}             { return yconst; }
+{do}                { return ydo; }
+{downto}            { return ydownto; }
+{else}              { return yelse; }
+{end}               { return yend; }
+{for}               { return yfor; }
+{function}          { return yfunction; }
+{if}                { return yif; }
+{in}                { return yin; }
+{nil}               { return ynil; }
+{not}               { return ynot; }
+{of}                { return yof; }
+{or}                { return yor; }
+{procedure}         { return yprocedure; }
+{program}           { return yprogram; }
+{record}            { return yrecord; }
+{repeat}            { return yrepeat; }
+{set}               { return yset; }
+{then}              { return ythen; }
+{to}                { return yto; }
+{type}              { return ytype; }
+{until}             { return yuntil; }
+{var}               { return yvar; }
+{while}             { return ywhile; }
 
 %{
 /* Here are where the rules for the basic types like numbers and identifiers
@@ -217,7 +217,7 @@ comment_newline     \n
 %}
 
 {number}            { s = yytext; return ynumber; }
-{identifier}        { s = yytext; for(int i = 0; i < s.length(); ++i) s[i] = tolower(s[i]); cout << "LEX IDENTIFIER " << s << endl; return yident; }
+{identifier}        { s = yytext; for(int i = 0; i < s.length(); ++i) s[i] = tolower(s[i]); return yident; }
 
 %{
 /* Strings start with either a single or double quote, therefore these start

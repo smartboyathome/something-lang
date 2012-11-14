@@ -24,6 +24,8 @@ private:
     stack<Variable*> temporary_proc_params;
     stack<Pointer*> temporary_pointers;
     stack<VariableType*> temporary_constants;
+    stack<MetaType*> temporary_designators;
+    stack<Variable*> temporary_expressions;
     
     // This is for outputting Zander-style strings.
     int scope_level;
@@ -76,6 +78,14 @@ public:
     void PushTempConstants(VariableType*);
     VariableType* PopTempConstants();
     bool TempConstantsEmpty();
+    
+    void PushTempDesignators(MetaType*);
+    MetaType* PopTempDesignators();
+    bool TempDesignatorsEmpty();
+    
+    void PushTempExpressions(Variable*);
+    Variable* PopTempExpressions();
+    bool TempExpressionsEmpty();
     
     bool AllTempsEmpty();
 };

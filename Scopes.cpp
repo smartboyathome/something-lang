@@ -10,17 +10,31 @@ GlobalScope::GlobalScope()
 {
     program_scopes.push(new LocalScope(program_scopes.size()-1));
     
+    LocalScope* SIT = program_scopes.top();
+    
     IntegerType* Int = new IntegerType("integer");
-    program_scopes.top()->Insert("integer", Int);
+    SIT->Insert("integer", Int);
     
     BooleanType* Bool = new BooleanType("boolean");
-    program_scopes.top()->Insert("boolean", Bool);
+    SIT->Insert("boolean", Bool);
     
-    BooleanType* True = new BooleanType("true", "true");
-    program_scopes.top()->Insert("true", True);
+    StringType* Char = new StringType("char");
+    SIT->Insert("char", Char);
     
-    BooleanType* False = new BooleanType("false", "false");
-    program_scopes.top()->Insert("false", False);
+    RealType* Real = new RealType("real");
+    SIT->Insert("real", Real);
+    
+    Variable* True = new Variable("true");
+    True->SetVarType(new BooleanType("true", "true"));
+    SIT->Insert("true", True);
+    
+    Variable* False = new Variable("false");
+    False->SetVarType(new BooleanType("false", "false"));
+    SIT->Insert("false", False);
+    
+    Variable* Nil = new Variable("nil");
+    Nil->SetVarType(new NilType());
+    SIT->Insert("nil", Nil);
     
     string procs [] = {"abs", "arctan", "chr", "cos", "eof", "eoln", "exp", "ln", "odd",
                       "ord", "pred", "round", "sin", "sqr", "sqrt", "succ", "trunc",
@@ -32,7 +46,7 @@ GlobalScope::GlobalScope()
         program_scopes.top()->Insert(procs[i], proc);
     }
     
-    // TODO: Strings/Chars and Reals and dummy functions
+    // TODO: Strings/Chars and Reals
 }
 
 void GlobalScope::CreateNewScope()
@@ -77,13 +91,11 @@ GlobalScope::~GlobalScope()
 LocalScope::LocalScope(int level)
 {
     scope_level = level;
-    cout << "LEVEL " << level << endl;
 }
 
 LocalScope::LocalScope(int level, map<string, MetaType*> new_parent_scope)
 {
     scope_level = level;
-    cout << "LEVEL " << level << endl;
     parent_scope = new_parent_scope;
 }
 
@@ -141,10 +153,28 @@ bool LocalScope::Insert(string identifier, MetaType* type)
     local_scope.insert(pair<string, MetaType*>(identifier, type));
     if(scope_level != -1) // If this isn't the S.I.T.
     {
-        istringstream ss(type->ToString());
-        string output_line;
-        while(getline(ss, output_line))
-            cout << make_indent() << output_line << endl;
+        cout << make_indent() << identifier;
+        string output = type->ToString();
+        bool is_multiline = false;
+        for(int i = 0; i < output.length(); ++i)
+        {
+            if(output[i] == '\n')
+            {
+                is_multiline = true;
+                break;
+            }
+        }
+        if(is_multiline)
+        {
+            istringstream ss(type->ToString());
+            string output_line;
+            while(getline(ss, output_line))
+                cout << make_indent() << " " << output_line << endl;
+        }
+        else
+        {
+            cout << " " << output << endl;
+        }
     }
     return true;
 }
@@ -179,7 +209,6 @@ map<string, MetaType*> LocalScope::GetLocalScope()
 
 string LocalScope::make_indent()
 {
-    cout << "INDENT: " << scope_level << endl;
     stringstream ss;
     for(int i = 0; i < scope_level; ++i)
     {
@@ -219,7 +248,11 @@ void LocalScope::PushTempVars(Variable* temp_var)
 Variable* LocalScope::PopTempVars()
 {
     if(temporary_variables.empty())
-        return NULL;
+    {
+        Variable* var = new Variable("nil");
+        var->SetVarType(new NilType());
+        return var;
+    }
     Variable* retval = temporary_variables.top();
     temporary_variables.pop();
     return retval;
@@ -238,7 +271,9 @@ void LocalScope::PushTempTypes(VariableType* temp_type)
 VariableType* LocalScope::PopTempTypes()
 {
     if(temporary_types.empty())
-        return NULL;
+    {
+        return new NilType();
+    }
     VariableType* retval = temporary_types.top();
     temporary_types.pop();
     return retval;
@@ -372,6 +407,51 @@ VariableType* LocalScope::PopTempConstants()
 bool LocalScope::TempConstantsEmpty()
 {
     return temporary_constants.empty();
+}
+
+void LocalScope::PushTempDesignators(MetaType* temp_designator)
+{
+    temporary_designators.push(temp_designator);
+}
+
+MetaType* LocalScope::PopTempDesignators()
+{
+    if (temporary_designators.empty())
+    {
+        VariableType* var = new NilType();
+        return var;
+    }
+    MetaType* retval = temporary_designators.top();
+    temporary_designators.pop();
+    return retval;
+}
+
+bool LocalScope::TempDesignatorsEmpty()
+{
+    return temporary_designators.empty();
+}
+
+void LocalScope::PushTempExpressions(Variable* temp_var)
+{
+    temporary_expressions.push(temp_var);
+}
+
+Variable* LocalScope::PopTempExpressions()
+{
+    if(temporary_expressions.empty())
+    {
+        Variable* var = new Variable("nil");
+        var->SetVarType(new NilType());
+        return var;
+    }
+    Variable* retval = temporary_expressions.top();
+    temporary_expressions.pop();
+    return retval;
+}
+
+bool LocalScope::TempExpressionsEmpty()
+{
+    return temporary_expressions.empty();
 }
 
 bool LocalScope::AllTempsEmpty()
