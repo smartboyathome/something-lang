@@ -594,6 +594,7 @@ theDesignatorStuff :  ydot yident
                           MetaType* metatype = current_scope->PopTempDesignators();
                           if(metatype->GetType() == VARIABLE)
                           {
+                              cout << "Variable designator, id '" << metatype->GetName() << "' on line " << line_num << endl;
                               metatype = ((Variable*)metatype)->GetVarType();
                           }
                           if(metatype->GetType() != VARIABLE_TYPE)
@@ -628,7 +629,7 @@ theDesignatorStuff :  ydot yident
                               VariableType* type = (VariableType*)metatype;
                               if(type->GetEnumType() != VarTypes::RECORD)
                               {
-                                  yyerror(("NOT A RECORD " + type->GetName()).c_str());
+                                  yyerror(("NOT A RECORD " + type->GetName() + " is a " + VarTypes::ToString(type->GetEnumType())).c_str());
                                   YYERROR;
                               }
                               else
@@ -768,8 +769,7 @@ TermExpr           :  Term
                    |  TermExpr AddOperator  Term
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
-                          Variable* newvar = new Variable("");
-                          newvar->SetVarType(current_scope->PopTempTypes());
+                          Variable* newvar = current_scope->PopTempVars();
                           if(!current_scope->TempVarsEmpty())
                           {
                               Variable* oldvar = current_scope->PopTempVars();
@@ -849,15 +849,18 @@ Factor             :  ynumber
                           }
                           else if(var->GetType() == VARIABLE_TYPE)
                           {
+                              cout << "Pushing on designator type " << var->GetName() << endl;
                               current_scope->PushTempTypes((VariableType*)var);
                           }
                           else if(var->GetType() == VARIABLE)
                           {
+                              cout << "Pushing on designator var " << var->GetName() << endl;
                               current_scope->PushTempTypes(((Variable*)var)->GetVarType());
                           }
                           else if(var->GetType() == PROCEDURE)
                           {
-                              current_scope->PushTempTypes(((Procedure*)var)->GetReturnType());
+                              cout << "Pushing on designator proc " << var->GetName() << endl;
+                              current_scope->PushTempTypes(((Procedure*)var)->GetReturnType()->GetVarType());
                           }
                           else if(var->GetType() == POINTER)
                           {
@@ -903,7 +906,7 @@ FunctionCall       :  yident
                               }
                               else
                               {
-                                  current_scope->PushTempTypes(((Procedure*)var)->GetReturnType());
+                                  current_scope->PushTempTypes(((Procedure*)var)->GetReturnType()->GetVarType());
                               }
                           }
                       }
@@ -997,7 +1000,27 @@ SubprogDeclList    :  /*** empty ***/
                    ;
 ProcedureDecl      :  ProcedureHeading  ysemicolon  Block 
                    ;
-FunctionDecl       :  FunctionHeading  ycolon  yident  ysemicolon  Block
+FunctionDecl       :  FunctionHeading  ycolon  yident
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          string func_name = current_scope->PopTempStrings();
+                          Procedure* func = (Procedure*)current_scope->Get(func_name);
+                          MetaType* metatype = current_scope->Get(s);
+                          if(metatype->GetType() != VARIABLE_TYPE)
+                          {
+                              yyerror("Functions must return a type.");
+                              YYERROR;
+                          }
+                          else
+                          {
+                              Variable* retval = new Variable(func_name);
+                              retval->SetVarType((VariableType*)metatype);
+                              func->SetReturnType(retval);
+                              current_scope->PushTempProcParams(retval);
+                          }
+                          
+                      }
+                      ysemicolon  Block
                    ;
 ProcedureHeading   :  yprocedure  yident  
                       {
@@ -1063,6 +1086,7 @@ FunctionHeading    :  yfunction  yident
                           }
                           Procedure* procedure = new Procedure(s);
                           current_scope->Insert(s, procedure);
+                          current_scope->PushTempStrings(s);
                       }
                    |  yfunction  yident
                       {
@@ -1097,6 +1121,7 @@ FunctionHeading    :  yfunction  yident
                               current_scope->PushTempProcParams(param);
                           }
                           current_scope->Insert(identifier, procedure);
+                          current_scope->PushTempStrings(s);
                       }
                    ;
 FormalParameters   :  yleftparen FormalParamList yrightparen 

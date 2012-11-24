@@ -6,7 +6,9 @@
 // Constructor
 Procedure::Procedure(const string name) : MetaType(name, PROCEDURE)
 {
-    return_type = new NilType();
+    return_data = new Variable("nil");
+    return_data->SetVarType(new NilType());
+    return_data->ToggleConst();
 }
 
 // Destructor
@@ -39,14 +41,14 @@ bool Procedure::HasDuplicateParameter(const Variable* checkedParam) {
     return false;            // No duplicate was found.
 }
 
-VariableType* Procedure::GetReturnType()
+Variable* Procedure::GetReturnType()
 {
-    return return_type;
+    return return_data;
 }
 
-void Procedure::SetReturnType(VariableType* type)
+void Procedure::SetReturnType(Variable* data)
 {
-    return_type = type;
+    return_data = data;
 }
 
 // Return a string representation of this object
