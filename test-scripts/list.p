@@ -95,7 +95,7 @@ begin
     read(newrec^.id);
     for i := 1 to grades do 
        read(newrec^.info[i]);
-(*    newrec^.info[avgPosition]:= average(newrec);  *)
+    newrec^.info[avgPosition]:= average(newrec);
 end;
 
 (* ************************************************************************* *)

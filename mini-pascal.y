@@ -130,7 +130,7 @@ Block              :  Declarations  ybegin
                               while(!current_scope->TempProcParamsEmpty())
                               {
                                   Variable* param = current_scope->PopTempProcParams();
-                                  current_scope->Insert(param->GetName(), param);
+                                  new_scope->Insert(param->GetName(), param);
                               }
                           }
                       }
@@ -474,7 +474,17 @@ Assignment         :  Designator  yassign Expression
                           MetaType* origtype = current_scope->PopTempDesignators();
                           if(origtype->GetType() != VARIABLE)
                           {
-                              yyerror(("NOT A VARIABLE '" + origtype->GetName() + "'").c_str());
+                              string str_type = "";
+                              switch(origtype->GetType())
+                              {
+                                  case VARIABLE_TYPE:
+                                      str_type = "VariableType";
+                                      break;
+                                  case PROCEDURE:
+                                      str_type = "Procedure";
+                                      break;
+                              }
+                              yyerror(("NOT A VARIABLE '" + origtype->GetName() + "' is type '" + str_type + "'").c_str());
                               YYERROR;
                           }
                           else
@@ -594,7 +604,7 @@ theDesignatorStuff :  ydot yident
                           MetaType* metatype = current_scope->PopTempDesignators();
                           if(metatype->GetType() == VARIABLE)
                           {
-                              cout << "Variable designator, id '" << metatype->GetName() << "' on line " << line_num << endl;
+                              //cout << "Variable designator, id '" << metatype->GetName() << "' on line " << line_num << endl;
                               metatype = ((Variable*)metatype)->GetVarType();
                           }
                           if(metatype->GetType() != VARIABLE_TYPE)
@@ -849,17 +859,17 @@ Factor             :  ynumber
                           }
                           else if(var->GetType() == VARIABLE_TYPE)
                           {
-                              cout << "Pushing on designator type " << var->GetName() << endl;
+                              //cout << "Pushing on designator type " << var->GetName() << endl;
                               current_scope->PushTempTypes((VariableType*)var);
                           }
                           else if(var->GetType() == VARIABLE)
                           {
-                              cout << "Pushing on designator var " << var->GetName() << endl;
+                              //cout << "Pushing on designator var " << var->GetName() << endl;
                               current_scope->PushTempTypes(((Variable*)var)->GetVarType());
                           }
                           else if(var->GetType() == PROCEDURE)
                           {
-                              cout << "Pushing on designator proc " << var->GetName() << endl;
+                              //cout << "Pushing on designator proc " << var->GetName() << endl;
                               current_scope->PushTempTypes(((Procedure*)var)->GetReturnType()->GetVarType());
                           }
                           else if(var->GetType() == POINTER)
@@ -1013,7 +1023,7 @@ FunctionDecl       :  FunctionHeading  ycolon  yident
                           }
                           else
                           {
-                              cout << "Creating function " << func_name << endl;
+                              //cout << "Creating function " << func_name << endl;
                               Variable* retval = new Variable(func_name);
                               retval->SetVarType((VariableType*)metatype);
                               func->SetReturnType(retval);
@@ -1152,7 +1162,7 @@ OneFormalParam     :  yvar  IdentList  ycolon  yident
                                   while(!current_scope->TempVarsEmpty())
                                   {
                                       Variable* param = current_scope->PopTempVars();
-                                      cout << "Assigning var " << param->GetName() << " type " << type->GetName() << endl;
+                                      //cout << "Assigning var " << param->GetName() << " type " << type->GetName() << endl;
                                       param->SetVarType(type);
                                       current_scope->PushTempProcParams(param);
                                   }
@@ -1181,7 +1191,7 @@ OneFormalParam     :  yvar  IdentList  ycolon  yident
                                   while(!current_scope->TempVarsEmpty())
                                   {
                                       Variable* param = current_scope->PopTempVars();
-                                      cout << "Assigning var " << param->GetName() << " type " << type->GetName() << endl;
+                                      //cout << "Assigning var " << param->GetName() << " type " << type->GetName() << endl;
                                       param->SetVarType(type);
                                       current_scope->PushTempProcParams(param);
                                   }
