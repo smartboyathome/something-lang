@@ -10,7 +10,6 @@ public:
     Procedure(const string name);
     ~Procedure();
     
-    // TODO: Make Variable* VariableTypes* instead.
     bool InsertParameter(Variable*);
     bool HasDuplicateParameter(const Variable*);
     
