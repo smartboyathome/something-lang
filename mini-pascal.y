@@ -204,9 +204,10 @@ ConstantDef        :  yident
                           }
                           else
                           {
-                              VariableType* type = current_scope->PopTempConstants();
-                              type->SetName(identifier);
-                              current_scope->Insert(identifier, type);
+                              Variable* constvar = new Variable(identifier);
+                              constvar->SetVarType(current_scope->PopTempConstants());
+                              constvar->ToggleConst();
+                              current_scope->Insert(identifier, constvar);
                           }
                       }
                    ;
@@ -301,19 +302,19 @@ ConstFactor        :  yident
                           else 
                           {
                               MetaType* var = current_scope->Get(s);
-                              if(var->GetType() != VARIABLE_TYPE)
+                              if(var->GetType() != VARIABLE)
                               {
-                                  yyerror(("NOT A TYPE: " + s).c_str());
+                                  yyerror(("NOT A TYPE TYPE TAPPA: " + s).c_str());
                                   YYERROR;
                               }
-                              else if(((VariableType*)var)->GetEnumType() != VarTypes::INTEGER)
+                              else if(((Variable*)var)->GetVarType()->GetEnumType() != VarTypes::INTEGER)
                               {
                                   yyerror(("NOT OF TYPE INTEGER " + s).c_str());
                                   YYERROR;
                               }
                               else
                               {
-                                  IntegerType* Int = (IntegerType*)var;
+                                  IntegerType* Int = (IntegerType*)((Variable*)var)->GetVarType();
                                   global_scope.GetCurrentScope()->PushTempInts(Int->GetValue());
                               }
                           }
