@@ -1013,6 +1013,7 @@ FunctionDecl       :  FunctionHeading  ycolon  yident
                           }
                           else
                           {
+                              cout << "Creating function " << func_name << endl;
                               Variable* retval = new Variable(func_name);
                               retval->SetVarType((VariableType*)metatype);
                               func->SetReturnType(retval);
@@ -1121,7 +1122,7 @@ FunctionHeading    :  yfunction  yident
                               current_scope->PushTempProcParams(param);
                           }
                           current_scope->Insert(identifier, procedure);
-                          current_scope->PushTempStrings(s);
+                          current_scope->PushTempStrings(identifier);
                       }
                    ;
 FormalParameters   :  yleftparen FormalParamList yrightparen 
@@ -1151,6 +1152,7 @@ OneFormalParam     :  yvar  IdentList  ycolon  yident
                                   while(!current_scope->TempVarsEmpty())
                                   {
                                       Variable* param = current_scope->PopTempVars();
+                                      cout << "Assigning var " << param->GetName() << " type " << type->GetName() << endl;
                                       param->SetVarType(type);
                                       current_scope->PushTempProcParams(param);
                                   }
@@ -1179,6 +1181,7 @@ OneFormalParam     :  yvar  IdentList  ycolon  yident
                                   while(!current_scope->TempVarsEmpty())
                                   {
                                       Variable* param = current_scope->PopTempVars();
+                                      cout << "Assigning var " << param->GetName() << " type " << type->GetName() << endl;
                                       param->SetVarType(type);
                                       current_scope->PushTempProcParams(param);
                                   }
