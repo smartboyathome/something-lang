@@ -55,11 +55,11 @@ void Procedure::SetReturnType(Variable* data)
 string Procedure::ToString() const {
     
                     // I am not sure that this is the way we SHOULD do this...
-    string s = "\n";
+    /*string s = "\n";
     for (int x = 0; x < parameters.size(); x++) {
-        s += ( "   " + parameters[x]->GetName() + " " + parameters[x]->ToString() + "\n");
-    }
-    return s;
+        s += ( "xxx" + parameters[x]->GetName() + " " + parameters[x]->ToString() + "\n");
+    }*/
+    return "";
 }
 
 // Return a C-formatted string representation of this object

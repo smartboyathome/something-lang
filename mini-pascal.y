@@ -364,6 +364,15 @@ Type               :  yident
                           // only one range.
                           Range range = current_scope->PopTempRanges();
                           array->AddDimension(range);
+                          switch(range.rangeType)
+                          {
+                              case(AcceptedTypes::CHAR):
+                                  array->SetArrayType((VariableType*)current_scope->Get("char"));
+                                  break;
+                              case(AcceptedTypes::INT):
+                                  array->SetArrayType((VariableType*)current_scope->Get("integer"));
+                                  break;
+                          }
                           current_scope->PushTempTypes(array);
                       }
                    ;
@@ -488,7 +497,7 @@ Assignment         :  Designator  yassign Expression
                               yyerror(("NOT A VARIABLE '" + origtype->GetName() + "' is type '" + str_type + "'").c_str());
                               YYERROR;
                           }
-                          else if(origtype->GetType() == VARIABLE_TYPE)
+                          else if(origtype->GetType() == VARIABLE_TYPE) // Yes, this is sort of a hack since designator *shouldn't* return a type, but it does sometimes.
                           {
                               VariableType* origvartype = (VariableType*)origtype;
                               if(var->GetVarType()->GetEnumType() != origvartype->GetEnumType())
