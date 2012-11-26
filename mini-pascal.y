@@ -21,7 +21,7 @@ extern "C" char* yytext;
 extern string s; // This is the metadata, such a s an int or string value.
 extern int line_num; // And this is the line number that flex is on.
 void yyerror(const char *s) {
-    cout << "ERROR: " << s << " on line " << line_num << endl;
+    cout << "ERROR: " << s << " on line " << line_num << " with token " << yytext << endl;
 }
 extern "C" int yyparse();
 GlobalScope global_scope;
@@ -954,6 +954,11 @@ Setvalue           :  yleftbracket ElementList  yrightbracket
                           current_scope->PushTempTypes(array);
                       }
                    |  yleftbracket yrightbracket
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          ArrayType* array = new ArrayType("");
+                          current_scope->PushTempTypes(array);
+                      }
                    ;
 ElementList        :  Element  
                    |  ElementList  ycomma  Element
