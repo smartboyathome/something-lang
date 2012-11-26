@@ -31,6 +31,7 @@ private:
     VarTypes::Type var_type;
 };
 
+// IntegerType ----------------------------------------------------------------
 class IntegerType : public VariableType
 {
 public:
@@ -45,6 +46,7 @@ private:
     int value;
 };
 
+// BooleanType ----------------------------------------------------------------
 class BooleanType : public VariableType
 {
 public:
@@ -62,6 +64,7 @@ private:
     bool value;
 };
 
+// RealType -------------------------------------------------------------------
 class RealType : public VariableType
 {
 public:
@@ -77,6 +80,7 @@ private:
     double value;
 };
 
+// StringType -----------------------------------------------------------------
 class StringType : public VariableType
 {
 public:

@@ -16,16 +16,18 @@ Pointer::Pointer(const string name) : VariableType(name, VarTypes::POINTER)
 // Destructor
 Pointer::~Pointer() {}
 
-// SetObjectPtr
+// SetTypePtr
 void Pointer::SetTypePtr(VariableType *type) {
     my_type = type;
 }
 
+// GetTypePtr
 VariableType* Pointer::GetTypePtr()
 {
     return my_type;
 }
 
+// GetTypeIdentifier
 string Pointer::GetTypeIdentifier()
 {
     return type_identifier;

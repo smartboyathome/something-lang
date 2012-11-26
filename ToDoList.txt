@@ -1,0 +1,17 @@
+TODO List / List of greviances:
+
+* Item - The issue.
+- The test file that exhibits it.
+[The status of the issue.]
+
+* Set - When defined is of type nil. May want to define a set's range as simply being of type integer.
+- set.p
+[To do...]
+
+* Designator - 
+- set.p, add.p
+[To do...]
+
+* Procedures - Parameters defined are not properly put into the scope of a procedure. Look at "OneFormalParam" in the y file.
+- set.p, add.p
+[To do...]
