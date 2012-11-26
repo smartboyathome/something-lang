@@ -473,7 +473,7 @@ Assignment         :  Designator  yassign Expression
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           Variable* var = current_scope->PopTempExpressions();
                           MetaType* origtype = current_scope->PopTempDesignators();
-                          if(origtype->GetType() != VARIABLE)
+                          if(origtype->GetType() != VARIABLE && origtype->GetType() != VARIABLE_TYPE)
                           {
                               string str_type = "";
                               switch(origtype->GetType())
@@ -488,6 +488,15 @@ Assignment         :  Designator  yassign Expression
                               yyerror(("NOT A VARIABLE '" + origtype->GetName() + "' is type '" + str_type + "'").c_str());
                               YYERROR;
                           }
+                          else if(origtype->GetType() == VARIABLE_TYPE)
+                          {
+                              VariableType* origvartype = (VariableType*)origtype;
+                              if(var->GetVarType()->GetEnumType() != origvartype->GetEnumType())
+                              {
+                                  yyerror(("Var Types DO NOT MATCH " + origtype->GetName() + " is of type " + VarTypes::ToString(origvartype->GetEnumType()) + " not type " + VarTypes::ToString(var->GetVarType()->GetEnumType())).c_str());
+                                  YYERROR;
+                              }
+                          }
                           else
                           {
                               Variable* origvar = (Variable*)origtype;
@@ -495,10 +504,6 @@ Assignment         :  Designator  yassign Expression
                               {
                                   yyerror(("VAR TYPES DO NOT MATCH " + origtype->GetName() + " is of type " + VarTypes::ToString(origvar->GetVarType()->GetEnumType()) + " not type " + VarTypes::ToString(var->GetVarType()->GetEnumType())).c_str());
                                   YYERROR;
-                              }
-                              else
-                              {
-                                  origvar->SetVarType(var->GetVarType());
                               }
                           }
                       }
