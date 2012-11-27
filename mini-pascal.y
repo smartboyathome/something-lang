@@ -89,55 +89,8 @@ IdentList          :  yident
 /**************************  Declarations section ***************************/
 
 Block              :  Declarations  ybegin
-                      {
-                          LocalScope* current_scope = global_scope.GetCurrentScope();
-                          if (!current_scope->AllTempsEmpty())
-                          {
-                              stringstream ss;
-                              ss << "UNDEFINED:" << endl;
-                              while(!current_scope->TempVarsEmpty())
-                              {
-                                  Variable* var = current_scope->PopTempVars();
-                                  ss << "VAR " << var->GetName() << endl;
-                                  delete var;
-                              }
-                              while(!current_scope->TempStringsEmpty())
-                              {
-                                  ss << "STRING " << current_scope->PopTempStrings() << endl;
-                              }
-                              while(!current_scope->TempTypesEmpty())
-                              {
-                                  VariableType* type = current_scope->PopTempTypes();
-                                  ss << "TYPE " << type->GetName() << endl;
-                                  delete type;
-                              }
-                              while(!current_scope->TempIntsEmpty())
-                              {
-                                  ss << "INT " << current_scope->PopTempInts() << endl;
-                              }
-                              while(!current_scope->TempRangesEmpty())
-                              {
-                                  Range range = current_scope->PopTempRanges();
-                                  ss << "RANGE " << range.ToString() << endl;
-                              }
-                              yyerror(ss.str().c_str());
-                              YYERROR;
-                          }
-                          else
-                          {
-                              global_scope.CreateNewScope();
-                              LocalScope* new_scope = global_scope.GetCurrentScope();
-                              while(!current_scope->TempProcParamsEmpty())
-                              {
-                                  Variable* param = current_scope->PopTempProcParams();
-                                  new_scope->Insert(param->GetName(), param);
-                              }
-                          }
-                      }
+                      
                       StatementSequence  yend
-                      {
-                          global_scope.PopCurrentScope();
-                      }
                    ;
 Declarations       :  ConstantDefBlock
                       TypeDefBlock
@@ -1028,7 +981,56 @@ SubprogDeclList    :  /*** empty ***/
                    |  SubprogDeclList ProcedureDecl ysemicolon  
                    |  SubprogDeclList FunctionDecl ysemicolon
                    ;
-ProcedureDecl      :  ProcedureHeading  ysemicolon  Block 
+ProcedureDecl      :  ProcedureHeading  ysemicolon
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          if (!current_scope->AllTempsEmpty())
+                          {
+                              stringstream ss;
+                              ss << "UNDEFINED:" << endl;
+                              while(!current_scope->TempVarsEmpty())
+                              {
+                                  Variable* var = current_scope->PopTempVars();
+                                  ss << "VAR " << var->GetName() << endl;
+                                  delete var;
+                              }
+                              while(!current_scope->TempStringsEmpty())
+                              {
+                                  ss << "STRING " << current_scope->PopTempStrings() << endl;
+                              }
+                              while(!current_scope->TempTypesEmpty())
+                              {
+                                  VariableType* type = current_scope->PopTempTypes();
+                                  ss << "TYPE " << type->GetName() << endl;
+                                  delete type;
+                              }
+                              while(!current_scope->TempIntsEmpty())
+                              {
+                                  ss << "INT " << current_scope->PopTempInts() << endl;
+                              }
+                              while(!current_scope->TempRangesEmpty())
+                              {
+                                  Range range = current_scope->PopTempRanges();
+                                  ss << "RANGE " << range.ToString() << endl;
+                              }
+                              yyerror(ss.str().c_str());
+                              YYERROR;
+                          }
+                          else
+                          {
+                              global_scope.CreateNewScope();
+                              LocalScope* new_scope = global_scope.GetCurrentScope();
+                              while(!current_scope->TempProcParamsEmpty())
+                              {
+                                  Variable* param = current_scope->PopTempProcParams();
+                                  new_scope->Insert(param->GetName(), param);
+                              }
+                          }
+                      }
+                      Block 
+                      {
+                          global_scope.PopCurrentScope();
+                      }
                    ;
 FunctionDecl       :  FunctionHeading  ycolon  yident
                       {
@@ -1049,9 +1051,53 @@ FunctionDecl       :  FunctionHeading  ycolon  yident
                               func->SetReturnType(retval);
                               current_scope->PushTempProcParams(retval);
                           }
-                          
+                          if (!current_scope->AllTempsEmpty())
+                          {
+                              stringstream ss;
+                              ss << "UNDEFINED:" << endl;
+                              while(!current_scope->TempVarsEmpty())
+                              {
+                                  Variable* var = current_scope->PopTempVars();
+                                  ss << "VAR " << var->GetName() << endl;
+                                  delete var;
+                              }
+                              while(!current_scope->TempStringsEmpty())
+                              {
+                                  ss << "STRING " << current_scope->PopTempStrings() << endl;
+                              }
+                              while(!current_scope->TempTypesEmpty())
+                              {
+                                  VariableType* type = current_scope->PopTempTypes();
+                                  ss << "TYPE " << type->GetName() << endl;
+                                  delete type;
+                              }
+                              while(!current_scope->TempIntsEmpty())
+                              {
+                                  ss << "INT " << current_scope->PopTempInts() << endl;
+                              }
+                              while(!current_scope->TempRangesEmpty())
+                              {
+                                  Range range = current_scope->PopTempRanges();
+                                  ss << "RANGE " << range.ToString() << endl;
+                              }
+                              yyerror(ss.str().c_str());
+                              YYERROR;
+                          }
+                          else
+                          {
+                              global_scope.CreateNewScope();
+                              LocalScope* new_scope = global_scope.GetCurrentScope();
+                              while(!current_scope->TempProcParamsEmpty())
+                              {
+                                  Variable* param = current_scope->PopTempProcParams();
+                                  new_scope->Insert(param->GetName(), param);
+                              }
+                          }
                       }
                       ysemicolon  Block
+                      {
+                          global_scope.PopCurrentScope();
+                      }
                    ;
 ProcedureHeading   :  yprocedure  yident  
                       {

@@ -31,7 +31,7 @@ begin
       Square(3, squareresult);
       write(squareresult);
    end;
-   if not (3 in morestuff) then
+   else 3 in morestuff then
       writeln("3 not in the set");
 
    if 4 in morestuff then
