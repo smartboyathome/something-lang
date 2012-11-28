@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <string>
 #include <stdio.h>
@@ -13,6 +14,8 @@ extern string s; // This is the metadata, such a s an int or string value.
 extern int line_num; // And this is the line number that flex is on.
 extern "C" int yyparse(); // yyparse is the main bison/yacc function.
 extern "C" int yydebug;
+
+ostream* output_file;
 
 // A simple class that just hashes the tokens to strings using an array and
 // some basic arithmetic. You can get a string from a token using the getString
@@ -120,24 +123,50 @@ string strip_whitespace(string s)
 };
 
 int main(int argc, char* argv[]) {
-    if ( argc > 2 ) // argc should not be greater than 2 for correct execution
+    if ( argc > 3 ) // argc should not be greater than 2 for correct execution
     {
         // We print argv[0] assuming it is the program name
-        cout<<"usage: "<< argv[0] <<" [<filename>]\n";
+        cout<<"usage: "<< argv[0] <<" [<input-filename> [<output-filename>]]\n";
         return -1; // exit code -1 means that an error has occured.
     }
-    else if(argc == 2) // If there are no arguments, STDIN is used instead.
+    else if(argc == 3) // If there are two arguments, the first is input the second is output
     {
         // open a file handle to a particular file:
-        FILE *myfile = fopen(argv[1], "r");
+        FILE *infile = fopen(argv[1], "r");
         // make sure it's valid:
-        if (!myfile) {
+        if (!infile) {
             // You haven't given us a file we can read from! ABORT! ABORT!
             cout << "I can't open " << argv[1] << "!" << endl;
             return -1;
         }
         // set lex to read from it instead of defaulting to STDIN:
-        yyin = myfile;
+        yyin = infile;
+        // open a file handle to a particular file:
+        output_file = new ofstream(argv[2]);
+        // make sure it's valid:
+        if (!((ofstream*)output_file)->is_open()) {
+            // You haven't given us a file we can read from! ABORT! ABORT!
+            cout << "I can't open " << argv[2] << "!" << endl;
+            return -1;
+        }
+    }
+    else if(argc == 2) // If there are no arguments, STDIN is used instead.
+    {
+        // open a file handle to a particular file:
+        FILE *infile = fopen(argv[1], "r");
+        // make sure it's valid:
+        if (!infile) {
+            // You haven't given us a file we can read from! ABORT! ABORT!
+            cout << "I can't open " << argv[1] << "!" << endl;
+            return -1;
+        }
+        // set lex to read from it instead of defaulting to STDIN:
+        yyin = infile;
+        output_file = &std::cout;
+    }
+    else
+    {
+        output_file = &cout;
     }
     // lex through the input:
     HashedTokenStrings hash; // We only want to initialize the hash table once.

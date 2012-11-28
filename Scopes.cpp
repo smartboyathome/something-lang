@@ -4,6 +4,8 @@
 #include "IdentTypes/Procedure.h"
 #include "IdentTypes/Pointer.h"
 #include <sstream>
+#include <fstream>
+extern ostream* output_file;
 using namespace std;
 
 GlobalScope::GlobalScope()
@@ -148,7 +150,7 @@ bool LocalScope::Insert(string identifier, MetaType* type)
     local_scope.insert(pair<string, MetaType*>(identifier, type));
     if(scope_level != -1) // If this isn't the S.I.T.
     {
-        cout << make_indent() << identifier;
+        *output_file << make_indent() << identifier;
         string output = type->ToString();
         bool is_multiline = false;
         for(int i = 0; i < output.length(); ++i)
@@ -164,11 +166,11 @@ bool LocalScope::Insert(string identifier, MetaType* type)
             istringstream ss(type->ToString());
             string output_line;
             while(getline(ss, output_line))
-                cout << make_indent() << " " << output_line << endl;
+                *output_file << make_indent() << " " << output_line << endl;
         }
         else
         {
-            cout << " " << output << endl;
+            *output_file << " " << output << endl;
         }
     }
     return true;
