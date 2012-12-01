@@ -1,7 +1,6 @@
 // Procedure.cpp
 #include "Procedure.h"
-#include "VariableType.h"
-#include "Pointer.h"
+
 
 // Constructor
 Procedure::Procedure(const string name) : MetaType(name, PROCEDURE)
