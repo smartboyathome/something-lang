@@ -1,10 +1,5 @@
 #include "Scopes.h"
-#include "IdentTypes/MetaType.h"
-#include "IdentTypes/VariableType.h"
-#include "IdentTypes/Procedure.h"
-#include "IdentTypes/Pointer.h"
-#include <sstream>
-#include <fstream>
+
 extern ostream* output_file;
 using namespace std;
 

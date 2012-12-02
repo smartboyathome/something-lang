@@ -1,9 +1,5 @@
 // Array.cpp
 #include "Array.h"
-#include "Pointer.h"
-#include <sstream>
-#include <math.h>
-
 
 Range::Range() : MetaType("", RANGE)
 {

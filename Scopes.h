@@ -7,6 +7,9 @@
 #include "IdentTypes/VariableType.h"
 #include "IdentTypes/Array.h"
 #include "IdentTypes/Pointer.h"
+#include "IdentTypes/Procedure.h"
+#include <sstream>
+#include <fstream>
 using namespace std;
 
 class LocalScope

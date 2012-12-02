@@ -3,6 +3,7 @@
 #include "MetaType.h"
 #include "Variable.h"
 #include "VariableType.h"
+#include "Pointer.h"
 #include <vector>
 
 class Procedure:public MetaType {

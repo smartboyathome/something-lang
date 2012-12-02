@@ -2,6 +2,9 @@
 #pragma once
 #include "MetaType.h"
 #include "VariableType.h"
+#include "Pointer.h"
+#include <sstream>
+#include <math.h>
 #include <vector>
 using namespace std;
 
