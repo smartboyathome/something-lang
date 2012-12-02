@@ -18,6 +18,8 @@ enum MetaTypeType
     RECORD
 };
 
+string MetaTypeTypeToString(MetaTypeType);
+
 class MetaType {
 public:
     // Constructor takes the name and a MetaTypeType

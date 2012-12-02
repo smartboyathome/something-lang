@@ -11,6 +11,7 @@
 #include "IdentTypes/Variable.h"
 #include "IdentTypes/Record.h"
 #include "IdentTypes/Array.h"
+#include "GrammarUtils.h"
 using namespace std;
 #define YYDEBUG 1
 
@@ -25,6 +26,53 @@ void yyerror(const char *s) {
 }
 extern "C" int yyparse();
 GlobalScope global_scope;
+
+void CreateNewScope()
+{
+    LocalScope* current_scope = global_scope.GetCurrentScope();
+    if (!current_scope->AllTempsEmpty())
+    {
+        stringstream ss;
+        ss << "UNDEFINED:" << endl;
+        while(!current_scope->TempVarsEmpty())
+        {
+            Variable* var = current_scope->PopTempVars();
+            ss << "VAR " << var->GetName() << endl;
+            delete var;
+        }
+        while(!current_scope->TempStringsEmpty())
+        {
+            ss << "STRING " << current_scope->PopTempStrings() << endl;
+        }
+        while(!current_scope->TempTypesEmpty())
+        {
+            VariableType* type = current_scope->PopTempTypes();
+            ss << "TYPE " << type->GetName() << endl;
+            delete type;
+        }
+        while(!current_scope->TempIntsEmpty())
+        {
+            ss << "INT " << current_scope->PopTempInts() << endl;
+        }
+        while(!current_scope->TempRangesEmpty())
+        {
+            Range range = current_scope->PopTempRanges();
+            ss << "RANGE " << range.ToString() << endl;
+        }
+        yyerror(ss.str().c_str());
+    }
+    else
+    {
+        global_scope.CreateNewScope();
+        LocalScope* new_scope = global_scope.GetCurrentScope();
+        while(!current_scope->TempProcParamsEmpty())
+        {
+            Variable* param = current_scope->PopTempProcParams();
+            new_scope->Insert(param->GetName(), param);
+        }
+    }
+};
+
 %}
 
 %start CompilationUnit
@@ -109,24 +157,10 @@ TypeDefBlock       :  /*** empty ***/
                           {
                               Pointer* pointer = current_scope->PopTempPointers();
                               string identifier = pointer->GetTypeIdentifier();
-                              if(!current_scope->IsInScope(identifier))
+                              if(IsInScopeCheck(current_scope, identifier)() && IsMetatypeCheck(current_scope->Get(identifier), VARIABLE_TYPE)())
                               {
-                                  yyerror("This is not the type you're looking for...");
-                                  YYERROR;
-                              }
-                              else
-                              {
-                                  MetaType* var = current_scope->Get(identifier);
-                                  if(var->GetType() != VARIABLE_TYPE)
-                                  {
-                                      yyerror("It's a trap, not a type!");
-                                      YYERROR;
-                                  }
-                                  else
-                                  {
-                                      VariableType* type = (VariableType*)var;
-                                      pointer->SetTypePtr(type);
-                                  }
+                                  VariableType* type = (VariableType*)current_scope->Get(identifier);
+                                  pointer->SetTypePtr(type);
                               }
                           }
                       }
@@ -148,12 +182,7 @@ ConstantDef        :  yident
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           string identifier = current_scope->PopTempStrings();
-                          if(current_scope->IsInLocalScope(identifier))
-                          {
-                              yyerror(("REDEFINED: " + identifier).c_str());
-                              YYERROR;
-                          }
-                          else
+                          if(NotIsInScopeCheck(current_scope, identifier)())
                           {
                               Variable* constvar = new Variable(identifier);
                               constvar->SetVarType(current_scope->PopTempConstants());
@@ -170,12 +199,7 @@ TypeDef            :  yident
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           string identifier = current_scope->PopTempStrings();
-                          if(current_scope->IsInLocalScope(identifier))
-                          {
-                              yyerror(("REDEFINED: " + identifier).c_str());
-                              YYERROR;
-                          }
-                          else
+                          if(NotIsInLocalScopeCheck(current_scope, identifier)())
                           {
                               VariableType* type = current_scope->PopTempTypes();
                               type->SetName(identifier);
@@ -187,12 +211,7 @@ TypeDef            :  yident
                                   if(current_scope->IsInLocalScope(type_identifier))
                                   {
                                       MetaType* ptr_type = current_scope->GetFromLocal(type_identifier);
-                                      if(ptr_type->GetType() != VARIABLE_TYPE)
-                                      {
-                                          yyerror(("NOT A TYPE " + type_identifier).c_str());
-                                          YYERROR;
-                                      }
-                                      else
+                                      if(IsMetatypeCheck(ptr_type, VARIABLE_TYPE)())
                                       {
                                           ptr->SetTypePtr((VariableType*)ptr_type);
                                       }
@@ -245,25 +264,10 @@ ConstExpression    :  UnaryOperator ConstFactor
 ConstFactor        :  yident
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
-                          if(!current_scope->IsInScope(s) && !current_scope->IsInScope(s+"_"))
-                          {
-                              yyerror(("UNDEFINED: " + s).c_str());
-                              YYERROR;
-                          }
-                          else 
+                          if(IsInScopeCheck(current_scope, s)())
                           {
                               MetaType* var = current_scope->IsInScope(s) ? current_scope->Get(s) : current_scope->Get(s+"_");
-                              if(var->GetType() != VARIABLE)
-                              {
-                                  yyerror(("NOT A TYPE OBJECT: " + s).c_str());
-                                  YYERROR;
-                              }
-                              else if(((Variable*)var)->GetVarType()->GetEnumType() != VarTypes::INTEGER)
-                              {
-                                  yyerror(("NOT OF TYPE INTEGER " + s).c_str());
-                                  YYERROR;
-                              }
-                              else
+                              if(IsMetatypeCheck(var, VARIABLE)() && IsVarTypeCheck(var, VarTypes::INTEGER)())
                               {
                                   IntegerType* Int = (IntegerType*)((Variable*)var)->GetVarType();
                                   global_scope.GetCurrentScope()->PushTempInts(Int->GetValue());
@@ -284,21 +288,10 @@ ConstFactor        :  yident
 Type               :  yident
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
-                          if(!current_scope->IsInScope(s) && !current_scope->IsInScope(s+"_"))
+                          if(IsInScopeCheck(current_scope, s)())
                           {
-                              yyerror(("UNDEFINED: " + s).c_str());
-                              YYERROR;
-                          }
-                          else
-                          {
-                              LocalScope* current_scope = global_scope.GetCurrentScope();
                               MetaType* var = current_scope->IsInScope(s) ? current_scope->Get(s) : current_scope->Get(s+"_");
-                              if(var->GetType() != VARIABLE_TYPE)
-                              {
-                                  yyerror(("NOT A TYPE " + s).c_str());
-                                  YYERROR;
-                              }
-                              else
+                              if(IsMetatypeCheck(var, VARIABLE_TYPE)())
                               {
                                   current_scope->PushTempTypes((VariableType*) var);
                               }
@@ -369,7 +362,6 @@ Subrange           :  ConstFactor ydotdot ConstFactor
                           if (a.length() != 1 || b.length() != 1)
                           {
                               yyerror(("BAD SUBRANGE: '" + a + "'..'" + b + "'").c_str());
-                              YYERROR;
                           }
                           else
                           {
@@ -433,37 +425,18 @@ Assignment         :  Designator  yassign Expression
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           Variable* var = current_scope->PopTempExpressions();
                           MetaType* origtype = current_scope->PopTempDesignators();
-                          if(origtype->GetType() != VARIABLE && origtype->GetType() != VARIABLE_TYPE)
+                          MetaTypeType types[] = {VARIABLE, VARIABLE_TYPE};
+                          if(IsOneOfMetatypesCheck(origtype, 2, types)())
                           {
-                              string str_type = "";
-                              switch(origtype->GetType())
+                              if(origtype->GetType() == VARIABLE_TYPE) // Yes, this is sort of a hack since designator *shouldn't* return a type, but it does sometimes.
                               {
-                                  case VARIABLE_TYPE:
-                                      str_type = "VariableType";
-                                      break;
-                                  case PROCEDURE:
-                                      str_type = "Procedure";
-                                      break;
+                                  VariableType* origvartype = (VariableType*)origtype;
+                                  IsVarTypeCheck(var, origvartype->GetEnumType())();
                               }
-                              yyerror(("NOT A VARIABLE '" + origtype->GetName() + "' is type '" + str_type + "'").c_str());
-                              YYERROR;
-                          }
-                          else if(origtype->GetType() == VARIABLE_TYPE) // Yes, this is sort of a hack since designator *shouldn't* return a type, but it does sometimes.
-                          {
-                              VariableType* origvartype = (VariableType*)origtype;
-                              if(var->GetVarType()->GetEnumType() != origvartype->GetEnumType())
+                              else
                               {
-                                  yyerror(("Var Types DO NOT MATCH " + origtype->GetName() + " is of type " + VarTypes::ToString(origvartype->GetEnumType()) + " not type " + VarTypes::ToString(var->GetVarType()->GetEnumType())).c_str());
-                                  YYERROR;
-                              }
-                          }
-                          else
-                          {
-                              Variable* origvar = (Variable*)origtype;
-                              if(var->GetVarType()->GetEnumType() != origvar->GetVarType()->GetEnumType())
-                              {
-                                  yyerror(("VAR TYPES DO NOT MATCH " + origtype->GetName() + " is of type " + VarTypes::ToString(origvar->GetVarType()->GetEnumType()) + " not type " + VarTypes::ToString(var->GetVarType()->GetEnumType())).c_str());
-                                  YYERROR;
+                                  Variable* origvar = (Variable*)origtype;
+                                  IsVarTypeCheck(var, origvar->GetVarType()->GetEnumType())();
                               }
                           }
                       }
@@ -471,37 +444,19 @@ Assignment         :  Designator  yassign Expression
 ProcedureCall      :  yident 
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
-                          if(!current_scope->IsInScope(s) && !current_scope->IsInScope(s+"_"))
-                          {
-                               yyerror(("UNDEFINED " + s).c_str());
-                               YYERROR;
-                          }
-                          else
+                          if(IsInScopeCheck(current_scope, s)())
                           {
                               MetaType* proc = current_scope->IsInScope(s) ? current_scope->Get(s) : current_scope->Get(s+"_");
-                              if(proc->GetType() != PROCEDURE)
-                              {
-                                  yyerror("NOT A PROCEDURE");
-                                  YYERROR;
-                              }
+                              IsMetatypeCheck(proc, PROCEDURE)();
                           }
                       }
                    |  yident
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
-                          if(!current_scope->IsInScope(s) && !current_scope->IsInScope(s+"_"))
-                          {
-                              yyerror(("UNDEFINED " + s).c_str());
-                              YYERROR;
-                          }
-                          else
+                          if(IsInScopeCheck(current_scope, s)())
                           {
                               MetaType* proc = current_scope->IsInScope(s) ? current_scope->Get(s) : current_scope->Get(s+"_");
-                              if(proc->GetType() != PROCEDURE)
-                              {
-                                  yyerror("NOT A PROCEDURE");
-                                  YYERROR;
-                              }
+                              IsMetatypeCheck(proc, PROCEDURE)();
                           }
                       }
                       ActualParameters
@@ -510,11 +465,7 @@ IfStatement        :  yif  Expression
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           Variable* var = current_scope->PopTempExpressions();
-                          if(var->GetVarType()->GetEnumType() != VarTypes::BOOLEAN)
-                          {
-                              yyerror("NOT A BOOLEAN");
-                              YYERROR;
-                          }
+                          IsVarTypeCheck(var, VarTypes::BOOLEAN);
                       }
                       ythen  Statement  ElsePart
                    ;
@@ -535,11 +486,7 @@ WhileStatement     :  ywhile  Expression
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           Variable* var = current_scope->PopTempExpressions();
-                          if(var->GetVarType()->GetEnumType() != VarTypes::BOOLEAN)
-                          {
-                              yyerror("NOT A BOOLEAN");
-                              YYERROR;
-                          }
+                          IsVarTypeCheck(var, VarTypes::BOOLEAN);
                       }
                       ydo  Statement  
                    ;
@@ -557,23 +504,10 @@ WhichWay           :  yto  |  ydownto
 Designator         :  yident
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
-                          if(!current_scope->IsInScope(s) && !current_scope->IsInScope(s+"_"))
-                          {
-                              yyerror(("DESIGNATOR NOT IN SCOPE "+s).c_str());
-                              YYERROR;
-                          }
-                          else
+                          if(IsInScopeCheck(current_scope, s)())
                           {
                               MetaType* metatype = current_scope->IsInScope(s) ? current_scope->Get(s) : current_scope->Get(s+"_");
-                              if (metatype == NULL)
-                              {
-                                  yyerror("ERROR! NULL REFERENCE TO A DESIGNATOR!");
-                                  YYERROR;
-                              }
-                              else
-                              {
-                                  current_scope->PushTempDesignators(metatype);
-                              }
+                              current_scope->PushTempDesignators(metatype);
                           }
                       }
                       DesignatorStuff 
@@ -589,53 +523,16 @@ theDesignatorStuff :  ydot yident
                           {
                               metatype = ((Variable*)metatype)->GetVarType();
                           }
-                          if(metatype->GetType() != VARIABLE_TYPE)
+                          if(IsMetatypeCheck(metatype, VARIABLE_TYPE)() && IsVarTypeCheck(metatype, VarTypes::RECORD)())
                           {
-                              string str_type;
-                              switch(metatype->GetType())
+                              Record* record = (Record*)metatype;
+                              if(!record->HasMember(s))
                               {
-                                  case(VARIABLE):
-                                      str_type = "VARIABLE";
-                                      break;
-                                  case(PROCEDURE):
-                                      str_type = "PROCEDURE";
-                                      break;
-                                  case(RANGE):
-                                      str_type = "RANGE";
-                                      break;
-                                  case(POINTER):
-                                      str_type = "POINTER";
-                                      break;
-                                  case(RECORD):
-                                      str_type = "RECORD";
-                                      break;
-                                  default:
-                                      str_type = "IDFK";
-                                      break;
-                              }
-                              yyerror(("NOT A TYPE " + metatype->GetName() + " " + str_type).c_str());
-                              YYERROR;
-                          }
-                          else
-                          {
-                              VariableType* type = (VariableType*)metatype;
-                              if(type->GetEnumType() != VarTypes::RECORD)
-                              {
-                                  yyerror(("NOT A RECORD " + type->GetName() + " is a " + VarTypes::ToString(type->GetEnumType())).c_str());
-                                  YYERROR;
+                                  yyerror(("RECORD '" + record->GetName() + "' DOES NOT CONTAIN A MEMBER '" + s + "'").c_str());
                               }
                               else
                               {
-                                  Record* record = (Record*)type;
-                                  if(!record->HasMember(s))
-                                  {
-                                      yyerror(("RECORD '" + record->GetName() + "' DOES NOT CONTAIN A MEMBER '" + s + "'").c_str());
-                                      YYERROR;
-                                  }
-                                  else
-                                  {
-                                      current_scope->PushTempDesignators(record->GetMember(s));
-                                  }
+                                  current_scope->PushTempDesignators(record->GetMember(s));
                               }
                           }
                           
@@ -648,61 +545,10 @@ theDesignatorStuff :  ydot yident
                           {
                               metatype = ((Variable*)metatype)->GetVarType();
                           }
-                          if(metatype->GetType() != VARIABLE_TYPE)
+                          if(IsMetatypeCheck(metatype, VARIABLE_TYPE)() && IsVarTypeCheck(metatype, VarTypes::ARRAY)())
                           {
-                              yyerror(("NOT A TYPE " + metatype->GetName()).c_str());
-                              YYERROR;
-                          }
-                          else
-                          {
-                              VariableType* type = (VariableType*)metatype;
-                              if(type->GetEnumType() != VarTypes::ARRAY)
-                              {
-                                  yyerror(("NOT AN ARRAY " + type->GetName()).c_str());
-                                  YYERROR;
-                              }
-                              else
-                              {
-                                  ArrayType* array = (ArrayType*)type;
-                                  /*stack<Variable*> reversed;
-                                  while(!current_scope->TempExpressionsEmpty())
-                                  {
-                                      Variable* var = current_scope->PopTempExpressions();
-                                      if(var->GetVarType()->GetEnumType() != VarTypes::INTEGER && var->GetVarType()->GetEnumType() != VarTypes::STRING)
-                                      {
-                                          //cout << "Type is " << VarTypes::ToString(var->GetVarType()->GetEnumType()) << endl;
-                                          current_scope->PushTempVars(var);
-                                          break;
-                                      }
-                                      reversed.push(var);
-                                  }
-                                  if(reversed.size() != array->GetArrayDimensions())
-                                  {
-                                      stringstream ss;
-                                      ss << "WRONG NUMBER OF DIMENSIONS " << array->GetName();
-                                      ss << " passed in dimensions: " << reversed.size();
-                                      ss << " array dimensions: " << array->GetArrayDimensions();
-                                      yyerror(ss.str().c_str());
-                                      YYERROR;
-                                  }
-                                  else
-                                  {
-                                      while(!reversed.empty())
-                                      {
-                                          Variable* var = reversed.top();
-                                          reversed.pop();
-                                          VarTypes::Type var_type = var->GetVarType()->GetEnumType();
-                                          AcceptedTypes::Types array_type = array->GetAcceptedType();
-                                          if(!(var_type == VarTypes::INTEGER && array_type == AcceptedTypes::INT) ||
-                                             !(var_type == VarTypes::STRING && array_type == AcceptedTypes::CHAR))
-                                          {
-                                              yyerror("WRONG INDEX TYPE");
-                                              YYERROR;
-                                          }
-                                      }*/
-                                  current_scope->PushTempDesignators(array->GetArrayType());
-                                  //}
-                              }
+                              ArrayType* array = (ArrayType*)metatype;
+                              current_scope->PushTempDesignators(array->GetArrayType());
                           }
                       }
                    |  ycaret
@@ -713,23 +559,9 @@ theDesignatorStuff :  ydot yident
                           {
                               metatype = ((Variable*)metatype)->GetVarType();
                           }
-                          if(metatype->GetType() != VARIABLE_TYPE)
+                          if(IsMetatypeCheck(metatype, VARIABLE_TYPE)() && IsVarTypeCheck(metatype, VarTypes::POINTER)())
                           {
-                              yyerror(("NOT A TYPE " + metatype->GetName()).c_str());
-                              YYERROR;
-                          }
-                          else
-                          {
-                              VariableType* type = (VariableType*)metatype;
-                              if(type->GetEnumType() != VarTypes::POINTER)
-                              {
-                                  yyerror(("NOT A POINTER " + type->GetName()).c_str());
-                                  YYERROR;
-                              }
-                              else
-                              {
-                                  current_scope->PushTempDesignators(((Pointer*)type)->GetTypePtr());
-                              }
+                              current_scope->PushTempDesignators(((Pointer*)metatype)->GetTypePtr());
                           }
                       }
                    ;
@@ -767,12 +599,7 @@ TermExpr           :  Term
                               Variable* oldvar = current_scope->PopTempVars();
                               VarTypes::Type newvartype = newvar->GetVarType()->GetEnumType();
                               VarTypes::Type oldvartype = oldvar->GetVarType()->GetEnumType();
-                              if(newvar->GetVarType()->GetEnumType() != oldvar->GetVarType()->GetEnumType())
-                              {
-                                  yyerror(("TYPES DO NOT MATCH newvar is " + VarTypes::ToString(newvar->GetVarType()->GetEnumType()) + " oldvar is " + VarTypes::ToString(oldvar->GetVarType()->GetEnumType())).c_str());
-                                  YYERROR;
-                              }
-                              else
+                              if(IsVarTypeCheck(newvar, oldvar->GetVarType()->GetEnumType())())
                               {
                                   current_scope->PushTempVars(newvar);
                               }
@@ -800,12 +627,7 @@ Term               :  Factor
                               Variable* oldvar = current_scope->PopTempVars();
                               VarTypes::Type newvartype = newvar->GetVarType()->GetEnumType();
                               VarTypes::Type oldvartype = oldvar->GetVarType()->GetEnumType();
-                              if(newvar->GetVarType()->GetEnumType() != oldvar->GetVarType()->GetEnumType())
-                              {
-                                  yyerror(("TYPES DO NOT MATCH a = " + VarTypes::ToString(newvartype) + " b = " + VarTypes::ToString(oldvartype)).c_str());
-                                  YYERROR;
-                              }
-                              else
+                              if(IsVarTypeCheck(newvar, oldvar->GetVarType()->GetEnumType())())
                               {
                                   current_scope->PushTempVars(newvar);
                               }
@@ -833,13 +655,7 @@ Factor             :  ynumber
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           MetaType* var = current_scope->PopTempDesignators();
-                          if(var->GetType() == RANGE)
-                          {
-                              string str_type = var->GetType() == VARIABLE_TYPE ? "VARIABLE_TYPE" : "RANGE";
-                              yyerror(("BAD TYPE FOR OPERATION, " + var->GetName() + " is of type " + str_type).c_str());
-                              YYERROR;
-                          }
-                          else if(var->GetType() == VARIABLE_TYPE)
+                          if(var->GetType() == VARIABLE_TYPE)
                           {
                               current_scope->PushTempTypes((VariableType*)var);
                           }
@@ -851,10 +667,6 @@ Factor             :  ynumber
                           else if(var->GetType() == PROCEDURE)
                           {
                               current_scope->PushTempTypes(((Procedure*)var)->GetReturnType()->GetVarType());
-                          }
-                          else if(var->GetType() == POINTER)
-                          {
-                              current_scope->PushTempTypes(((Pointer*)var)->GetTypePtr()); // This will push null on NilType
                           }
                       }
                    |  yleftparen  Expression
@@ -881,20 +693,10 @@ Factor             :  ynumber
 FunctionCall       :  yident
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
-                          if(!current_scope->IsInScope(s) && !current_scope->IsInScope(s+"_"))
-                          {
-                              yyerror(("UNDEFINED PROCEDURE " + s).c_str());
-                              YYERROR;
-                          }
-                          else
+                          if(IsInScopeCheck(current_scope, s)())
                           {
                               MetaType* var = current_scope->IsInScope(s) ? current_scope->Get(s) : current_scope->Get(s+"_");
-                              if(var->GetType() != PROCEDURE)
-                              {
-                                  yyerror(("NON-PROCEDURAL OBJECT " + s).c_str());
-                                  YYERROR;
-                              }
-                              else
+                              if(IsMetatypeCheck(var, PROCEDURE)())
                               {
                                   current_scope->PushTempTypes(((Procedure*)var)->GetReturnType()->GetVarType());
                               }
@@ -942,7 +744,6 @@ Element            :  ConstExpression
                               if(temp_val.size() != 1)
                               {
                                   yyerror("STRING MUST BE 1 CHARACTER LONG!");
-                                  YYERROR;
                               }
                               else
                               {
@@ -954,12 +755,8 @@ Element            :  ConstExpression
                       {
                           VariableType* b = global_scope.GetCurrentScope()->PopTempConstants();
                           VariableType* a = global_scope.GetCurrentScope()->PopTempConstants();
-                          if(a->GetEnumType() != b->GetEnumType())
-                          {
-                              yyerror("Range types must match!");
-                              YYERROR;
-                          }
-                          else if(a->GetEnumType() == VarTypes::INTEGER)
+                          bool result = IsVarTypeCheck(a, b->GetEnumType())();
+                          if(result && a->GetEnumType() == VarTypes::INTEGER)
                           {
                               IntegerType* a_int = (IntegerType*)a;
                               IntegerType* b_int = (IntegerType*)b;
@@ -967,7 +764,7 @@ Element            :  ConstExpression
                               int b_val = b_int->GetValue();
                               global_scope.GetCurrentScope()->PushTempRanges(Range(a_val, b_val));
                           }
-                          else if(a->GetEnumType() == VarTypes::STRING)
+                          if(result && a->GetEnumType() == VarTypes::STRING)
                           {
                               StringType* a_str = (StringType*)a;
                               StringType* b_str = (StringType*)b;
@@ -976,7 +773,6 @@ Element            :  ConstExpression
                               if(a_val.size() != b_val.size() || a_val.size() != 1)
                               {
                                   yyerror("STRINGS MUST BE 1 CHARACTER LONG!");
-                                  YYERROR;
                               }
                               else
                               {
@@ -994,49 +790,7 @@ SubprogDeclList    :  /*** empty ***/
                    ;
 ProcedureDecl      :  ProcedureHeading  ysemicolon
                       {
-                          LocalScope* current_scope = global_scope.GetCurrentScope();
-                          if (!current_scope->AllTempsEmpty())
-                          {
-                              stringstream ss;
-                              ss << "UNDEFINED:" << endl;
-                              while(!current_scope->TempVarsEmpty())
-                              {
-                                  Variable* var = current_scope->PopTempVars();
-                                  ss << "VAR " << var->GetName() << endl;
-                                  delete var;
-                              }
-                              while(!current_scope->TempStringsEmpty())
-                              {
-                                  ss << "STRING " << current_scope->PopTempStrings() << endl;
-                              }
-                              while(!current_scope->TempTypesEmpty())
-                              {
-                                  VariableType* type = current_scope->PopTempTypes();
-                                  ss << "TYPE " << type->GetName() << endl;
-                                  delete type;
-                              }
-                              while(!current_scope->TempIntsEmpty())
-                              {
-                                  ss << "INT " << current_scope->PopTempInts() << endl;
-                              }
-                              while(!current_scope->TempRangesEmpty())
-                              {
-                                  Range range = current_scope->PopTempRanges();
-                                  ss << "RANGE " << range.ToString() << endl;
-                              }
-                              yyerror(ss.str().c_str());
-                              YYERROR;
-                          }
-                          else
-                          {
-                              global_scope.CreateNewScope();
-                              LocalScope* new_scope = global_scope.GetCurrentScope();
-                              while(!current_scope->TempProcParamsEmpty())
-                              {
-                                  Variable* param = current_scope->PopTempProcParams();
-                                  new_scope->Insert(param->GetName(), param);
-                              }
-                          }
+                          CreateNewScope();
                       }
                       Block 
                       {
@@ -1049,60 +803,14 @@ FunctionDecl       :  FunctionHeading  ycolon  yident
                           string func_name = current_scope->PopTempStrings();
                           Procedure* func = (Procedure*)current_scope->Get(func_name+"_");
                           MetaType* metatype = current_scope->Get(s);
-                          if(metatype->GetType() != VARIABLE_TYPE)
-                          {
-                              yyerror("Functions must return a type.");
-                              YYERROR;
-                          }
-                          else
+                          if(IsMetatypeCheck(metatype, VARIABLE_TYPE)())
                           {
                               Variable* retval = new Variable(func_name);
                               retval->SetVarType((VariableType*)metatype);
                               func->SetReturnType(retval);
                               current_scope->PushTempProcParams(retval);
                           }
-                          if (!current_scope->AllTempsEmpty())
-                          {
-                              stringstream ss;
-                              ss << "UNDEFINED:" << endl;
-                              while(!current_scope->TempVarsEmpty())
-                              {
-                                  Variable* var = current_scope->PopTempVars();
-                                  ss << "VAR " << var->GetName() << endl;
-                                  delete var;
-                              }
-                              while(!current_scope->TempStringsEmpty())
-                              {
-                                  ss << "STRING " << current_scope->PopTempStrings() << endl;
-                              }
-                              while(!current_scope->TempTypesEmpty())
-                              {
-                                  VariableType* type = current_scope->PopTempTypes();
-                                  ss << "TYPE " << type->GetName() << endl;
-                                  delete type;
-                              }
-                              while(!current_scope->TempIntsEmpty())
-                              {
-                                  ss << "INT " << current_scope->PopTempInts() << endl;
-                              }
-                              while(!current_scope->TempRangesEmpty())
-                              {
-                                  Range range = current_scope->PopTempRanges();
-                                  ss << "RANGE " << range.ToString() << endl;
-                              }
-                              yyerror(ss.str().c_str());
-                              YYERROR;
-                          }
-                          else
-                          {
-                              global_scope.CreateNewScope();
-                              LocalScope* new_scope = global_scope.GetCurrentScope();
-                              while(!current_scope->TempProcParamsEmpty())
-                              {
-                                  Variable* param = current_scope->PopTempProcParams();
-                                  new_scope->Insert(param->GetName(), param);
-                              }
-                          }
+                          CreateNewScope();
                       }
                       ysemicolon  Block
                       {
@@ -1112,15 +820,7 @@ FunctionDecl       :  FunctionHeading  ycolon  yident
 ProcedureHeading   :  yprocedure  yident  
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
-                          if(current_scope->IsInScope(s) || current_scope->IsInScope(s+"_"))
-                          {
-                              yyerror(("REDEFINITION " + s).c_str());
-                              YYERROR;
-                          }
-                          if(s == "")
-                          {
-                              yyerror((string("THAR BE BLANK NAMES HERE! THE TOKEN IS ") + string(yytext)).c_str());
-                          }
+                          NotIsInScopeCheck(current_scope, s)();
                           Procedure* procedure = new Procedure(s + "_");
                           current_scope->Insert(s + "_", procedure);
                       }
@@ -1134,47 +834,35 @@ ProcedureHeading   :  yprocedure  yident
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           string var_identifier = current_scope->PopTempStrings();
                           string identifier = var_identifier + "_";
-                          if(current_scope->IsInScope(identifier) || current_scope->IsInScope(var_identifier))
+                          if(NotIsInScopeCheck(current_scope, identifier)())
                           {
-                              yyerror(("REDEFINITION " + var_identifier).c_str());
-                              YYERROR;
+                              Procedure* procedure = new Procedure(identifier);
+                              stack<Variable*> reversed;
+                              while(!current_scope->TempProcParamsEmpty())
+                              {
+                                  reversed.push(current_scope->PopTempProcParams());
+                              }
+                              while(!reversed.empty())
+                              {
+                                  LocalScope* current_scope = global_scope.GetCurrentScope();
+                                  Variable* param = reversed.top();
+                                  reversed.pop();
+                                  procedure->InsertParameter(param);
+                                  current_scope->PushTempProcParams(param);
+                              }
+                              current_scope->Insert(identifier, procedure);
                           }
-                          if(identifier == "")
-                          {
-                              yyerror((string("THAR BE BLANK NAMES HERE! THE TOKEN IS ") + string(yytext)).c_str());
-                          }
-                          Procedure* procedure = new Procedure(identifier);
-                          stack<Variable*> reversed;
-                          while(!current_scope->TempProcParamsEmpty())
-                          {
-                              reversed.push(current_scope->PopTempProcParams());
-                          }
-                          while(!reversed.empty())
-                          {
-                              LocalScope* current_scope = global_scope.GetCurrentScope();
-                              Variable* param = reversed.top();
-                              reversed.pop();
-                              procedure->InsertParameter(param);
-                              current_scope->PushTempProcParams(param);
-                          }
-                          current_scope->Insert(identifier, procedure);
                       }
                    ;
 FunctionHeading    :  yfunction  yident  
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
-                          if(current_scope->IsInScope(s) || current_scope->IsInScope(s+"_"))
+                          if(NotIsInScopeCheck(current_scope, s)())
                           {
-                              yyerror(("REDEFINITION " + s).c_str());
-                              YYERROR;
+                              Procedure* procedure = new Procedure(s+"_");
+                              current_scope->Insert(s+"_", procedure);
+                              current_scope->PushTempStrings(s);
                           }
-                          if(s == "")
-                          {
-                              yyerror((string("THAR BE BLANK NAMES HERE! THE TOKEN IS ") + string(yytext)).c_str());
-                          }
-                          Procedure* procedure = new Procedure(s+"_");
-                          current_scope->Insert(s+"_", procedure);
-                          current_scope->PushTempStrings(s);
                       }
                    |  yfunction  yident
                       {
@@ -1186,31 +874,25 @@ FunctionHeading    :  yfunction  yident
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           string var_identifier = current_scope->PopTempStrings();
                           string identifier = var_identifier + "_";
-                          if(current_scope->IsInScope(identifier) || current_scope->IsInScope(var_identifier))
+                          if(NotIsInScopeCheck(current_scope, identifier)())
                           {
-                              yyerror(("REDEFINITION " + var_identifier).c_str());
-                              YYERROR;
+                              Procedure* procedure = new Procedure(identifier);
+                              stack<Variable*> reversed;
+                              while(!current_scope->TempProcParamsEmpty())
+                              {
+                                  reversed.push(current_scope->PopTempProcParams());
+                              }
+                              while(!reversed.empty())
+                              {
+                                  LocalScope* current_scope = global_scope.GetCurrentScope();
+                                  Variable* param = reversed.top();
+                                  reversed.pop();
+                                  procedure->InsertParameter(param);
+                                  current_scope->PushTempProcParams(param);
+                              }
+                              current_scope->Insert(identifier, procedure);
+                              current_scope->PushTempStrings(var_identifier);
                           }
-                          if(identifier == "")
-                          {
-                              yyerror((string("THAR BE BLANK NAMES HERE! THE TOKEN IS ") + string(yytext)).c_str());
-                          }
-                          Procedure* procedure = new Procedure(identifier);
-                          stack<Variable*> reversed;
-                          while(!current_scope->TempProcParamsEmpty())
-                          {
-                              reversed.push(current_scope->PopTempProcParams());
-                          }
-                          while(!reversed.empty())
-                          {
-                              LocalScope* current_scope = global_scope.GetCurrentScope();
-                              Variable* param = reversed.top();
-                              reversed.pop();
-                              procedure->InsertParameter(param);
-                              current_scope->PushTempProcParams(param);
-                          }
-                          current_scope->Insert(identifier, procedure);
-                          current_scope->PushTempStrings(var_identifier);
                       }
                    ;
 FormalParameters   :  yleftparen FormalParamList yrightparen 
@@ -1221,20 +903,10 @@ FormalParamList    :  OneFormalParam
 OneFormalParam     :  yvar  IdentList  ycolon  yident
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
-                          if(!current_scope->IsInScope(s) && !current_scope->IsInScope(s+"_"))
-                          {
-                              yyerror(("UNDEFINED " + s).c_str());
-                              YYERROR;
-                          }
-                          else
+                          if(IsInScopeCheck(current_scope, s)())
                           {
                               MetaType* var = current_scope->IsInScope(s) ? current_scope->Get(s) : current_scope->Get(s+"_");
-                              if(!var->GetType() == VARIABLE_TYPE)
-                              {
-                                  yyerror(("NOT A TYPE " + s).c_str());
-                                  YYERROR;
-                              }
-                              else
+                              if(IsMetatypeCheck(var, VARIABLE_TYPE)())
                               {
                                   VariableType* type = (VariableType*)var;
                                   while(!current_scope->TempVarsEmpty())
@@ -1249,20 +921,10 @@ OneFormalParam     :  yvar  IdentList  ycolon  yident
                    |  IdentList  ycolon  yident
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
-                          if(!current_scope->IsInScope(s) && !current_scope->IsInScope(s+"_"))
-                          {
-                              yyerror(("UNDEFINED " + s).c_str());
-                              YYERROR;
-                          }
-                          else
+                          if(IsInScopeCheck(current_scope, s)())
                           {
                               MetaType* var = current_scope->IsInScope(s) ? current_scope->Get(s) : current_scope->Get(s+"_");
-                              if(!var->GetType() == VARIABLE_TYPE)
-                              {
-                                  yyerror(("NOT A TYPE " + s).c_str());
-                                  YYERROR;
-                              }
-                              else
+                              if(IsMetatypeCheck(var, VARIABLE_TYPE)())
                               {
                                   VariableType* type = (VariableType*)var;
                                   while(!current_scope->TempVarsEmpty())

@@ -2,6 +2,27 @@
 // Abstract superclass that other identMetaTypes 
 #include "MetaType.h"
 
+string MetaTypeTypeToString(MetaTypeType type)
+{
+    switch(type)
+    {
+        case CONSTANT:
+            return "constant";
+        case PROCEDURE:
+            return "procedure";
+        case RANGE:
+            return "range";
+        case VARIABLE:
+            return "variable";
+        case VARIABLE_TYPE:
+            return "variable type";
+        case POINTER:
+            return "pointer";
+        case RECORD:
+            return "record";
+    }
+}
+
 // Constructor with a name
 MetaType::MetaType(const string name, MetaTypeType metatype) {
     identifier = name;
