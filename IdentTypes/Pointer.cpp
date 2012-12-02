@@ -43,6 +43,10 @@ string Pointer::CString() const {
     return "";
 }
 
+string Pointer::CString(string var_name) const {
+    return "";
+}
+
 // NilType --------------------------------------------------------------------
 NilType::NilType() : Pointer("nil")
 {
@@ -62,4 +66,8 @@ string NilType::ToString() const
 string NilType::CString() const
 {
     return "NULL";
+}
+
+string NilType::CString(string var_name) const {
+    return "";
 }

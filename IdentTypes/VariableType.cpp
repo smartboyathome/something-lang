@@ -47,7 +47,13 @@ string IntegerType::ToString() const {
 }
 
 string IntegerType::CString() const {
-    return "";
+    return "int";
+}
+
+string IntegerType::CString(string var_name) const {
+    stringstream ss;
+    ss << "int " << var_name << " = " << value << ";";
+    return ss.str();
 }
 
 // BooleanType ----------------------------------------------------------------
@@ -95,6 +101,10 @@ string BooleanType::CString() const {
     return "";
 }
 
+string BooleanType::CString(string var_name) const {
+    return "";
+}
+
 // RealType -------------------------------------------------------------------
 RealType::RealType() : VariableType("", VarTypes::REAL) {
     value = 0;
@@ -121,6 +131,10 @@ string RealType::CString() const {
     return "";
 }
 
+string RealType::CString(string var_name) const {
+    return "";
+}
+
 // StringType -----------------------------------------------------------------
 StringType::StringType() : VariableType("", VarTypes::STRING) {
     value = "";
@@ -144,5 +158,11 @@ string StringType::ToString() const {
     
 }
 string StringType::CString() const {
-    return "";
+    return "string";
+}
+
+string StringType::CString(string var_name) const {
+    stringstream ss;
+    ss << "string " << var_name << " = \"" << value << "\";";
+    return ss.str();
 }

@@ -2,6 +2,7 @@
 #pragma once
 #include "MetaType.h"
 #include "VariableType.h"
+#include "Pointer.h"
 
 class Variable:public MetaType {
 public:

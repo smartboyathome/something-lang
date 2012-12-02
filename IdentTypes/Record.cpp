@@ -75,3 +75,7 @@ string Record::ToString() const {
 string Record::CString() const {
     return "";
 }    
+
+string Record::CString(string var_name) const {
+    return "";
+}

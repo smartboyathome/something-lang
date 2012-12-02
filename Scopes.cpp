@@ -1,6 +1,5 @@
 #include "Scopes.h"
 
-extern ostream* output_file;
 using namespace std;
 
 GlobalScope::GlobalScope()
@@ -56,7 +55,7 @@ void GlobalScope::CreateNewScope()
     {
         new_parent_scope.insert(pair<string, MetaType*>(i->first, i->second)); // This will only insert if the ident doesn't exist.
     }
-    program_scopes.push(new LocalScope(program_scopes.size()-1, new_parent_scope));
+    program_scopes.push(new LocalScope(program_scopes.size(), new_parent_scope));
 }
 
 LocalScope* GlobalScope::GetCurrentScope()
@@ -143,31 +142,6 @@ bool LocalScope::Insert(string identifier, MetaType* type)
     if (local_scope.count(identifier) > 0)
         return false;
     local_scope.insert(pair<string, MetaType*>(identifier, type));
-    if(scope_level != -1) // If this isn't the S.I.T.
-    {
-        *output_file << make_indent() << identifier;
-        string output = type->ToString();
-        bool is_multiline = false;
-        for(int i = 0; i < output.length(); ++i)
-        {
-            if(output[i] == '\n')
-            {
-                is_multiline = true;
-                break;
-            }
-        }
-        if(is_multiline)
-        {
-            istringstream ss(type->ToString());
-            string output_line;
-            while(getline(ss, output_line))
-                *output_file << make_indent() << " " << output_line << endl;
-        }
-        else
-        {
-            *output_file << " " << output << endl;
-        }
-    }
     return true;
 }
 

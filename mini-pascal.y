@@ -19,6 +19,7 @@ using namespace std;
 extern "C" int yylex();
 extern "C" FILE *yyin;
 extern "C" char* yytext;
+extern ostream* output_file;
 extern string s; // This is the metadata, such a s an int or string value.
 extern int line_num; // And this is the line number that flex is on.
 void yyerror(const char *s) {
@@ -101,24 +102,24 @@ CompilationUnit    :  ProgramModule
                    ;
 ProgramModule      :  yprogram yident
                       {
-                          global_scope.GetCurrentScope()->PushTempStrings(s);
+                          //global_scope.GetCurrentScope()->PushTempStrings(s);
                       }
                       ProgramParameters
                       {
                           LocalScope* prev_scope = global_scope.GetCurrentScope();
-                          string program_name = prev_scope->PopTempStrings();
-                          Procedure* program = new Procedure(program_name);
+                          /*string program_name = prev_scope->PopTempStrings();
+                          Procedure* program = new Procedure(program_name);*/
                           while(!prev_scope->TempVarsEmpty())
                           {
                               Variable* param = prev_scope->PopTempVars();
                               // Zander said to ignore these parameters, so we will.
                               delete param;
                           }
-                          global_scope.CreateNewScope();
+                          /*global_scope.CreateNewScope();
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           current_scope->Insert(program_name, program);
                           // This scope is for all the variables defined in the program.
-                          global_scope.CreateNewScope();
+                          global_scope.CreateNewScope();*/
                       }
                       ysemicolon Block ydot
                    ;
@@ -188,6 +189,7 @@ ConstantDef        :  yident
                               constvar->SetVarType(current_scope->PopTempConstants());
                               constvar->ToggleConst();
                               current_scope->Insert(identifier, constvar);
+                              *output_file << current_scope->make_indent() << constvar->CString() << endl;
                           }
                       }
                    ;
@@ -233,6 +235,7 @@ VariableDecl       :  IdentList  ycolon  Type
                               Variable* var = current_scope->PopTempVars();
                               var->SetVarType(type);
                               current_scope->Insert(var->GetName(), var);
+                              *output_file << current_scope->make_indent() << var->CString() << endl;
                           }
                       }
                    ;

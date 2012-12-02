@@ -26,6 +26,8 @@ public:
     ~VariableType();
     
     VarTypes::Type GetEnumType();    // Returns a string representation of the type
+    virtual string CString() const = 0;
+    virtual string CString(string) const = 0;
     
 private:
     VarTypes::Type var_type;
@@ -42,6 +44,7 @@ public:
     
     string ToString() const;
     string CString() const;
+    string CString(string) const;
 private:
     int value;
 };
@@ -60,6 +63,7 @@ public:
     
     string ToString() const;
     string CString() const;
+    string CString(string) const;
 private:
     bool value;
 };
@@ -76,6 +80,7 @@ public:
     
     string ToString() const;
     string CString() const;
+    string CString(string) const;
 private:
     double value;
 };
@@ -92,6 +97,7 @@ public:
     
     string ToString() const;
     string CString() const;
+    string CString(string) const;
 private:
     string value;
     

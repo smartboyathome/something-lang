@@ -32,7 +32,6 @@ private:
     
     // This is for outputting Zander-style strings.
     int scope_level;
-    string make_indent();
 public:
     LocalScope(int scope_level);
     LocalScope(int scope_level, map<string, MetaType*>);
@@ -49,6 +48,7 @@ public:
     map<string, MetaType*> GetParentScope();
     map<string, MetaType*> GetLocalScope();
     string ToString();
+    string make_indent();
     
     void PushTempVars(Variable*);
     Variable* PopTempVars();

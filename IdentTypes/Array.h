@@ -51,6 +51,7 @@ public:
 	
 	string ToString() const;
 	string CString() const;
+    string CString(string) const;
 
 private:
     // RangeStruct allows us to hold a vector of 'low' and 'high' values

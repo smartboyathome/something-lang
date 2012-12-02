@@ -6,6 +6,7 @@
 Variable::Variable(const string name) : MetaType(name, VARIABLE) {
     is_const = false;
     variable_value = "";
+    my_type = new NilType();
 }
 
 // Constructor
@@ -13,6 +14,7 @@ Variable::Variable(const string name) : MetaType(name, VARIABLE) {
 Variable::Variable(const string name, const string value) : MetaType(name, VARIABLE) {
     is_const = false;
     variable_value = value;
+    my_type = new NilType();
 }
 
 // Destructor
@@ -64,5 +66,8 @@ string Variable::ToString() const {
 
 // Return a C-formatted string representation of this object
 string Variable::CString() const {
-    return "";
+    stringstream ss;
+    if(is_const) ss << "const ";
+    ss << my_type->CString(identifier);
+    return ss.str();
 }

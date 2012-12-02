@@ -15,6 +15,7 @@ public:
     
     string ToString() const;
     string CString() const;
+    string CString(string) const;
 
 private:
     string name;
@@ -29,4 +30,5 @@ public:
     NilType(string);
     string ToString() const;
     string CString() const;
+    string CString(string) const;
 };

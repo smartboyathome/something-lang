@@ -2,11 +2,24 @@ program setstuff(input, output);
 
 (*** Demonstrate the set datatype. ***)
 
+const
+    one = 1;
+    two = 2;
+    three = 3;
+    a = 'a';
+    b = 'b';
+    c = 'c';
+
 type
    Digit = set of 0..9;
 
 var
    odds, evens, stuff, morestuff: Digit;
+
+function Square(input : integer) : integer;
+begin
+    Square := input * input;
+end;
 
 begin
    odds := [1, 3, 5, 7, 9];

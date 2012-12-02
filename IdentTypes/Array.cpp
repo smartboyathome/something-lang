@@ -51,7 +51,7 @@ string Range::CString() const
 
 // Constructor
 ArrayType::ArrayType(const string name) : VariableType(name, VarTypes::ARRAY) {
-    my_type = new NilType("nil");
+    my_type = new NilType();
 }
 
 // Destructor
@@ -135,6 +135,27 @@ string ArrayType::ToString() const {
 // Return a C-formatted string representation of this object
 string ArrayType::CString() const {
     return "";
+}
+
+string ArrayType::CString(string var_name) const {
+    stringstream ss;
+    ss << my_type->CString() << " " << var_name << " ";
+    bool first = true;
+    for(int i = 0; i < ranges.size(); ++i)
+    {
+        ss << "[";
+        if(ranges[i].rangeType == AcceptedTypes::INT)
+        {
+            ss << ranges[i].intHigh - ranges[i].intLow + 1;
+        }
+        else if(ranges[i].rangeType == AcceptedTypes::CHAR)
+        {
+            ss << (int)(ranges[i].charHigh - ranges[i].charLow + 1);
+        }
+        ss << "]";
+    }
+    ss << ";";
+    return ss.str();
 }
 
 int ArrayType::GetArrayDimensions()
