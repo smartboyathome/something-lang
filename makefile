@@ -19,7 +19,7 @@ OBJ_FILES = y.tab.o lex.yy.o main.o scopes.o grammar_utils.o IdentTypes/array.o 
 COMPILER_FLAGS = -lfl -g
 
 mini-pascal: $(OBJ_FILES)
-	g++ $(OBJ_FILES) $(COMPILER_FLAGS) -o $(BINARY_FILE)
+	g++ -g $(OBJ_FILES) $(COMPILER_FLAGS) -o $(BINARY_FILE)
 
 main.o: $(MAIN_FILE)
 	g++ -c $(MAIN_FILE) -o main.o

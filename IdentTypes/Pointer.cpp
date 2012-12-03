@@ -24,7 +24,7 @@ void Pointer::SetTypePtr(VariableType *type) {
 // GetTypePtr
 VariableType* Pointer::GetTypePtr()
 {
-    return my_type;
+    return my_type == NULL ? new NilType() : my_type;
 }
 
 // GetTypeIdentifier
@@ -40,10 +40,16 @@ string Pointer::ToString() const {
 
 // Return a C-formatted string representation of this object
 string Pointer::CString() const {
-    return "";
+    VariableType* the_type = my_type == NULL ? new NilType() : my_type;
+    stringstream ss;
+    ss << the_type->CString() << "*";
+    return ss.str();
 }
 
 string Pointer::CString(string var_name) const {
+    VariableType* the_type = my_type == NULL ? new NilType() : my_type;
+    stringstream ss;
+    ss << the_type->CString() << "* " << var_name;
     return "";
 }
 
@@ -69,5 +75,5 @@ string NilType::CString() const
 }
 
 string NilType::CString(string var_name) const {
-    return "";
+    return var_name + " = NULL";
 }

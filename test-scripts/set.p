@@ -12,6 +12,12 @@ const
 
 type
    Digit = set of 0..9;
+   cellPtr = ^cell;
+   cell = record
+       id: integer;
+       info: char; 
+       next: real
+   end;
 
 var
    odds, evens, stuff, morestuff: Digit;

@@ -134,7 +134,23 @@ string ArrayType::ToString() const {
 
 // Return a C-formatted string representation of this object
 string ArrayType::CString() const {
-    return "";
+    stringstream ss;
+    ss << my_type->CString();
+    bool first = true;
+    for(int i = 0; i < ranges.size(); ++i)
+    {
+        ss << "[";
+        if(ranges[i].rangeType == AcceptedTypes::INT)
+        {
+            ss << ranges[i].intHigh - ranges[i].intLow + 1;
+        }
+        else if(ranges[i].rangeType == AcceptedTypes::CHAR)
+        {
+            ss << (int)(ranges[i].charHigh - ranges[i].charLow + 1);
+        }
+        ss << "]";
+    }
+    return ss.str();
 }
 
 string ArrayType::CString(string var_name) const {

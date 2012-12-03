@@ -223,6 +223,7 @@ TypeDef            :  yident
                                       current_scope->PushTempPointers(ptr);
                                   }
                               }
+                              *output_file << current_scope->make_indent() << type->CString() << endl;
                           }
                       }
                    ;

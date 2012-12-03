@@ -77,5 +77,12 @@ string Record::CString() const {
 }    
 
 string Record::CString(string var_name) const {
-    return "";
+    stringstream ss;
+    ss << "struct " << var_name << " { ";
+    for(int i = 0; i < members.size(); ++i)
+    {
+        ss << members[i]->GetVarType()->CString() << " " << members[i]->GetName() << "; ";
+    }
+    ss << "};";
+    return ss.str();
 }

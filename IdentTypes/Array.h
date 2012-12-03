@@ -53,7 +53,6 @@ public:
 	string CString() const;
     string CString(string) const;
 
-private:
     // RangeStruct allows us to hold a vector of 'low' and 'high' values
     vector <Range> ranges;    // Vector holding ranges
     

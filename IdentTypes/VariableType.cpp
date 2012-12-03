@@ -63,7 +63,7 @@ BooleanType::BooleanType() : VariableType("", VarTypes::BOOLEAN) {
 
 BooleanType::BooleanType(string name) : VariableType(name, VarTypes::BOOLEAN) {
     value = true;   // defaults to true
-}       
+}
 
 // String for 'true' and 'false'
 BooleanType::BooleanType(string name, string input) : VariableType(name, VarTypes::BOOLEAN) {   
@@ -98,11 +98,13 @@ string BooleanType::ToString() const {
 }
 
 string BooleanType::CString() const {
-    return "";
+    return "bool";
 }
 
 string BooleanType::CString(string var_name) const {
-    return "";
+    stringstream ss;
+    ss << "bool " << var_name << " = " << boolalpha << value << ";";
+    return "bool ";
 }
 
 // RealType -------------------------------------------------------------------
@@ -128,11 +130,13 @@ string RealType::ToString() const {
     return ss.str();
 }
 string RealType::CString() const {
-    return "";
+    return "double";
 }
 
 string RealType::CString(string var_name) const {
-    return "";
+    stringstream ss;
+    ss << "double " << var_name << " = " << value << ";";
+    return ss.str();
 }
 
 // StringType -----------------------------------------------------------------
