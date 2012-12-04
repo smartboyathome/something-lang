@@ -57,6 +57,8 @@ string OutputFunctor::get_c_type(VariableType* the_type)
     else if(enum_type == VarTypes::POINTER)
     {
         Pointer* pointer = (Pointer*)the_type;
+        if(pointer->GetName() == "nil")
+            return "void";
         stringstream ss;
         ss << pointer->GetTypeIdentifier() << "*";
         return ss.str();
