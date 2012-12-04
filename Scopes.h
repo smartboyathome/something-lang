@@ -104,4 +104,5 @@ public:
     LocalScope* GetCurrentScope();
     bool PopCurrentScope();
     void PrintCurrentScope();
+    int CurrentScopeLevel();
 };

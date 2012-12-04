@@ -20,7 +20,7 @@ public:
     string CString() const;
     string CString(string) const;
 
-private:
+
     // Vector holding pointers to Variables that represent the members 
     // of this Record
     vector<Variable*> members;

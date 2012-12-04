@@ -16,7 +16,7 @@ type
    cell = record
        id: integer;
        info: char; 
-       next: real
+       next: cellPtr
    end;
 
 var

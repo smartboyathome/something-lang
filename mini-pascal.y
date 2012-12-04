@@ -12,6 +12,7 @@
 #include "IdentTypes/Record.h"
 #include "IdentTypes/Array.h"
 #include "GrammarUtils.h"
+#include "CppOutputUtils.h"
 using namespace std;
 #define YYDEBUG 1
 
@@ -162,6 +163,8 @@ TypeDefBlock       :  /*** empty ***/
                               {
                                   VariableType* type = (VariableType*)current_scope->Get(identifier);
                                   pointer->SetTypePtr(type);
+                                  TypeDefOutput generate_output(global_scope.CurrentScopeLevel(), pointer);
+                                  *output_file << generate_output() << endl;
                               }
                           }
                       }
@@ -189,7 +192,8 @@ ConstantDef        :  yident
                               constvar->SetVarType(current_scope->PopTempConstants());
                               constvar->ToggleConst();
                               current_scope->Insert(identifier, constvar);
-                              *output_file << current_scope->make_indent() << constvar->CString() << endl;
+                              ConstDefOutput generate_output(global_scope.CurrentScopeLevel(), constvar);
+                              *output_file << generate_output() << endl;
                           }
                       }
                    ;
@@ -206,6 +210,7 @@ TypeDef            :  yident
                               VariableType* type = current_scope->PopTempTypes();
                               type->SetName(identifier);
                               current_scope->Insert(identifier, type);
+                              bool non_temp_pointer = true;
                               if(type->GetEnumType() == VarTypes::POINTER)
                               {
                                   Pointer* ptr = (Pointer*)type;
@@ -220,10 +225,15 @@ TypeDef            :  yident
                                   }
                                   else
                                   {
+                                      non_temp_pointer = false;
                                       current_scope->PushTempPointers(ptr);
                                   }
                               }
-                              *output_file << current_scope->make_indent() << type->CString() << endl;
+                              else if(non_temp_pointer) // Pointers will be output when they are verified.
+                              {
+                                  TypeDefOutput generate_output(global_scope.CurrentScopeLevel(), type);
+                                  *output_file << generate_output() << endl;
+                              }
                           }
                       }
                    ;
@@ -236,7 +246,8 @@ VariableDecl       :  IdentList  ycolon  Type
                               Variable* var = current_scope->PopTempVars();
                               var->SetVarType(type);
                               current_scope->Insert(var->GetName(), var);
-                              *output_file << current_scope->make_indent() << var->CString() << endl;
+                              VarDefOutput generate_output(global_scope.CurrentScopeLevel(), var);
+                              *output_file << generate_output() << endl;
                           }
                       }
                    ;
@@ -813,12 +824,16 @@ FunctionDecl       :  FunctionHeading  ycolon  yident
                               retval->SetVarType((VariableType*)metatype);
                               func->SetReturnType(retval);
                               current_scope->PushTempProcParams(retval);
+                              SubprogDefOutput generate_output(global_scope.CurrentScopeLevel(), func);
+                              *output_file << generate_output() << endl;
                           }
                           CreateNewScope();
+                          *output_file << SubprogDefOutput(global_scope.CurrentScopeLevel(), NULL).BeginBlock() << endl;
                       }
                       ysemicolon  Block
                       {
                           global_scope.PopCurrentScope();
+                          *output_file << SubprogDefOutput(global_scope.CurrentScopeLevel(), NULL).EndBlock() << endl;
                       }
                    ;
 ProcedureHeading   :  yprocedure  yident  

@@ -20,10 +20,9 @@ public:
     string ToString() const;
     string CString() const;
 
-private:
+
     // Vector holding pointers to Variables that represent the parameters 
     // of this procedure
     vector<Variable*> parameters;
     Variable* return_data;
-    
 };

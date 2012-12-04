@@ -84,6 +84,11 @@ GlobalScope::~GlobalScope()
     }
 }
 
+int GlobalScope::CurrentScopeLevel()
+{
+    return program_scopes.size()-1;
+}
+
 LocalScope::LocalScope(int level)
 {
     scope_level = level;
