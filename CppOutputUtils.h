@@ -12,6 +12,7 @@ class OutputFunctor
 protected:
     int scope_level;
     string make_indent();
+    static string make_indent(int);
 public:
     OutputFunctor(int);
     string get_c_type(VariableType*);
@@ -56,5 +57,7 @@ public:
     SubprogDefOutput(int, Procedure*);
     string operator() ();
     string BeginBlock();
+    static string BeginBlock(int);
     string EndBlock();
+    static string EndBlock(int);
 };

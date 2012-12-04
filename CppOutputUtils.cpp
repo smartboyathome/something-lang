@@ -9,8 +9,13 @@ OutputFunctor::OutputFunctor(int the_scope_level)
 
 string OutputFunctor::make_indent()
 {
+    return make_indent(scope_level);
+}
+
+string OutputFunctor::make_indent(int level)
+{
     stringstream ss;
-    for(int i = 0; i < scope_level; ++i)
+    for(int i = 0; i < level; ++i)
         ss << "    ";
     return ss.str();
 }
@@ -98,18 +103,24 @@ string OutputFunctor::get_c_value(VariableType* the_type)
     }
     else if(enum_type == VarTypes::ARRAY)
     {
-        // TODO: Implement this
-        return "";
+        stringstream ss;
+        ArrayType* array = (ArrayType*)the_type;
+        ss << "new " << get_c_type(array) << "()";
+        return ss.str();
     }
     else if(enum_type == VarTypes::POINTER)
     {
-        // TODO: Implement this
-        return "";
+        Pointer* pointer = (Pointer*)the_type;
+        stringstream ss;
+        ss << "new " << get_c_value(pointer->GetTypePtr());
+        return ss.str();
     }
     else if(enum_type == VarTypes::RECORD)
     {
-        // TODO: Implement this
-        return "";
+        Record* record = (Record*)the_type;
+        stringstream ss;
+        ss << record->GetName() << "()";
+        return ss.str();
     }
     else
     {
@@ -227,10 +238,20 @@ string SubprogDefOutput::operator() ()
 
 string SubprogDefOutput::BeginBlock()
 {
-    return "{";
+    return make_indent() + "{";
+}
+
+string SubprogDefOutput::BeginBlock(int level)
+{
+    return make_indent(level) + "{";
 }
 
 string SubprogDefOutput::EndBlock()
 {
-    return "};";
+    return make_indent() + "};";
+}
+
+string SubprogDefOutput::EndBlock(int level)
+{
+    return make_indent(level) + "};";
 }

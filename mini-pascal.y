@@ -827,13 +827,14 @@ FunctionDecl       :  FunctionHeading  ycolon  yident
                               SubprogDefOutput generate_output(global_scope.CurrentScopeLevel(), func);
                               *output_file << generate_output() << endl;
                           }
+                          *output_file << SubprogDefOutput::BeginBlock(global_scope.CurrentScopeLevel()) << endl;
                           CreateNewScope();
-                          *output_file << SubprogDefOutput(global_scope.CurrentScopeLevel(), NULL).BeginBlock() << endl;
+                          
                       }
                       ysemicolon  Block
                       {
                           global_scope.PopCurrentScope();
-                          *output_file << SubprogDefOutput(global_scope.CurrentScopeLevel(), NULL).EndBlock() << endl;
+                          *output_file << SubprogDefOutput::EndBlock(global_scope.CurrentScopeLevel()) << endl;
                       }
                    ;
 ProcedureHeading   :  yprocedure  yident  
