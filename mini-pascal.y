@@ -1,10 +1,12 @@
 %{
 #include <cstdio>
 #include <cstring>
+#include <cmath>
 #include <iostream>
 #include <stack>
 #include <vector>
 #include <sstream>
+#include <deque>
 #include "Scopes.h"
 #include "IdentTypes/MetaType.h"
 #include "IdentTypes/Procedure.h"
@@ -27,7 +29,10 @@ void yyerror(const char *s) {
     cout << "ERROR: " << s << " on line " << line_num << " with token " << yytext << endl;
 }
 extern "C" int yyparse();
+
 GlobalScope global_scope;
+deque<string> output_deque;
+bool is_main = true;
 
 void CreateNewScope()
 {
@@ -121,6 +126,7 @@ ProgramModule      :  yprogram yident
                           current_scope->Insert(program_name, program);
                           // This scope is for all the variables defined in the program.
                           global_scope.CreateNewScope();*/
+                          *output_file << "#include <string>" << endl;
                       }
                       ysemicolon Block ydot
                    ;
@@ -138,7 +144,22 @@ IdentList          :  yident
 
 /**************************  Declarations section ***************************/
 
-Block              :  Declarations  ybegin  StatementSequence  yend
+Block              :  Declarations  ybegin
+                      {
+                          if(is_main)
+                          {
+                              *output_file << "void main()" << endl << "{" << endl;
+                              global_scope.IncrementScopeLevel();
+                          }
+                      }
+                      StatementSequence  yend
+                      {
+                          if(is_main)
+                          {
+                              *output_file << "};" << endl;
+                              global_scope.DecrementScopeLevel();
+                          }
+                      }
                    ;
 Declarations       :  ConstantDefBlock
                       TypeDefBlock
@@ -426,16 +447,43 @@ StatementSequence  :  Statement
                    |  StatementSequence  ysemicolon  Statement
                    ;
 Statement          :  Assignment
+                      {
+                          *output_file << ";" << endl;
+                      }
                    |  ProcedureCall
+                      {
+                          *output_file << ";" << endl;
+                      }
                    |  IfStatement
+                      {
+                          *output_file << endl;
+                      }
                    |  CaseStatement
+                      {
+                          *output_file << endl;
+                      }
                    |  WhileStatement
+                      {
+                          *output_file << endl;
+                      }
                    |  RepeatStatement
+                      {
+                          *output_file << endl;
+                      }
                    |  ForStatement
+                      {
+                          *output_file << endl;
+                      }
                    |  ybegin StatementSequence yend
                    |  /*** empty ***/
                    ;
-Assignment         :  Designator  yassign Expression
+Assignment         :  Designator
+                      {
+                          AssignLeftOutput generate_output(global_scope.CurrentScopeLevel(), output_deque);
+                          *output_file << generate_output();
+                          output_deque.clear();
+                      }
+                      yassign Expression
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           Variable* var = current_scope->PopTempExpressions();
@@ -463,6 +511,7 @@ ProcedureCall      :  yident
                           {
                               MetaType* proc = current_scope->IsInScope(s) ? current_scope->Get(s) : current_scope->Get(s+"_");
                               IsMetatypeCheck(proc, PROCEDURE)();
+                              *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel()) << proc->GetName() << "()";
                           }
                       }
                    |  yident
@@ -472,20 +521,46 @@ ProcedureCall      :  yident
                           {
                               MetaType* proc = current_scope->IsInScope(s) ? current_scope->Get(s) : current_scope->Get(s+"_");
                               IsMetatypeCheck(proc, PROCEDURE)();
+                              *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel()) << proc->GetName() << "( ";
                           }
                       }
                       ActualParameters
+                      {
+                          *output_file << ")";
+                      }
                    ;
-IfStatement        :  yif  Expression
+IfStatement        :  yif
+                      {
+                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel()) << "if (";
+                      }
+                      Expression
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           Variable* var = current_scope->PopTempExpressions();
                           IsVarTypeCheck(var, VarTypes::BOOLEAN);
+                          *output_file << ")" << endl;
+                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel()) << "{" << endl;
+                          global_scope.IncrementScopeLevel();
                       }
-                      ythen  Statement  ElsePart
+                      ythen  Statement
+                      {
+                          global_scope.DecrementScopeLevel();
+                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel()) << "}" << endl;
+                      }
+                      ElsePart
                    ;
 ElsePart           :  /*** empty ***/
-                   |  yelse  Statement
+                   |  yelse
+                      {
+                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel()) << "else" << endl;
+                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel()) << "{" << endl;
+                          global_scope.IncrementScopeLevel();
+                      }
+                      Statement
+                      {
+                          global_scope.DecrementScopeLevel();
+                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel()) << "}" << endl;
+                      }
                    ;
 CaseStatement      :  ycase  Expression  yof  CaseList  yend
                    ;
@@ -523,6 +598,7 @@ Designator         :  yident
                           {
                               MetaType* metatype = current_scope->IsInScope(s) ? current_scope->Get(s) : current_scope->Get(s+"_");
                               current_scope->PushTempDesignators(metatype);
+                              output_deque.push_back(metatype->GetName());
                           }
                       }
                       DesignatorStuff 
@@ -548,11 +624,16 @@ theDesignatorStuff :  ydot yident
                               else
                               {
                                   current_scope->PushTempDesignators(record->GetMember(s));
+                                  output_deque.push_back("." + record->GetName());
                               }
                           }
                           
                       }
-                   |  yleftbracket ExpList yrightbracket 
+                   |  yleftbracket
+                      {
+                          output_deque.push_back("[");
+                      }
+                      ExpList yrightbracket 
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           MetaType* metatype = current_scope->PopTempDesignators();
@@ -564,6 +645,7 @@ theDesignatorStuff :  ydot yident
                           {
                               ArrayType* array = (ArrayType*)metatype;
                               current_scope->PushTempDesignators(array->GetArrayType());
+                              output_deque.push_back("]");
                           }
                       }
                    |  ycaret
@@ -577,13 +659,19 @@ theDesignatorStuff :  ydot yident
                           if(IsMetatypeCheck(metatype, VARIABLE_TYPE)() && IsVarTypeCheck(metatype, VarTypes::POINTER)())
                           {
                               current_scope->PushTempDesignators(((Pointer*)metatype)->GetTypePtr());
+                              output_deque.pop_back();
+                              output_deque.push_back("(*" + metatype->GetName() + ")");
                           }
                       }
                    ;
 ActualParameters   :  yleftparen  ExpList  yrightparen
                    ;
 ExpList            :  Expression   
-                   |  ExpList  ycomma  Expression       
+                   |  ExpList  ycomma
+                      {
+                          *output_file << ", ";
+                      }
+                      Expression       
                    ;
 
 /***************************  Expression Stuff  ******************************/
@@ -655,16 +743,31 @@ Term               :  Factor
                    ;
 Factor             :  ynumber
                       {
-                          int temp;
+                          double temp;
+                          double temp_int;
                           stringstream(s) >> temp;
-                          IntegerType* Int = new IntegerType("", temp);
-                          global_scope.GetCurrentScope()->PushTempTypes(Int);
+                          if(modf(temp, &temp_int) == 0.0)
+                          {
+                              IntegerType* Int = new IntegerType("", (int)temp_int);
+                              global_scope.GetCurrentScope()->PushTempTypes(Int);
+                              IntOutput generate_output(global_scope.CurrentScopeLevel(), Int->GetValue());
+                              *output_file << generate_output() << " ";
+                          }
+                          else
+                          {
+                              RealType* Real = new RealType("", temp);
+                              global_scope.GetCurrentScope()->PushTempTypes(Real);
+                              RealOutput generate_output(global_scope.CurrentScopeLevel(), Real->GetValue());
+                              *output_file << generate_output() << " ";
+                          }
                       }
                    |  ynil
                    |  ystring
                       {
                           StringType* String = new StringType("", s);
                           global_scope.GetCurrentScope()->PushTempTypes(String);
+                          StringOutput generate_output(global_scope.CurrentScopeLevel(), String->GetValue());
+                          *output_file << generate_output() << " ";
                       }
                    |  Designator
                       {
@@ -683,13 +786,23 @@ Factor             :  ynumber
                           {
                               current_scope->PushTempTypes(((Procedure*)var)->GetReturnType()->GetVarType());
                           }
+                          DesignatorOutput generate_output(global_scope.CurrentScopeLevel(), output_deque);
+                          *output_file << generate_output() << " ";
+                          output_deque.clear();
                       }
-                   |  yleftparen  Expression
+                   |  yleftparen
+                      {
+                          *output_file << "(";
+                      }
+                      Expression
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           current_scope->PushTempTypes(current_scope->PopTempExpressions()->GetVarType());
                       }
                       yrightparen
+                      {
+                          *output_file << ")";
+                      }
                    |  ynot Factor
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
@@ -697,6 +810,7 @@ Factor             :  ynumber
                           Variable* var = new Variable("");
                           var->SetVarType(new BooleanType());
                           current_scope->PushTempVars(var);
+                          *output_file << "!";
                       }
                    |  Setvalue
                    |  FunctionCall
@@ -719,7 +833,11 @@ FunctionCall       :  yident
                       }
                       ActualParameters
                    ;
-Setvalue           :  yleftbracket ElementList  yrightbracket
+Setvalue           :  yleftbracket
+                      {
+                          *output_file << "{";
+                      }
+                      ElementList  yrightbracket
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           ArrayType* array = new ArrayType("");
@@ -734,16 +852,22 @@ Setvalue           :  yleftbracket ElementList  yrightbracket
                           }
                           array->AddDimension(0, temp.size()-1);
                           current_scope->PushTempTypes(array);
+                          *output_file << "}";
                       }
                    |  yleftbracket yrightbracket
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           ArrayType* array = new ArrayType("");
                           current_scope->PushTempTypes(array);
+                          *output_file << "{ }";
                       }
                    ;
 ElementList        :  Element  
-                   |  ElementList  ycomma  Element
+                   |  ElementList  ycomma
+                      {
+                          *output_file << ", ";
+                      }
+                      Element
                    ;
 Element            :  ConstExpression  
                       {
@@ -752,6 +876,7 @@ Element            :  ConstExpression
                           {
                               int temp_val = ((IntegerType*)temp)->GetValue();
                               global_scope.GetCurrentScope()->PushTempRanges(Range(temp_val, temp_val));
+                              *output_file << temp_val;
                           }
                           else if(temp->GetEnumType() == VarTypes::STRING)
                           {
@@ -763,6 +888,7 @@ Element            :  ConstExpression
                               else
                               {
                                   global_scope.GetCurrentScope()->PushTempRanges(Range(temp_val[0], temp_val[0]));
+                                  *output_file << "'" << temp_val << "'";
                               }
                           }
                       }
@@ -777,7 +903,23 @@ Element            :  ConstExpression
                               IntegerType* b_int = (IntegerType*)b;
                               int a_val = a_int->GetValue();
                               int b_val = b_int->GetValue();
+                              if(a_val > b_val)
+                              {
+                                  // swap without using a temp var
+                                  a_val ^= b_val;
+                                  b_val ^= a_val;
+                                  a_val ^= b_val;
+                              }
                               global_scope.GetCurrentScope()->PushTempRanges(Range(a_val, b_val));
+                              bool first = true;
+                              for(int i = a_val; i < b_val; ++i)
+                              {
+                                  if(!first)
+                                      *output_file << ", ";
+                                  else
+                                      first = false;
+                                  *output_file << i << " ";
+                              }
                           }
                           if(result && a->GetEnumType() == VarTypes::STRING)
                           {
@@ -792,6 +934,19 @@ Element            :  ConstExpression
                               else
                               {
                                   global_scope.GetCurrentScope()->PushTempRanges(Range(a_val[0], b_val[0]));
+                                  char a_char = a_val[0];
+                                  char b_char = b_val[0];
+                                  if(a_char > b_char)
+                                  {
+                                      // swap without using a temp var
+                                      a_char ^= b_char;
+                                      b_char ^= a_char;
+                                      a_char ^= b_char;
+                                  }
+                                  for(char i = a_char; i < b_char; ++i)
+                                  {
+                                      *output_file << "'" << i << "' ";
+                                  }
                               }
                           }
                       }
@@ -825,16 +980,19 @@ FunctionDecl       :  FunctionHeading  ycolon  yident
                               func->SetReturnType(retval);
                               current_scope->PushTempProcParams(retval);
                               SubprogDefOutput generate_output(global_scope.CurrentScopeLevel(), func);
-                              *output_file << generate_output() << endl;
+                              *output_file << generate_output();
                           }
                           *output_file << SubprogDefOutput::BeginBlock(global_scope.CurrentScopeLevel()) << endl;
                           CreateNewScope();
+                          is_main = false;
                           
                       }
                       ysemicolon  Block
                       {
                           global_scope.PopCurrentScope();
                           *output_file << SubprogDefOutput::EndBlock(global_scope.CurrentScopeLevel()) << endl;
+                          if(global_scope.CurrentScopeLevel() == 0)
+                              is_main = true;
                       }
                    ;
 ProcedureHeading   :  yprocedure  yident  
@@ -967,13 +1125,71 @@ UnaryOperator      :  yplus
                    |  yminus
                       {
                           global_scope.GetCurrentScope()->PushTempStrings("-");
+                          *output_file << "-";
                       }
                    ;
-MultOperator       :  ymultiply | ydivide | ydiv | ymod | yand 
+MultOperator       :  ymultiply
+                      {
+                          *output_file << "* ";
+                      }
+                   |  ydivide
+                      {
+                          *output_file << "/ ";
+                      }
+                   |  ydiv
+                      {
+                          *output_file << "/ ";
+                      }
+                   |  ymod
+                      {
+                          *output_file << "% ";
+                      }
+                   |  yand
+                      {
+                          *output_file << "& ";
+                      }
                    ;
-AddOperator        :  yplus | yminus | yor
+AddOperator        :  yplus
+                      {
+                          *output_file << "+ ";
+                      }
+                   |  yminus
+                      {
+                          *output_file << "- ";
+                      }
+                   |  yor
+                      {
+                          *output_file << "| ";
+                      }
                    ;
-Relation           :  yequal  | ynotequal | yless | ygreater 
-                   |  ylessequal | ygreaterequal | yin
+Relation           :  yequal
+                      {
+                          *output_file << "== ";
+                      }
+                   |  ynotequal
+                      {
+                          *output_file << "!= ";
+                      }
+                   |  yless
+                      {
+                          *output_file << "< ";
+                      }
+                   |  ygreater
+                      {
+                          *output_file << "> ";
+                      }
+                   |  ylessequal
+                      {
+                          *output_file << "<= ";
+                      }
+                   |  ygreaterequal
+                      {
+                          *output_file << ">= ";
+                      }
+                   |  yin
+                      {
+                          // TODO: Should this be in a library?
+                          *output_file << "";
+                      }
                    ;
 %%

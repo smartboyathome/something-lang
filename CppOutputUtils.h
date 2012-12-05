@@ -1,4 +1,5 @@
 #pragma once
+#include <deque>
 #include "IdentTypes/Variable.h"
 #include "IdentTypes/MetaType.h"
 #include "IdentTypes/VariableType.h"
@@ -11,13 +12,13 @@ class OutputFunctor
 {
 protected:
     int scope_level;
-    string make_indent();
-    static string make_indent(int);
 public:
     OutputFunctor(int);
     string get_c_type(VariableType*);
     string get_c_value(VariableType*);
     virtual string operator() () = 0;
+    string make_indent();
+    static string make_indent(int);
 };
 
 class ConstDefOutput : public OutputFunctor
@@ -60,4 +61,72 @@ public:
     static string BeginBlock(int);
     string EndBlock();
     static string EndBlock(int);
+};
+
+class DequeOutputFunctor : public OutputFunctor
+{
+private:
+    deque<string> output_deque;
+public:
+    DequeOutputFunctor(int, deque<string>);
+    string DequeToString();
+};
+
+class AssignLeftOutput : public DequeOutputFunctor
+{
+public:
+    AssignLeftOutput(int, deque<string>);
+    string operator() ();
+};
+
+class DesignatorOutput : public DequeOutputFunctor
+{
+public:
+    DesignatorOutput(int, deque<string>);
+    string operator() ();
+};
+
+class IntOutput : public OutputFunctor
+{
+private:
+    int int_to_output;
+public:
+    IntOutput(int, int);
+    string operator() ();
+};
+
+class RealOutput : public OutputFunctor
+{
+private:
+    double real_to_output;
+public:
+    RealOutput(int, double);
+    string operator() ();
+};
+
+class BooleanOutput : public OutputFunctor
+{
+private:
+    bool bool_to_output;
+public:
+    BooleanOutput(int, bool);
+    string operator() ();
+};
+
+class StringOutput : public OutputFunctor
+{
+private:
+    string string_to_output;
+public:
+    StringOutput(int, string);
+    string operator() ();
+};
+
+class ProcedureCallOutput : public OutputFunctor
+{
+private:
+    Procedure* proc;
+public:
+    ProcedureCallOutput(int, Procedure*);
+    string operator() ();
 };

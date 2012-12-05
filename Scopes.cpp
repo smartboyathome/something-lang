@@ -42,7 +42,7 @@ GlobalScope::GlobalScope()
         program_scopes.top()->Insert(procs[i], proc);
     }
     
-    // TODO: Strings/Chars and Reals
+    scope_level = 0;
 }
 
 void GlobalScope::CreateNewScope()
@@ -56,6 +56,7 @@ void GlobalScope::CreateNewScope()
         new_parent_scope.insert(pair<string, MetaType*>(i->first, i->second)); // This will only insert if the ident doesn't exist.
     }
     program_scopes.push(new LocalScope(program_scopes.size(), new_parent_scope));
+    IncrementScopeLevel();
 }
 
 LocalScope* GlobalScope::GetCurrentScope()
@@ -70,6 +71,7 @@ bool GlobalScope::PopCurrentScope()
     LocalScope* old_scope = program_scopes.top();
     program_scopes.pop();
     delete old_scope;
+    DecrementScopeLevel();
     return true;
 }
 
@@ -86,7 +88,17 @@ GlobalScope::~GlobalScope()
 
 int GlobalScope::CurrentScopeLevel()
 {
-    return program_scopes.size()-1;
+    return scope_level;
+}
+
+void GlobalScope::IncrementScopeLevel()
+{
+    ++scope_level;
+}
+
+void GlobalScope::DecrementScopeLevel()
+{
+    --scope_level;
 }
 
 LocalScope::LocalScope(int level)

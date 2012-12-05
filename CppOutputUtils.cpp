@@ -37,7 +37,7 @@ string OutputFunctor::get_c_type(VariableType* the_type)
     }
     else if(enum_type == VarTypes::STRING)
     {
-        return "string";
+        return "std::string";
     }
     else if(enum_type == VarTypes::ARRAY)
     {
@@ -254,4 +254,128 @@ string SubprogDefOutput::EndBlock()
 string SubprogDefOutput::EndBlock(int level)
 {
     return make_indent(level) + "};";
+}
+
+// ---------------- DequeOutputFunctor ----------------------------------------
+
+DequeOutputFunctor::DequeOutputFunctor(int the_scope_level, deque<string> the_deque) :
+    OutputFunctor(the_scope_level)
+{
+    output_deque = the_deque;
+}
+
+string DequeOutputFunctor::DequeToString()
+{
+    stringstream ss;
+    while(!output_deque.empty())
+    {
+        ss << output_deque.front();
+        output_deque.pop_front();
+    }
+    return ss.str();
+}
+
+// ---------------- AssignLeftOutput ------------------------------------------
+
+AssignLeftOutput::AssignLeftOutput(int the_level, deque<string> the_deque) :
+    DequeOutputFunctor(the_level, the_deque)
+{
+
+}
+
+string AssignLeftOutput::operator() ()
+{
+    stringstream ss;
+    ss << make_indent() << DequeToString() << " = "; 
+    return ss.str();
+}
+
+// ---------------- DesignatorOutput ------------------------------------------
+
+DesignatorOutput::DesignatorOutput(int the_level, deque<string> the_deque) :
+    DequeOutputFunctor(the_level, the_deque)
+{
+
+}
+
+string DesignatorOutput::operator() ()
+{
+    stringstream ss;
+    ss << DequeToString();
+    return ss.str();
+}
+
+// ---------------- IntOutput -------------------------------------------------
+
+IntOutput::IntOutput(int the_scope_level, int the_int_to_output) :
+    OutputFunctor(the_scope_level)
+{
+    int_to_output = the_int_to_output;
+}
+
+string IntOutput::operator() ()
+{
+    stringstream ss;
+    ss << int_to_output;
+    return ss.str();
+}
+
+// ---------------- RealOutput ------------------------------------------------
+
+RealOutput::RealOutput(int the_scope_level, double the_real_to_output) :
+    OutputFunctor(the_scope_level)
+{
+    real_to_output = the_real_to_output;
+}
+
+string RealOutput::operator() ()
+{
+    stringstream ss;
+    ss << real_to_output;
+    return ss.str();
+}
+
+// ---------------- BooleanOutput ---------------------------------------------
+
+BooleanOutput::BooleanOutput(int the_scope_level, bool the_bool_to_output) :
+    OutputFunctor(the_scope_level)
+{
+    bool_to_output = the_bool_to_output;
+}
+
+string BooleanOutput::operator() ()
+{
+    stringstream ss;
+    ss << boolalpha << bool_to_output;
+    return ss.str();
+}
+
+// ---------------- StringOutput ----------------------------------------------
+
+StringOutput::StringOutput(int the_scope_level, string the_string_to_output) :
+    OutputFunctor(the_scope_level)
+{
+    string_to_output = the_string_to_output;
+}
+
+string StringOutput::operator() ()
+{
+    stringstream ss;
+    ss << "\"" << string_to_output << "\"";
+    return ss.str();
+}
+
+// ---------------- ProcedureCallOutput ---------------------------------------
+
+ProcedureCallOutput::ProcedureCallOutput(int the_level, Procedure* the_proc) :
+    OutputFunctor(the_level)
+{
+    proc = the_proc;
+}
+
+string ProcedureCallOutput::operator() ()
+{
+    stringstream ss;
+    ss << proc->GetName() << "(";
+    return ss.str();
 }

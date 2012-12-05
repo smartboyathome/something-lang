@@ -97,6 +97,7 @@ class GlobalScope
 {
 private:
     stack<LocalScope*> program_scopes;
+    int scope_level;
 public:
     GlobalScope();
     ~GlobalScope();
@@ -105,4 +106,6 @@ public:
     bool PopCurrentScope();
     void PrintCurrentScope();
     int CurrentScopeLevel();
+    void IncrementScopeLevel();
+    void DecrementScopeLevel();
 };
