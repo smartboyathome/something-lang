@@ -583,10 +583,56 @@ WhileStatement     :  ywhile  Expression
                    ;
 RepeatStatement    :  yrepeat  StatementSequence  yuntil  Expression
                    ;
-ForStatement       :  yfor  yident  yassign  Expression  WhichWay  Expression
-                            ydo  Statement
-                   ;
-WhichWay           :  yto  |  ydownto
+ForStatement       :  yfor  yident
+                      {
+                          global_scope.GetCurrentScope()->PushTempStrings(s);
+                      }
+                      yassign  Expression  yto  Expression
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          string identifier = current_scope->PopTempStrings();
+                          Variable* right_side = current_scope->PopTempExpressions();
+                          Variable* left_side = current_scope->PopTempExpressions();
+                          Variable* new_var = new Variable(identifier);
+                          new_var->SetVarType(left_side->GetVarType());
+                          ForStatementOutput generate_output(global_scope.CurrentScopeLevel(),
+                              new_var, left_side, right_side, true);
+                          *output_file << generate_output() << endl;
+                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
+                          *output_file << "{" << endl;
+                          global_scope.IncrementScopeLevel();
+                      }
+                      ydo  Statement
+                      {
+                          global_scope.DecrementScopeLevel();
+                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
+                          *output_file << "}" << endl;
+                      }
+                   |  yfor  yident
+                      {
+                          global_scope.GetCurrentScope()->PushTempStrings(s);
+                      }
+                      yassign  Expression  ydownto  Expression
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          string identifier = current_scope->PopTempStrings();
+                          Variable* right_side = current_scope->PopTempExpressions();
+                          Variable* left_side = current_scope->PopTempExpressions();
+                          Variable* new_var = new Variable(identifier);
+                          new_var->SetVarType(left_side->GetVarType());
+                          ForStatementOutput generate_output(global_scope.CurrentScopeLevel(),
+                              new_var, left_side, right_side, false);
+                          *output_file << generate_output() << endl;
+                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
+                          *output_file << "{" << endl;
+                          global_scope.IncrementScopeLevel();
+                      }
+                      ydo  Statement
+                      {
+                          global_scope.DecrementScopeLevel();
+                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
+                          *output_file << "}" << endl;
+                      }
                    ;
 
 

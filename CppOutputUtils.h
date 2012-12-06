@@ -133,3 +133,15 @@ public:
     ProcedureCallOutput(int, Procedure*);
     string operator() ();
 };
+
+class ForStatementOutput : public OutputFunctor
+{
+private:
+    Variable* new_var;
+    Variable* left_side;
+    Variable* right_side;
+    bool up_to;
+public:
+    ForStatementOutput(int, Variable*, Variable*, Variable*, bool);
+    string operator() ();
+};
