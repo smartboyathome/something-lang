@@ -39,26 +39,6 @@ string OutputFunctor::get_c_type(VariableType* the_type)
     {
         return "std::string";
     }
-    else if(enum_type == VarTypes::ARRAY)
-    {
-        ArrayType* array = (ArrayType*)the_type;
-        stringstream ss;
-        ss << get_c_type(array->GetArrayType());
-        for(int i = 0; i < array->ranges.size(); ++i)
-        {
-            ss << "[";
-            if(array->ranges[i].rangeType == AcceptedTypes::INT)
-            {
-                ss << array->ranges[i].intHigh - array->ranges[i].intLow + 1;
-            }
-            else if(array->ranges[i].rangeType == AcceptedTypes::CHAR)
-            {
-                ss << (int)(array->ranges[i].charHigh - array->ranges[i].charLow + 1);
-            }
-            ss << "]";
-        }
-        return ss.str();
-    }
     else if(enum_type == VarTypes::POINTER)
     {
         Pointer* pointer = (Pointer*)the_type;
@@ -68,9 +48,68 @@ string OutputFunctor::get_c_type(VariableType* the_type)
         ss << pointer->GetTypeIdentifier() << "*";
         return ss.str();
     }
-    else
+    else if(enum_type == VarTypes::RECORD)
     {
         return the_type->GetName();
+    }
+    else
+    {
+        return "";
+    }
+}
+
+string OutputFunctor::create_array_indexes(ArrayType* array)
+{
+    stringstream ss;
+    for(int i = 0; i < array->ranges.size(); ++i)
+    {
+        ss << "[";
+        if(array->ranges[i].rangeType == AcceptedTypes::INT)
+        {
+            ss << array->ranges[i].intHigh - array->ranges[i].intLow + 1;
+        }
+        else if(array->ranges[i].rangeType == AcceptedTypes::CHAR)
+        {
+            ss << (int)(array->ranges[i].charHigh - array->ranges[i].charLow + 1);
+        }
+        ss << "]";
+    }
+    return ss.str();
+}
+
+string OutputFunctor::get_c_func_type(VariableType* the_type)
+{
+    VarTypes::Type enum_type = the_type->GetEnumType();
+    if(enum_type == VarTypes::ARRAY)
+    {
+        ArrayType* array = (ArrayType*)the_type;
+        stringstream ss;
+        ss << get_c_func_type(array->GetArrayType());
+        ss << create_array_indexes(array);
+        return ss.str();
+    }
+    else
+    {
+        return get_c_type(the_type);
+    }
+}
+
+string OutputFunctor::get_c_var_type(Variable* the_var)
+{
+    
+    VarTypes::Type enum_type = the_var->GetVarType()->GetEnumType();
+    if(enum_type == VarTypes::ARRAY)
+    {
+        ArrayType* array = (ArrayType*)the_var->GetVarType();
+        stringstream ss;
+        ss << get_c_func_type(array->GetArrayType());
+        ss << " " << the_var->GetName();
+        ss << create_array_indexes(array);
+        return ss.str();
+    }
+    else
+    {
+        return get_c_type(the_var->GetVarType()) + " " + the_var->GetName();
     }
 }
 
@@ -105,7 +144,7 @@ string OutputFunctor::get_c_value(VariableType* the_type)
     {
         stringstream ss;
         ArrayType* array = (ArrayType*)the_type;
-        ss << "new " << get_c_type(array) << "()";
+        ss << "new " << get_c_func_type(array) << "()";
         return ss.str();
     }
     else if(enum_type == VarTypes::POINTER)
@@ -140,7 +179,7 @@ string ConstDefOutput::operator() ()
 {
     stringstream ss;
     ss << make_indent();
-    ss << "const " << get_c_type(var->GetVarType()) << " " << var->GetName();
+    ss << "const " << get_c_var_type(var);
     ss << " = " << get_c_value(var->GetVarType()) << ";";
     return ss.str();
 }
@@ -167,15 +206,15 @@ string TypeDefOutput::operator() ()
 
 string TypeDefOutput::RecordOutput()
 {
-    stringstream ss;
     Record* record = (Record*)var_type;
+    stringstream ss;
     ss << make_indent() << "struct " << record->GetName() << endl;
     ss << make_indent() << "{" << endl;
     ++scope_level;
     for(int i = 0; i < record->members.size(); ++i)
     {
         ss << make_indent();
-        ss << get_c_type(record->members[i]->GetVarType()) << " " << record->members[i]->GetName() << ";";
+        ss << get_c_var_type(record->members[i]) << ";";
         ss << endl;
     }
     --scope_level;
@@ -185,11 +224,11 @@ string TypeDefOutput::RecordOutput()
 
 string TypeDefOutput::OtherOutput()
 {
+    Variable var(var_type->GetName());
+    var.SetVarType(var_type);
     stringstream ss;
     ss << make_indent();
-    ss << "typedef " << get_c_type(var_type);
-    ss << " " << var_type->GetName();
-    ss << ";";
+    ss << "typedef " << get_c_var_type(&var) << ";";
     return ss.str();
 }
 
@@ -205,7 +244,7 @@ string VarDefOutput::operator() ()
 {
     stringstream ss;
     ss << make_indent();
-    ss << get_c_type(var->GetVarType()) << " " << var->GetName() << ";";
+    ss << get_c_var_type(var) << ";";
     return ss.str();
 }
 

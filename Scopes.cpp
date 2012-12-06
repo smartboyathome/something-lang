@@ -104,12 +104,14 @@ void GlobalScope::DecrementScopeLevel()
 LocalScope::LocalScope(int level)
 {
     scope_level = level;
+    current_procedure = NULL;
 }
 
 LocalScope::LocalScope(int level, map<string, MetaType*> new_parent_scope)
 {
     scope_level = level;
     parent_scope = new_parent_scope;
+    current_procedure = NULL;
 }
 
 bool LocalScope::IsInScope(string identifier)

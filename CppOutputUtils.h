@@ -12,9 +12,12 @@ class OutputFunctor
 {
 protected:
     int scope_level;
+    string get_c_type(VariableType*);
+    string create_array_indexes(ArrayType*);
 public:
     OutputFunctor(int);
-    string get_c_type(VariableType*);
+    string get_c_func_type(VariableType*);
+    string get_c_var_type(Variable*);
     string get_c_value(VariableType*);
     virtual string operator() () = 0;
     string make_indent();

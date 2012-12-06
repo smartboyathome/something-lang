@@ -127,6 +127,7 @@ ProgramModule      :  yprogram yident
                           // This scope is for all the variables defined in the program.
                           global_scope.CreateNewScope();*/
                           *output_file << "#include <string>" << endl;
+                          *output_file << "using namespace std;" << endl;
                       }
                       ysemicolon Block ydot
                    ;
@@ -979,20 +980,34 @@ FunctionDecl       :  FunctionHeading  ycolon  yident
                               retval->SetVarType((VariableType*)metatype);
                               func->SetReturnType(retval);
                               current_scope->PushTempProcParams(retval);
+                              current_scope->current_procedure = func;
+                              
                               SubprogDefOutput generate_output(global_scope.CurrentScopeLevel(), func);
-                              *output_file << generate_output();
+                              *output_file << generate_output() << endl;
+                              *output_file << generate_output.BeginBlock() << endl;
+                              CreateNewScope();
+                              VarDefOutput retval_output(global_scope.CurrentScopeLevel(), retval);
+                              *output_file << retval_output() << endl;
+                              is_main = false;
                           }
-                          *output_file << SubprogDefOutput::BeginBlock(global_scope.CurrentScopeLevel()) << endl;
-                          CreateNewScope();
-                          is_main = false;
                           
                       }
                       ysemicolon  Block
                       {
                           global_scope.PopCurrentScope();
-                          *output_file << SubprogDefOutput::EndBlock(global_scope.CurrentScopeLevel()) << endl;
-                          if(global_scope.CurrentScopeLevel() == 0)
-                              is_main = true;
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          if(current_scope->current_procedure != NULL)
+                          {
+                              global_scope.IncrementScopeLevel();
+                              Variable* retval = current_scope->current_procedure->GetReturnType();
+                              *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
+                              *output_file << "return " << retval->GetName() << ";" << endl;
+                              current_scope->current_procedure = NULL;
+                              global_scope.DecrementScopeLevel();
+                              *output_file << SubprogDefOutput::EndBlock(global_scope.CurrentScopeLevel()) << endl;
+                              if(global_scope.CurrentScopeLevel() == 0)
+                                  is_main = true;
+                          }
                       }
                    ;
 ProcedureHeading   :  yprocedure  yident  

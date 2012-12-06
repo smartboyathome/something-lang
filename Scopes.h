@@ -49,6 +49,7 @@ public:
     map<string, MetaType*> GetLocalScope();
     string ToString();
     string make_indent();
+    Procedure* current_procedure;
     
     void PushTempVars(Variable*);
     Variable* PopTempVars();
