@@ -38,7 +38,11 @@ string OutputFunctor::get_c_type(VariableType* the_type, bool is_output)
     }
     else if(enum_type == VarTypes::STRING)
     {
-        retval =  "std::string";
+        string value = ((StringType*)the_type)->GetValue();
+        if(value.length() == 1)
+            retval = "char";
+        else
+            retval =  "string";
     }
     else if(enum_type == VarTypes::POINTER)
     {
@@ -140,9 +144,11 @@ string OutputFunctor::get_c_value(VariableType* the_type)
     }
     else if(enum_type == VarTypes::STRING)
     {
-        stringstream ss;
-        ss << "\"" << ((StringType*)the_type)->GetValue() << "\"";
-        return ss.str();
+        string value = ((StringType*)the_type)->GetValue();
+        if(value.length() == 1)
+            return "'" + value + "'";
+        else
+            return "\"" + value + "\"";
     }
     else if(enum_type == VarTypes::ARRAY)
     {
@@ -407,9 +413,10 @@ StringOutput::StringOutput(int the_scope_level, string the_string_to_output) :
 
 string StringOutput::operator() ()
 {
-    stringstream ss;
-    ss << "\"" << string_to_output << "\"";
-    return ss.str();
+    if(string_to_output.length() == 1)
+        return "'" + string_to_output + "'";
+    else
+        return "\"" + string_to_output + "\"";
 }
 
 // ---------------- ProcedureCallOutput ---------------------------------------
@@ -442,6 +449,7 @@ ForStatementOutput::ForStatementOutput(int the_level, Variable* the_new_var,
 string ForStatementOutput::operator() ()
 {
     stringstream ss;
+    
     ss << make_indent() << "for(" << get_c_var_type(new_var);
     ss << " = " << left_side << "; ";
     string less_than = up_to ? " <= " : " >= ";

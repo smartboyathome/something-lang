@@ -887,7 +887,33 @@ Expression         :  SimpleExpression
                       }
                    |  SimpleExpression  yin  SimpleExpression
                       {
-                      
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          string right_side = expression_deque.back();
+                          expression_deque.pop_back();
+                          Variable* right_side_expr = current_scope->PopTempVars();
+                          string left_side = expression_deque.back();
+                          expression_deque.pop_back();
+                          Variable* left_side_expr = current_scope->PopTempVars();
+                          
+                          if(IsVarTypeCheck(right_side_expr, VarTypes::ARRAY)())
+                          {
+                              ArrayType* array = (ArrayType*)((Variable*)right_side_expr)->GetVarType();
+                              if(IsVarTypeCheck(left_side_expr, array->GetArrayType()->GetEnumType())())
+                              {
+                                  expression_deque.push_back("count(");
+                                  expression_deque.push_back(right_side);
+                                  expression_deque.push_back(",");
+                                  stringstream ss;
+                                  if(array->ranges[0].rangeType == AcceptedTypes::INT)
+                                      ss << right_side << "+" << array->ranges[0].intHigh + 1;
+                                  else
+                                      ss << right_side << "+" << (int)array->ranges[0].charHigh + 1;
+                                  expression_deque.push_back(ss.str());
+                                  expression_deque.push_back(",");
+                                  expression_deque.push_back(left_side);
+                                  expression_deque.push_back(") != 0");
+                              }
+                          }
                       }
                    ;
 SimpleExpression   :  TermExpr
