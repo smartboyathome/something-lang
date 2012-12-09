@@ -20,42 +20,46 @@ string OutputFunctor::make_indent(int level)
     return ss.str();
 }
 
-string OutputFunctor::get_c_type(VariableType* the_type)
+string OutputFunctor::get_c_type(VariableType* the_type, bool is_output)
 {
     VarTypes::Type enum_type = the_type->GetEnumType();
+    string retval;
     if(enum_type == VarTypes::INTEGER)
     {
-        return "int";
+        retval =  "int";
     }
     else if(enum_type == VarTypes::BOOLEAN)
     {
-        return "bool";
+        retval =  "bool";
     }
     else if(enum_type == VarTypes::REAL)
     {
-        return "double";
+        retval =  "double";
     }
     else if(enum_type == VarTypes::STRING)
     {
-        return "std::string";
+        retval =  "std::string";
     }
     else if(enum_type == VarTypes::POINTER)
     {
         Pointer* pointer = (Pointer*)the_type;
         if(pointer->GetName() == "nil")
-            return "void";
+            retval =  "void";
         stringstream ss;
         ss << pointer->GetTypeIdentifier() << "*";
-        return ss.str();
+        retval =  ss.str();
     }
     else if(enum_type == VarTypes::RECORD)
     {
-        return the_type->GetName();
+        retval =  the_type->GetName();
     }
     else
     {
-        return "";
+        retval =  "";
     }
+    if(is_output)
+        retval += "*";
+    return retval;
 }
 
 string OutputFunctor::create_array_indexes(ArrayType* array)
@@ -90,7 +94,7 @@ string OutputFunctor::get_c_func_type(VariableType* the_type)
     }
     else
     {
-        return get_c_type(the_type);
+        return get_c_type(the_type, false);
     }
 }
 
@@ -109,7 +113,7 @@ string OutputFunctor::get_c_var_type(Variable* the_var)
     }
     else
     {
-        return get_c_type(the_var->GetVarType()) + " " + the_var->GetName();
+        return get_c_type(the_var->GetVarType(), false) + " " + the_var->GetName();
     }
 }
 
@@ -261,7 +265,7 @@ string SubprogDefOutput::operator() ()
 {
     stringstream ss;
     if(has_return_type)
-        ss << get_c_type(proc->GetReturnType()->GetVarType());
+        ss << get_c_type(proc->GetReturnType()->GetVarType(), false);
     else
         ss << "void";
     ss << " " << proc->GetName() << "(";
@@ -272,7 +276,7 @@ string SubprogDefOutput::operator() ()
             ss << ", ";
         else
             first = false;
-        ss << get_c_type(proc->parameters[i]->GetVarType());
+        ss << get_c_type(proc->parameters[i]->GetVarType(), proc->parameters[i]->IsOutput());
         ss << " " << proc->parameters[i]->GetName();
     }
     ss << ")";

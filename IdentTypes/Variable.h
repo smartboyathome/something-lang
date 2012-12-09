@@ -16,12 +16,15 @@ public:
     string GetValue();
     void ToggleConst();
     bool IsConst();
+    void ToggleOutput();
+    bool IsOutput();
     
     string ToString() const;
     string CString() const;
     
 private:
     bool is_const;
+    bool is_output;
     string variable_value;
     VariableType* my_type;
 };

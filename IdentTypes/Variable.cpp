@@ -5,6 +5,7 @@
 // Takes a string name (identifier)
 Variable::Variable(const string name) : MetaType(name, VARIABLE) {
     is_const = false;
+    is_output = false;
     variable_value = "";
     my_type = new NilType();
 }
@@ -13,6 +14,7 @@ Variable::Variable(const string name) : MetaType(name, VARIABLE) {
 // Takes a string name (identifier) and a string value
 Variable::Variable(const string name, const string value) : MetaType(name, VARIABLE) {
     is_const = false;
+    is_output = false;
     variable_value = value;
     my_type = new NilType();
 }
@@ -43,15 +45,22 @@ string Variable::GetValue() {
 
 void Variable::ToggleConst()
 {
-    if(is_const)
-        is_const = false;
-    else
-        is_const = true;
+    is_const = is_const? false : true;
 }
 
 bool Variable::IsConst()
 {
     return is_const;
+}
+
+void Variable::ToggleOutput()
+{
+    is_output = is_output? false : true;
+}
+
+bool Variable::IsOutput()
+{
+    return is_output;
 }
 
 // Return a string representation of this object

@@ -598,6 +598,7 @@ ProcedureCall      :  yident
                               bool is_output = proc->GetName() == "write" || proc->GetName() == "writeln";
                               bool is_input = proc->GetName() == "read" || proc->GetName() == "readln";
                               bool do_newline = proc->GetName() == "writeln";
+                              int count = 0;
                               while(!expression_deque.empty())
                               {
                                   string next_expr = expression_deque.front();
@@ -611,9 +612,12 @@ ProcedureCall      :  yident
                                   }
                                   else
                                   {
+                                      if(proc->parameters.size() > count && proc->parameters[count]->IsOutput())
+                                          *output_file << "&";
                                       *output_file << next_expr;
                                   }
                                   expression_deque.pop_front();
+                                  ++count;
                               }
                               if(is_output && do_newline)
                                   *output_file << " << endl";
@@ -748,7 +752,14 @@ Designator         :  yident
                           {
                               MetaType* metatype = current_scope->IsInScope(s) ? current_scope->Get(s) : current_scope->Get(s+"_");
                               current_scope->PushTempDesignators(metatype);
-                              designator_deque.push_back(metatype->GetName());
+                              if(metatype->GetType() == VARIABLE && ((Variable*)metatype)->IsOutput())
+                              {
+                                  designator_deque.push_back("(*" + metatype->GetName() + ")");
+                              }
+                              else
+                              {
+                                  designator_deque.push_back(metatype->GetName());
+                              }
                           }
                       }
                       DesignatorStuff 
@@ -1239,7 +1250,7 @@ ProcedureDecl      :  ProcedureHeading  ysemicolon
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           string identifier = current_scope->PopTempStrings();
                           Procedure* proc = (Procedure*)current_scope->Get(identifier);
-                          SubprogDefOutput generate_output(global_scope.CurrentScopeLevel(), proc, true);
+                          SubprogDefOutput generate_output(global_scope.CurrentScopeLevel(), proc, false);
                           *output_file << generate_output() << endl;
                           *output_file << generate_output.BeginBlock() << endl;
                           is_main = false;
@@ -1393,6 +1404,7 @@ OneFormalParam     :  yvar  IdentList  ycolon  yident
                                   {
                                       Variable* param = current_scope->PopTempVars();
                                       param->SetVarType(type);
+                                      param->ToggleOutput();
                                       current_scope->PushTempProcParams(param);
                                   }
                               }

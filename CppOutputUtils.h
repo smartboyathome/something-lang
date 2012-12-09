@@ -12,7 +12,7 @@ class OutputFunctor
 {
 protected:
     int scope_level;
-    static string get_c_type(VariableType*);
+    static string get_c_type(VariableType*, bool);
     static string create_array_indexes(ArrayType*);
 public:
     OutputFunctor(int);
