@@ -21,7 +21,7 @@ Range::Range(int low, int high) : MetaType("", RANGE)
 Range::Range(char low, char high) : MetaType("", RANGE)
 {
     if (!('a' <= low && low <= 'z' && 'a' <= high && high <= 'z') 
-	|| !('A' <= low && low <= 'Z' && 'A' <= high && high <= 'Z'))
+	&& !('A' <= low && low <= 'Z' && 'A' <= high && high <= 'Z'))
         return;
         
     rangeType = AcceptedTypes::CHAR;

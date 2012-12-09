@@ -25,4 +25,5 @@ public:
     // of this procedure
     vector<Variable*> parameters;
     Variable* return_data;
+    bool var_num_args;
 };

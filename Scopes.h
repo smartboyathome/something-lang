@@ -10,6 +10,7 @@
 #include "IdentTypes/Procedure.h"
 #include <sstream>
 #include <fstream>
+#include <algorithm>
 using namespace std;
 
 class LocalScope
@@ -50,6 +51,7 @@ public:
     string ToString();
     string make_indent();
     Procedure* current_procedure;
+    Procedure* procedure_call;
     
     void PushTempVars(Variable*);
     Variable* PopTempVars();

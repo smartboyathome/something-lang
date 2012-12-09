@@ -8,6 +8,7 @@ Procedure::Procedure(const string name) : MetaType(name, PROCEDURE)
     return_data = new Variable("nil");
     return_data->SetVarType(new NilType());
     return_data->ToggleConst();
+    var_num_args = false;
 }
 
 // Destructor

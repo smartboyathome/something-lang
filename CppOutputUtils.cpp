@@ -66,11 +66,11 @@ string OutputFunctor::create_array_indexes(ArrayType* array)
         ss << "[";
         if(array->ranges[i].rangeType == AcceptedTypes::INT)
         {
-            ss << array->ranges[i].intHigh - array->ranges[i].intLow + 1;
+            ss << array->ranges[i].intHigh + 1;
         }
         else if(array->ranges[i].rangeType == AcceptedTypes::CHAR)
         {
-            ss << (int)(array->ranges[i].charHigh - array->ranges[i].charLow + 1);
+            ss << (int)(array->ranges[i].charHigh + 1);
         }
         ss << "]";
     }
@@ -163,7 +163,7 @@ string OutputFunctor::get_c_value(VariableType* the_type)
     }
     else
     {
-        return "";
+        return "xxx";
     }
 }
 
@@ -250,16 +250,20 @@ string VarDefOutput::operator() ()
 
 // ---------------- SubprogDefOutput ------------------------------------------
 
-SubprogDefOutput::SubprogDefOutput(int the_scope_level, Procedure* the_proc) :
+SubprogDefOutput::SubprogDefOutput(int the_scope_level, Procedure* the_proc, bool this_has_return_type) :
     OutputFunctor(the_scope_level)
 {
     proc = the_proc;
+    has_return_type = this_has_return_type;
 }
 
 string SubprogDefOutput::operator() ()
 {
     stringstream ss;
-    ss << get_c_type(proc->GetReturnType()->GetVarType());
+    if(has_return_type)
+        ss << get_c_type(proc->GetReturnType()->GetVarType());
+    else
+        ss << "void";
     ss << " " << proc->GetName() << "(";
     bool first = true;
     for(int i = 0; i < proc->parameters.size(); ++i)
@@ -436,7 +440,7 @@ string ForStatementOutput::operator() ()
     stringstream ss;
     ss << make_indent() << "for(" << get_c_var_type(new_var);
     ss << " = " << get_c_value(left_side->GetVarType()) << "; ";
-    ss << new_var->GetName() << " = " << get_c_value(right_side->GetVarType()) << ";";
+    ss << new_var->GetName() << " <= " << get_c_value(right_side->GetVarType()) << ";";
     string the_increment = up_to ? "++" : "--";
     ss << the_increment << new_var->GetName() << ")";
     return ss.str();

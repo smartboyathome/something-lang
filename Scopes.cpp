@@ -36,9 +36,14 @@ GlobalScope::GlobalScope()
                       "ord", "pred", "round", "sin", "sqr", "sqrt", "succ", "trunc",
                       "get", "new", "dispose", "pack", "page", "put", "read", "readln",
                       "reset", "rewrite", "unpack", "write", "writeln"};
+    string var_num_arg_procs [] = {"read", "readln", "write", "writeln"};
     for(int i = 0; i < 30; ++i)
     {
         Procedure* proc = new Procedure(procs[i]);
+        if(count(var_num_arg_procs, var_num_arg_procs+4, procs[i]) != 0)
+        {
+            proc->var_num_args = true;
+        }
         program_scopes.top()->Insert(procs[i], proc);
     }
     

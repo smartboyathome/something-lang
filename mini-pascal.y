@@ -31,7 +31,8 @@ void yyerror(const char *s) {
 extern "C" int yyparse();
 
 GlobalScope global_scope;
-deque<string> output_deque;
+deque<string> designator_deque;
+deque<string> expression_deque;
 bool is_main = true;
 
 void CreateNewScope()
@@ -127,6 +128,7 @@ ProgramModule      :  yprogram yident
                           // This scope is for all the variables defined in the program.
                           global_scope.CreateNewScope();*/
                           *output_file << "#include <string>" << endl;
+                          *output_file << "#include <iostream>" << endl;
                           *output_file << "using namespace std;" << endl;
                       }
                       ysemicolon Block ydot
@@ -149,7 +151,7 @@ Block              :  Declarations  ybegin
                       {
                           if(is_main)
                           {
-                              *output_file << "void main()" << endl << "{" << endl;
+                              *output_file << "int main()" << endl << "{" << endl;
                               global_scope.IncrementScopeLevel();
                           }
                       }
@@ -157,8 +159,10 @@ Block              :  Declarations  ybegin
                       {
                           if(is_main)
                           {
-                              *output_file << "};" << endl;
+                              *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
+                              *output_file << "return 0;" << endl;
                               global_scope.DecrementScopeLevel();
+                              *output_file << "};" << endl;
                           }
                       }
                    ;
@@ -251,7 +255,7 @@ TypeDef            :  yident
                                       current_scope->PushTempPointers(ptr);
                                   }
                               }
-                              else if(non_temp_pointer) // Pointers will be output when they are verified.
+                              if(non_temp_pointer) // Pointers will be output when they are verified.
                               {
                                   TypeDefOutput generate_output(global_scope.CurrentScopeLevel(), type);
                                   *output_file << generate_output() << endl;
@@ -363,6 +367,7 @@ ArrayType          :  yarray yleftbracket Subrange SubrangeList
                           ArrayType* array = new ArrayType("");
                           stack<Range> reversed; // Needed since the ranges will be backwards
                           LocalScope* current_scope = global_scope.GetCurrentScope();
+                          VariableType* type = current_scope->PopTempTypes();
                           while(!current_scope->TempRangesEmpty())
                           {
                               reversed.push(current_scope->PopTempRanges());
@@ -373,8 +378,18 @@ ArrayType          :  yarray yleftbracket Subrange SubrangeList
                               reversed.pop();
                               array->AddDimension(range);
                           }
-                          VariableType* type = current_scope->PopTempTypes();
-                          array->SetArrayType(type);
+                          if(type->GetEnumType() == VarTypes::ARRAY)
+                          {
+                              ArrayType* other_array = (ArrayType*)type;
+                              VariableType* new_type = other_array->GetArrayType();
+                              for(int i = 0; i < other_array->GetArrayDimensions(); ++i)
+                              {
+                                  array->AddDimension(other_array->ranges[i]);
+                              }
+                              array->SetArrayType(new_type);
+                          }
+                          else
+                            array->SetArrayType(type);
                           current_scope->PushTempTypes(array);
                       }
                    ;
@@ -480,9 +495,9 @@ Statement          :  Assignment
                    ;
 Assignment         :  Designator
                       {
-                          AssignLeftOutput generate_output(global_scope.CurrentScopeLevel(), output_deque);
+                          AssignLeftOutput generate_output(global_scope.CurrentScopeLevel(), designator_deque);
                           *output_file << generate_output();
-                          output_deque.clear();
+                          designator_deque.clear();
                       }
                       yassign Expression
                       {
@@ -502,6 +517,11 @@ Assignment         :  Designator
                                   Variable* origvar = (Variable*)origtype;
                                   IsVarTypeCheck(var, origvar->GetVarType()->GetEnumType())();
                               }
+                              while(!expression_deque.empty())
+                              {
+                                  *output_file << expression_deque.front() << " ";
+                                  expression_deque.pop_front();
+                              }
                           }
                       }
                    ;
@@ -512,7 +532,19 @@ ProcedureCall      :  yident
                           {
                               MetaType* proc = current_scope->IsInScope(s) ? current_scope->Get(s) : current_scope->Get(s+"_");
                               IsMetatypeCheck(proc, PROCEDURE)();
-                              *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel()) << proc->GetName() << "()";
+                              *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
+                              if(proc->GetName() == "writeln")
+                              {
+                                  *output_file << "cout << endl";
+                              }
+                              else if(proc->GetName() == "write")
+                              {
+                                  *output_file << "cout";
+                              }
+                              else
+                              {
+                                  *output_file << proc->GetName() << "()";
+                              }
                           }
                       }
                    |  yident
@@ -522,25 +554,94 @@ ProcedureCall      :  yident
                           {
                               MetaType* proc = current_scope->IsInScope(s) ? current_scope->Get(s) : current_scope->Get(s+"_");
                               IsMetatypeCheck(proc, PROCEDURE)();
-                              *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel()) << proc->GetName() << "( ";
+                              if(proc->GetName() == "new")
+                              {
+                                  
+                              }
+                              else
+                              {
+                                  *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
+                                  bool is_output = proc->GetName() == "write" || proc->GetName() == "writeln";
+                                  bool is_input = proc->GetName() == "read" || proc->GetName() == "readln";
+                                  if(is_output)
+                                  {
+                                      *output_file << "cout << ";
+                                  }
+                                  else if(is_input)
+                                  {
+                                      *output_file << "cin >> ";
+                                  }
+                                  else
+                                  {
+                                      *output_file << proc->GetName() << "(";
+                                  }
+                              }
+                              current_scope->procedure_call = (Procedure*)proc;
                           }
                       }
                       ActualParameters
                       {
-                          *output_file << ")";
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          Procedure* proc = current_scope->procedure_call;
+                          // Kyle says fight fire with fire, so here we go!
+                          if(proc->GetName() == "new")
+                          {
+                              *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
+                              *output_file << expression_deque.front() << " = ";
+                              Variable* var = current_scope->PopTempExpressions();
+                              current_scope->PushTempExpressions(var);
+                              *output_file << OutputFunctor::get_c_value(var->GetVarType());
+                              expression_deque.clear();
+                          }
+                          else
+                          {
+                              bool is_output = proc->GetName() == "write" || proc->GetName() == "writeln";
+                              bool is_input = proc->GetName() == "read" || proc->GetName() == "readln";
+                              bool do_newline = proc->GetName() == "writeln";
+                              while(!expression_deque.empty())
+                              {
+                                  string next_expr = expression_deque.front();
+                                  if(is_output && next_expr == ",")
+                                  {
+                                      *output_file << " << ";
+                                  }
+                                  else if(is_input && next_expr == ",")
+                                  {
+                                      *output_file << " >> ";
+                                  }
+                                  else
+                                  {
+                                      *output_file << next_expr;
+                                  }
+                                  expression_deque.pop_front();
+                              }
+                              if(is_output && do_newline)
+                                  *output_file << " << endl";
+                              else if(!is_output && !is_input)
+                                  *output_file << ")";
+                          }
                       }
                    ;
-IfStatement        :  yif
-                      {
-                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel()) << "if (";
-                      }
-                      Expression
+IfStatement        :  yif  Expression
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           Variable* var = current_scope->PopTempExpressions();
                           IsVarTypeCheck(var, VarTypes::BOOLEAN);
+                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
+                          *output_file << "if(";
+                          bool first = true;
+                          while(!expression_deque.empty())
+                          {
+                              if(!first)
+                                  *output_file << " ";
+                              else
+                                  first = false;
+                              *output_file << expression_deque.front();
+                              expression_deque.pop_front();
+                          }
                           *output_file << ")" << endl;
-                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel()) << "{" << endl;
+                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
+                          *output_file << "{" << endl;
                           global_scope.IncrementScopeLevel();
                       }
                       ythen  Statement
@@ -578,8 +679,24 @@ WhileStatement     :  ywhile  Expression
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           Variable* var = current_scope->PopTempExpressions();
                           IsVarTypeCheck(var, VarTypes::BOOLEAN);
+                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
+                          *output_file << "while(";
+                          while(!expression_deque.empty())
+                          {
+                              *output_file << expression_deque.front() << " ";
+                              expression_deque.pop_front();
+                          }
+                          *output_file << ")" << endl;
+                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
+                          *output_file << "{" << endl;
+                          global_scope.IncrementScopeLevel();
                       }
-                      ydo  Statement  
+                      ydo  Statement
+                      {
+                          global_scope.DecrementScopeLevel();
+                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
+                          *output_file << "}" << endl;
+                      }
                    ;
 RepeatStatement    :  yrepeat  StatementSequence  yuntil  Expression
                    ;
@@ -587,44 +704,22 @@ ForStatement       :  yfor  yident
                       {
                           global_scope.GetCurrentScope()->PushTempStrings(s);
                       }
-                      yassign  Expression  yto  Expression
+                      yassign  Expression  WhichWay  Expression
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
+                          string up_to_str = current_scope->PopTempStrings();
                           string identifier = current_scope->PopTempStrings();
                           Variable* right_side = current_scope->PopTempExpressions();
                           Variable* left_side = current_scope->PopTempExpressions();
                           Variable* new_var = new Variable(identifier);
                           new_var->SetVarType(left_side->GetVarType());
+                          bool up_to = up_to_str == "to";
                           ForStatementOutput generate_output(global_scope.CurrentScopeLevel(),
                               new_var, left_side, right_side, true);
                           *output_file << generate_output() << endl;
                           *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
                           *output_file << "{" << endl;
-                          global_scope.IncrementScopeLevel();
-                      }
-                      ydo  Statement
-                      {
-                          global_scope.DecrementScopeLevel();
-                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
-                          *output_file << "}" << endl;
-                      }
-                   |  yfor  yident
-                      {
-                          global_scope.GetCurrentScope()->PushTempStrings(s);
-                      }
-                      yassign  Expression  ydownto  Expression
-                      {
-                          LocalScope* current_scope = global_scope.GetCurrentScope();
-                          string identifier = current_scope->PopTempStrings();
-                          Variable* right_side = current_scope->PopTempExpressions();
-                          Variable* left_side = current_scope->PopTempExpressions();
-                          Variable* new_var = new Variable(identifier);
-                          new_var->SetVarType(left_side->GetVarType());
-                          ForStatementOutput generate_output(global_scope.CurrentScopeLevel(),
-                              new_var, left_side, right_side, false);
-                          *output_file << generate_output() << endl;
-                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
-                          *output_file << "{" << endl;
+                          expression_deque.clear();
                           global_scope.IncrementScopeLevel();
                       }
                       ydo  Statement
@@ -634,7 +729,15 @@ ForStatement       :  yfor  yident
                           *output_file << "}" << endl;
                       }
                    ;
-
+WhichWay           :  yto
+                      {
+                          global_scope.GetCurrentScope()->PushTempStrings("to");
+                      }
+                   |  ydownto
+                      {
+                          global_scope.GetCurrentScope()->PushTempStrings("downto");
+                      }
+                   ;
 
 /***************************  Designator Stuff  ******************************/
 
@@ -645,7 +748,7 @@ Designator         :  yident
                           {
                               MetaType* metatype = current_scope->IsInScope(s) ? current_scope->Get(s) : current_scope->Get(s+"_");
                               current_scope->PushTempDesignators(metatype);
-                              output_deque.push_back(metatype->GetName());
+                              designator_deque.push_back(metatype->GetName());
                           }
                       }
                       DesignatorStuff 
@@ -671,14 +774,15 @@ theDesignatorStuff :  ydot yident
                               else
                               {
                                   current_scope->PushTempDesignators(record->GetMember(s));
-                                  output_deque.push_back("." + record->GetName());
+                                  designator_deque.push_back("." + s);
                               }
                           }
                           
                       }
                    |  yleftbracket
                       {
-                          output_deque.push_back("[");
+                          designator_deque.push_back("[");
+                          expression_deque.push_back("[");
                       }
                       ExpList yrightbracket 
                       {
@@ -692,7 +796,20 @@ theDesignatorStuff :  ydot yident
                           {
                               ArrayType* array = (ArrayType*)metatype;
                               current_scope->PushTempDesignators(array->GetArrayType());
-                              output_deque.push_back("]");
+                              string expression_str = "";
+                              while(expression_deque.back() != "[")
+                              {
+                                  string next_expr = expression_deque.back();
+                                  if(next_expr == ",")
+                                  {
+                                      next_expr = "][";
+                                  }
+                                  expression_str = next_expr + expression_str;
+                                  expression_deque.pop_back();
+                              }
+                              expression_deque.pop_back();
+                              designator_deque.push_back(expression_str);
+                              designator_deque.push_back("]");
                           }
                       }
                    |  ycaret
@@ -706,8 +823,10 @@ theDesignatorStuff :  ydot yident
                           if(IsMetatypeCheck(metatype, VARIABLE_TYPE)() && IsVarTypeCheck(metatype, VarTypes::POINTER)())
                           {
                               current_scope->PushTempDesignators(((Pointer*)metatype)->GetTypePtr());
-                              output_deque.pop_back();
-                              output_deque.push_back("(*" + metatype->GetName() + ")");
+                              //string before = designator_deque.back();
+                              //designator_deque.pop_back();
+                              designator_deque.push_front("(*");
+                              designator_deque.push_back(")");
                           }
                       }
                    ;
@@ -716,9 +835,9 @@ ActualParameters   :  yleftparen  ExpList  yrightparen
 ExpList            :  Expression   
                    |  ExpList  ycomma
                       {
-                          *output_file << ", ";
+                          expression_deque.push_back(",");
                       }
-                      Expression       
+                      Expression
                    ;
 
 /***************************  Expression Stuff  ******************************/
@@ -734,6 +853,10 @@ Expression         :  SimpleExpression
                           Variable* var = current_scope->PopTempVars();
                           var->SetVarType(new BooleanType());
                           current_scope->PushTempExpressions(var);
+                      }
+                   |  SimpleExpression  yin  SimpleExpression
+                      {
+                      
                       }
                    ;
 SimpleExpression   :  TermExpr
@@ -787,6 +910,68 @@ Term               :  Factor
                               current_scope->PushTempVars(newvar);
                           }
                       }
+                   |  Term ydiv Factor
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          Variable* newvar = new Variable("");
+                          newvar->SetVarType(current_scope->PopTempTypes());
+                          if(!current_scope->TempVarsEmpty())
+                          {
+                              Variable* oldvar = current_scope->PopTempVars();
+                              VarTypes::Type newvartype = newvar->GetVarType()->GetEnumType();
+                              VarTypes::Type oldvartype = oldvar->GetVarType()->GetEnumType();
+                              if(IsVarTypeCheck(newvar, oldvar->GetVarType()->GetEnumType())())
+                              {
+                                  current_scope->PushTempVars(newvar);
+                                  string expression_right = expression_deque.back();
+                                  expression_deque.pop_back();
+                                  string expression_left = expression_deque.back();
+                                  expression_deque.pop_back();
+                                  expression_deque.push_back("(");
+                                  expression_deque.push_back("(int)");
+                                  expression_deque.push_back(expression_left);
+                                  expression_deque.push_back("/");
+                                  expression_deque.push_back("(int)");
+                                  expression_deque.push_back(expression_right);
+                                  expression_deque.push_back(")");
+                              }
+                          }
+                          else
+                          {
+                              current_scope->PushTempVars(newvar);
+                          }
+                      }
+                   |  Term ydivide Factor
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          Variable* newvar = new Variable("");
+                          newvar->SetVarType(current_scope->PopTempTypes());
+                          if(!current_scope->TempVarsEmpty())
+                          {
+                              Variable* oldvar = current_scope->PopTempVars();
+                              VarTypes::Type newvartype = newvar->GetVarType()->GetEnumType();
+                              VarTypes::Type oldvartype = oldvar->GetVarType()->GetEnumType();
+                              if(IsVarTypeCheck(newvar, oldvar->GetVarType()->GetEnumType())())
+                              {
+                                  current_scope->PushTempVars(newvar);
+                                  string expression_right = expression_deque.back();
+                                  expression_deque.pop_back();
+                                  string expression_left = expression_deque.back();
+                                  expression_deque.pop_back();
+                                  expression_deque.push_back("(");
+                                  expression_deque.push_back("(double)");
+                                  expression_deque.push_back(expression_left);
+                                  expression_deque.push_back("/");
+                                  expression_deque.push_back("(double)");
+                                  expression_deque.push_back(expression_right);
+                                  expression_deque.push_back(")");
+                              }
+                          }
+                          else
+                          {
+                              current_scope->PushTempVars(newvar);
+                          }
+                      }
                    ;
 Factor             :  ynumber
                       {
@@ -798,23 +983,26 @@ Factor             :  ynumber
                               IntegerType* Int = new IntegerType("", (int)temp_int);
                               global_scope.GetCurrentScope()->PushTempTypes(Int);
                               IntOutput generate_output(global_scope.CurrentScopeLevel(), Int->GetValue());
-                              *output_file << generate_output() << " ";
+                              expression_deque.push_back(generate_output());
                           }
                           else
                           {
                               RealType* Real = new RealType("", temp);
                               global_scope.GetCurrentScope()->PushTempTypes(Real);
                               RealOutput generate_output(global_scope.CurrentScopeLevel(), Real->GetValue());
-                              *output_file << generate_output() << " ";
+                              expression_deque.push_back(generate_output());
                           }
                       }
                    |  ynil
+                      {
+                          expression_deque.push_back("NULL");
+                      }
                    |  ystring
                       {
                           StringType* String = new StringType("", s);
                           global_scope.GetCurrentScope()->PushTempTypes(String);
                           StringOutput generate_output(global_scope.CurrentScopeLevel(), String->GetValue());
-                          *output_file << generate_output() << " ";
+                          expression_deque.push_back(generate_output());
                       }
                    |  Designator
                       {
@@ -833,31 +1021,39 @@ Factor             :  ynumber
                           {
                               current_scope->PushTempTypes(((Procedure*)var)->GetReturnType()->GetVarType());
                           }
-                          DesignatorOutput generate_output(global_scope.CurrentScopeLevel(), output_deque);
-                          *output_file << generate_output() << " ";
-                          output_deque.clear();
+                          DesignatorOutput generate_output(global_scope.CurrentScopeLevel(), designator_deque);
+                          expression_deque.push_back(generate_output());
+                          designator_deque.clear();
                       }
                    |  yleftparen
                       {
-                          *output_file << "(";
+                          expression_deque.push_back("(");
                       }
                       Expression
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           current_scope->PushTempTypes(current_scope->PopTempExpressions()->GetVarType());
+                          string expression_str = ")";
+                          while(expression_deque.back() != "(")
+                          {
+                              expression_str = expression_deque.back() + " " + expression_str;
+                              expression_deque.pop_back();
+                          }
+                          expression_deque.pop_back();
+                          expression_deque.push_back("(" + expression_str);
                       }
                       yrightparen
+                   |  ynot
                       {
-                          *output_file << ")";
+                          expression_deque.push_back("!");
                       }
-                   |  ynot Factor
+                      Factor
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           current_scope->PopTempVars();
                           Variable* var = new Variable("");
                           var->SetVarType(new BooleanType());
                           current_scope->PushTempVars(var);
-                          *output_file << "!";
                       }
                    |  Setvalue
                    |  FunctionCall
@@ -871,14 +1067,47 @@ FunctionCall       :  yident
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           if(IsInScopeCheck(current_scope, s)())
                           {
-                              MetaType* var = current_scope->IsInScope(s) ? current_scope->Get(s) : current_scope->Get(s+"_");
-                              if(IsMetatypeCheck(var, PROCEDURE)())
+                              MetaType* proc = current_scope->IsInScope(s) ? current_scope->Get(s) : current_scope->Get(s+"_");
+                              if(IsMetatypeCheck(proc, PROCEDURE)())
                               {
-                                  current_scope->PushTempTypes(((Procedure*)var)->GetReturnType()->GetVarType());
+                                  current_scope->PushTempTypes(((Procedure*)proc)->GetReturnType()->GetVarType());
+                                  if(proc->GetName() == "writeln")
+                                  {
+                                      *output_file << "cout << endl";
+                                  }
+                                  else if(proc->GetName() == "write")
+                                  {
+                                      *output_file << "cout";
+                                  }
+                                  else
+                                  {
+                                      *output_file << proc->GetName() << "(";
+                                  }
+                                  expression_deque.push_back("(");
                               }
                           }
                       }
                       ActualParameters
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          Procedure* proc = current_scope->procedure_call;
+                          // Kyle says fight fire with fire AGAIN, so here we go AGAIN!
+                          deque<string> temp;
+                          while(!expression_deque.empty() && expression_deque.back() != "(")
+                          {
+                              temp.push_back(expression_deque.back());
+                              expression_deque.pop_back();
+                          }
+                          if(!expression_deque.empty())
+                              expression_deque.pop_back();
+                          while(!temp.empty())
+                          {
+                              string next_expr = temp.back();
+                              *output_file << next_expr;
+                              temp.pop_back();
+                          }
+                          *output_file << ")";
+                      }
                    ;
 Setvalue           :  yleftbracket
                       {
@@ -1007,11 +1236,21 @@ SubprogDeclList    :  /*** empty ***/
                    ;
 ProcedureDecl      :  ProcedureHeading  ysemicolon
                       {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          string identifier = current_scope->PopTempStrings();
+                          Procedure* proc = (Procedure*)current_scope->Get(identifier);
+                          SubprogDefOutput generate_output(global_scope.CurrentScopeLevel(), proc, true);
+                          *output_file << generate_output() << endl;
+                          *output_file << generate_output.BeginBlock() << endl;
+                          is_main = false;
                           CreateNewScope();
                       }
                       Block 
                       {
                           global_scope.PopCurrentScope();
+                          *output_file << SubprogDefOutput::EndBlock(global_scope.CurrentScopeLevel()) << endl;
+                          if(global_scope.CurrentScopeLevel() == 0)
+                              is_main = true;
                       }
                    ;
 FunctionDecl       :  FunctionHeading  ycolon  yident
@@ -1028,7 +1267,7 @@ FunctionDecl       :  FunctionHeading  ycolon  yident
                               current_scope->PushTempProcParams(retval);
                               current_scope->current_procedure = func;
                               
-                              SubprogDefOutput generate_output(global_scope.CurrentScopeLevel(), func);
+                              SubprogDefOutput generate_output(global_scope.CurrentScopeLevel(), func, true);
                               *output_file << generate_output() << endl;
                               *output_file << generate_output.BeginBlock() << endl;
                               CreateNewScope();
@@ -1062,6 +1301,7 @@ ProcedureHeading   :  yprocedure  yident
                           NotIsInScopeCheck(current_scope, s)();
                           Procedure* procedure = new Procedure(s + "_");
                           current_scope->Insert(s + "_", procedure);
+                          current_scope->PushTempStrings(s+"_");
                       }
                    |  yprocedure  yident
                       {
@@ -1090,6 +1330,7 @@ ProcedureHeading   :  yprocedure  yident
                                   current_scope->PushTempProcParams(param);
                               }
                               current_scope->Insert(identifier, procedure);
+                              current_scope->PushTempStrings(identifier);
                           }
                       }
                    ;
@@ -1186,71 +1427,58 @@ UnaryOperator      :  yplus
                    |  yminus
                       {
                           global_scope.GetCurrentScope()->PushTempStrings("-");
-                          *output_file << "-";
+                          expression_deque.push_back("-");
                       }
                    ;
 MultOperator       :  ymultiply
                       {
-                          *output_file << "* ";
-                      }
-                   |  ydivide
-                      {
-                          *output_file << "/ ";
-                      }
-                   |  ydiv
-                      {
-                          *output_file << "/ ";
+                          expression_deque.push_back("*");
                       }
                    |  ymod
                       {
-                          *output_file << "% ";
+                          expression_deque.push_back("%");
                       }
                    |  yand
                       {
-                          *output_file << "& ";
+                          expression_deque.push_back("&");
                       }
                    ;
 AddOperator        :  yplus
                       {
-                          *output_file << "+ ";
+                          expression_deque.push_back("+");
                       }
                    |  yminus
                       {
-                          *output_file << "- ";
+                          expression_deque.push_back("-");
                       }
                    |  yor
                       {
-                          *output_file << "| ";
+                          expression_deque.push_back("|");
                       }
                    ;
 Relation           :  yequal
                       {
-                          *output_file << "== ";
+                          expression_deque.push_back("==");
                       }
                    |  ynotequal
                       {
-                          *output_file << "!= ";
+                          expression_deque.push_back("!=");
                       }
                    |  yless
                       {
-                          *output_file << "< ";
+                          expression_deque.push_back("<");
                       }
                    |  ygreater
                       {
-                          *output_file << "> ";
+                          expression_deque.push_back(">");
                       }
                    |  ylessequal
                       {
-                          *output_file << "<= ";
+                          expression_deque.push_back("<=");
                       }
                    |  ygreaterequal
                       {
-                          *output_file << ">= ";
-                      }
-                   |  yin
-                      {
-                          // TODO: Should this be in a library?
-                          *output_file << "";
+                          expression_deque.push_back(">=");
                       }
                    ;
 %%
