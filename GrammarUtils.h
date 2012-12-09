@@ -125,3 +125,14 @@ public:
     NotIsVarTypeCheck(MetaType*, VarTypes::Type);
     bool operator() ();
 };
+
+class IsOneOfVarTypesCheck : public ErrorFunctor
+{
+private:
+    MetaType* metatype;
+    VarTypes::Type *types;
+    int types_length;
+public:
+    IsOneOfVarTypesCheck(MetaType*, int, VarTypes::Type[]);
+    bool operator() ();
+};

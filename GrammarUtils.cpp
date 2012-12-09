@@ -224,3 +224,45 @@ bool NotIsVarTypeCheck::operator() ()
          yyerror(("'" + metatype->GetName() + "' is of type '" + VarTypes::ToString(vartype->GetEnumType())).c_str());
     return retval;
 }
+
+IsOneOfVarTypesCheck::IsOneOfVarTypesCheck(MetaType* the_metatype, int the_types_length, VarTypes::Type the_types[])
+{
+    metatype = the_metatype;
+    types_length = the_types_length;
+    types = the_types;
+}
+
+bool IsOneOfVarTypesCheck::operator() ()
+{
+    if(metatype == NULL)
+        return false;
+    VariableType* vartype;
+    if(metatype->GetType() == VARIABLE)
+    {
+        vartype = ((Variable*)metatype)->GetVarType();
+        if(vartype == NULL)
+            return false;
+    }
+    else if(metatype->GetType() == VARIABLE_TYPE)
+    {
+        vartype = (VariableType*)metatype;
+    }
+    else
+    {
+        return false;
+    }
+    string s = "'" + metatype->GetName() + "' is not of type ";
+    bool first = true;
+    for(int i = 0; i < types_length; ++i)
+    {
+        s += "'" + VarTypes::ToString(types[i]) + "'";
+        if(!first)
+            s += " or ";
+        else
+            first = false;
+        if(vartype->GetEnumType() == types[i])
+            return true;
+    }
+    yyerror(s.c_str());
+    return false;
+}
