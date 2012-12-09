@@ -949,19 +949,58 @@ Term               :  Factor
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           Variable* newvar = new Variable("");
                           newvar->SetVarType(current_scope->PopTempTypes());
-                          if(!current_scope->TempVarsEmpty())
+                          VarTypes::Type types[] = {VarTypes::INTEGER, VarTypes::REAL};
+                          if(IsOneOfVarTypesCheck(newvar, 2, types)())
                           {
-                              Variable* oldvar = current_scope->PopTempVars();
-                              VarTypes::Type newvartype = newvar->GetVarType()->GetEnumType();
-                              VarTypes::Type oldvartype = oldvar->GetVarType()->GetEnumType();
-                              if(IsVarTypeCheck(newvar, oldvar->GetVarType()->GetEnumType())())
+                              if(!current_scope->TempVarsEmpty())
+                              {
+                                  Variable* oldvar = current_scope->PopTempVars();
+                                  VarTypes::Type newvartype = newvar->GetVarType()->GetEnumType();
+                                  VarTypes::Type oldvartype = oldvar->GetVarType()->GetEnumType();
+                                  if(IsOneOfVarTypesCheck(oldvar, 2, types)())
+                                  {
+                                      VarTypes::Type newvar_type = newvar->GetVarType()->GetEnumType();
+                                      VarTypes::Type oldvar_type = oldvar->GetVarType()->GetEnumType();
+                                      if(newvar_type == VarTypes::REAL || oldvar_type == VarTypes::REAL)
+                                      {
+                                          RealType* real = new RealType("");
+                                          double product = 0.0;
+                                          if(newvar_type == VarTypes::REAL)
+                                          {
+                                              product = ((RealType*)newvar->GetVarType())->GetValue();
+                                          }
+                                          else
+                                          {
+                                              product = (double)((IntegerType*)newvar->GetVarType())->GetValue();
+                                          }
+                                          if(oldvar_type == VarTypes::REAL)
+                                          {
+                                              product *= ((RealType*)oldvar->GetVarType())->GetValue();
+                                          }
+                                          else
+                                          {
+                                              product *= ((IntegerType*)oldvar->GetVarType())->GetValue();
+                                          }
+                                          real->SetValue(product);
+                                          Variable* next = new Variable("");
+                                          next->SetVarType(real);
+                                          current_scope->PushTempVars(next);
+                                      }
+                                      else
+                                      {
+                                          IntegerType* integer = new IntegerType("");
+                                          int product = ((IntegerType*)newvar->GetVarType())->GetValue() * ((IntegerType*)oldvar->GetVarType())->GetValue();
+                                          integer->SetValue(product);
+                                          Variable* next = new Variable("");
+                                          next->SetVarType(integer);
+                                          current_scope->PushTempVars(next);
+                                      }
+                                  }
+                              }
+                              else
                               {
                                   current_scope->PushTempVars(newvar);
                               }
-                          }
-                          else
-                          {
-                              current_scope->PushTempVars(newvar);
                           }
                       }
                    |  Term ydiv Factor
@@ -969,30 +1008,33 @@ Term               :  Factor
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           Variable* newvar = new Variable("");
                           newvar->SetVarType(current_scope->PopTempTypes());
-                          if(!current_scope->TempVarsEmpty())
+                          if(IsVarTypeCheck(newvar, VarTypes::INTEGER)())
                           {
-                              Variable* oldvar = current_scope->PopTempVars();
-                              VarTypes::Type newvartype = newvar->GetVarType()->GetEnumType();
-                              VarTypes::Type oldvartype = oldvar->GetVarType()->GetEnumType();
-                              if(IsVarTypeCheck(newvar, oldvar->GetVarType()->GetEnumType())())
+                              if(!current_scope->TempVarsEmpty())
+                              {
+                                  Variable* oldvar = current_scope->PopTempVars();
+                                  VarTypes::Type newvartype = newvar->GetVarType()->GetEnumType();
+                                  VarTypes::Type oldvartype = oldvar->GetVarType()->GetEnumType();
+                                  if(IsVarTypeCheck(oldvar, VarTypes::INTEGER)())
+                                  {
+                                      current_scope->PushTempVars(newvar);
+                                      string expression_right = expression_deque.back();
+                                      expression_deque.pop_back();
+                                      string expression_left = expression_deque.back();
+                                      expression_deque.pop_back();
+                                      expression_deque.push_back("(");
+                                      expression_deque.push_back("(int)");
+                                      expression_deque.push_back(expression_left);
+                                      expression_deque.push_back("/");
+                                      expression_deque.push_back("(int)");
+                                      expression_deque.push_back(expression_right);
+                                      expression_deque.push_back(")");
+                                  }
+                              }
+                              else
                               {
                                   current_scope->PushTempVars(newvar);
-                                  string expression_right = expression_deque.back();
-                                  expression_deque.pop_back();
-                                  string expression_left = expression_deque.back();
-                                  expression_deque.pop_back();
-                                  expression_deque.push_back("(");
-                                  expression_deque.push_back("(int)");
-                                  expression_deque.push_back(expression_left);
-                                  expression_deque.push_back("/");
-                                  expression_deque.push_back("(int)");
-                                  expression_deque.push_back(expression_right);
-                                  expression_deque.push_back(")");
                               }
-                          }
-                          else
-                          {
-                              current_scope->PushTempVars(newvar);
                           }
                       }
                    |  Term ydivide Factor
@@ -1000,30 +1042,34 @@ Term               :  Factor
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           Variable* newvar = new Variable("");
                           newvar->SetVarType(current_scope->PopTempTypes());
-                          if(!current_scope->TempVarsEmpty())
+                          VarTypes::Type types[] = {VarTypes::INTEGER, VarTypes::REAL};
+                          if(IsOneOfVarTypesCheck(newvar, 2, types)())
                           {
-                              Variable* oldvar = current_scope->PopTempVars();
-                              VarTypes::Type newvartype = newvar->GetVarType()->GetEnumType();
-                              VarTypes::Type oldvartype = oldvar->GetVarType()->GetEnumType();
-                              if(IsVarTypeCheck(newvar, oldvar->GetVarType()->GetEnumType())())
+                              if(!current_scope->TempVarsEmpty())
+                              {
+                                  Variable* oldvar = current_scope->PopTempVars();
+                                  VarTypes::Type newvartype = newvar->GetVarType()->GetEnumType();
+                                  VarTypes::Type oldvartype = oldvar->GetVarType()->GetEnumType();
+                                  if(IsOneOfVarTypesCheck(oldvar, 2, types)())
+                                  {
+                                      current_scope->PushTempVars(newvar);
+                                      string expression_right = expression_deque.back();
+                                      expression_deque.pop_back();
+                                      string expression_left = expression_deque.back();
+                                      expression_deque.pop_back();
+                                      expression_deque.push_back("(");
+                                      expression_deque.push_back("(double)");
+                                      expression_deque.push_back(expression_left);
+                                      expression_deque.push_back("/");
+                                      expression_deque.push_back("(double)");
+                                      expression_deque.push_back(expression_right);
+                                      expression_deque.push_back(")");
+                                  }
+                              }
+                              else
                               {
                                   current_scope->PushTempVars(newvar);
-                                  string expression_right = expression_deque.back();
-                                  expression_deque.pop_back();
-                                  string expression_left = expression_deque.back();
-                                  expression_deque.pop_back();
-                                  expression_deque.push_back("(");
-                                  expression_deque.push_back("(double)");
-                                  expression_deque.push_back(expression_left);
-                                  expression_deque.push_back("/");
-                                  expression_deque.push_back("(double)");
-                                  expression_deque.push_back(expression_right);
-                                  expression_deque.push_back(")");
                               }
-                          }
-                          else
-                          {
-                              current_scope->PushTempVars(newvar);
                           }
                       }
                    ;
