@@ -13,7 +13,14 @@ string VarTypes::ToString(Type type)
         "POINTER",
         "RECORD"
     };
-    return StringTypes[type];
+    if((int)type >= 0 && (int)type <= 7)
+        return StringTypes[type];
+    else
+    {
+        stringstream ss;
+        ss << (int)type;
+        return ss.str();
+    }
 }
 
 // Constructor

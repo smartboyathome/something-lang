@@ -430,7 +430,7 @@ string ProcedureCallOutput::operator() ()
 // ---------------- ForStatementOutput ----------------------------------------
 
 ForStatementOutput::ForStatementOutput(int the_level, Variable* the_new_var,
-    Variable* the_left_side, Variable* the_right_side, bool the_up_to) :
+    string the_left_side, string the_right_side, bool the_up_to) :
     OutputFunctor(the_level)
 {
     new_var = the_new_var;
@@ -443,8 +443,9 @@ string ForStatementOutput::operator() ()
 {
     stringstream ss;
     ss << make_indent() << "for(" << get_c_var_type(new_var);
-    ss << " = " << get_c_value(left_side->GetVarType()) << "; ";
-    ss << new_var->GetName() << " <= " << get_c_value(right_side->GetVarType()) << ";";
+    ss << " = " << left_side << "; ";
+    string less_than = up_to ? " <= " : " >= ";
+    ss << new_var->GetName() << less_than << right_side << ";";
     string the_increment = up_to ? "++" : "--";
     ss << the_increment << new_var->GetName() << ")";
     return ss.str();

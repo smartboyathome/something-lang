@@ -139,10 +139,10 @@ class ForStatementOutput : public OutputFunctor
 {
 private:
     Variable* new_var;
-    Variable* left_side;
-    Variable* right_side;
+    string left_side;
+    string right_side;
     bool up_to;
 public:
-    ForStatementOutput(int, Variable*, Variable*, Variable*, bool);
+    ForStatementOutput(int, Variable*, string, string, bool);
     string operator() ();
 };

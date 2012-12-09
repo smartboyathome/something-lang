@@ -711,15 +711,32 @@ ForStatement       :  yfor  yident
                       {
                           global_scope.GetCurrentScope()->PushTempStrings(s);
                       }
-                      yassign  Expression  WhichWay  Expression
+                      yassign  Expression
+                      {
+                          string temp = "";
+                          while(!expression_deque.empty())
+                          {
+                              temp += expression_deque.front();
+                              expression_deque.pop_front();
+                          }
+                          global_scope.GetCurrentScope()->PushTempStrings(temp);
+                      }
+                      WhichWay  Expression
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           string up_to_str = current_scope->PopTempStrings();
+                          string left_side = current_scope->PopTempStrings();
                           string identifier = current_scope->PopTempStrings();
-                          Variable* right_side = current_scope->PopTempExpressions();
-                          Variable* left_side = current_scope->PopTempExpressions();
+                          string right_side = "";
+                          Variable* left_side_var = current_scope->PopTempExpressions();
+                          Variable* right_side_var = current_scope->PopTempExpressions();
+                          while(!expression_deque.empty())
+                          {
+                              right_side += expression_deque.front();
+                              expression_deque.pop_front();
+                          }
                           Variable* new_var = new Variable(identifier);
-                          new_var->SetVarType(left_side->GetVarType());
+                          new_var->SetVarType(left_side_var->GetVarType());
                           bool up_to = up_to_str == "to";
                           ForStatementOutput generate_output(global_scope.CurrentScopeLevel(),
                               new_var, left_side, right_side, true);
@@ -877,7 +894,11 @@ SimpleExpression   :  TermExpr
                    |  UnaryOperator  TermExpr
                    ;
 TermExpr           :  Term  
-                   |  TermExpr AddOperator  Term
+                   |  TermExpr yplus
+                      {
+                          expression_deque.push_back("+");
+                      }
+                      Term
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           Variable* newvar = current_scope->PopTempVars();
@@ -893,14 +914,13 @@ TermExpr           :  Term
                                   {
                                       VarTypes::Type newvar_type = newvar->GetVarType()->GetEnumType();
                                       VarTypes::Type oldvar_type = oldvar->GetVarType()->GetEnumType();
-                                      int add = current_scope->PopTempStrings() == "+" ? 1 : -1;
                                       if(newvar_type == VarTypes::REAL || oldvar_type == VarTypes::REAL)
                                       {
                                           RealType* real = new RealType("");
                                           double sum = 0.0;
                                           if(newvar_type == VarTypes::REAL)
                                           {
-                                              sum += ((RealType*)newvar->GetVarType())->GetValue() * add;
+                                              sum += ((RealType*)newvar->GetVarType())->GetValue();
                                           }
                                           else
                                           {
@@ -922,7 +942,7 @@ TermExpr           :  Term
                                       else
                                       {
                                           IntegerType* integer = new IntegerType("");
-                                          int sum = ((IntegerType*)newvar->GetVarType())->GetValue()*add + ((IntegerType*)oldvar->GetVarType())->GetValue();
+                                          int sum = ((IntegerType*)newvar->GetVarType())->GetValue() + ((IntegerType*)oldvar->GetVarType())->GetValue();
                                           integer->SetValue(sum);
                                           Variable* next = new Variable("");
                                           next->SetVarType(integer);
@@ -936,19 +956,14 @@ TermExpr           :  Term
                               }
                           }
                       }
-                   ;
-Term               :  Factor  
+                   |  TermExpr yminus
                       {
-                          LocalScope* current_scope = global_scope.GetCurrentScope();
-                          Variable* var = new Variable("");
-                          var->SetVarType(current_scope->PopTempTypes());
-                          current_scope->PushTempVars(var);
+                          expression_deque.push_back("-");
                       }
-                   |  Term  MultOperator  Factor
+                      Term
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
-                          Variable* newvar = new Variable("");
-                          newvar->SetVarType(current_scope->PopTempTypes());
+                          Variable* newvar = current_scope->PopTempVars();
                           VarTypes::Type types[] = {VarTypes::INTEGER, VarTypes::REAL};
                           if(IsOneOfVarTypesCheck(newvar, 2, types)())
                           {
@@ -964,14 +979,83 @@ Term               :  Factor
                                       if(newvar_type == VarTypes::REAL || oldvar_type == VarTypes::REAL)
                                       {
                                           RealType* real = new RealType("");
-                                          double product = 0.0;
+                                          double sum = 0.0;
                                           if(newvar_type == VarTypes::REAL)
                                           {
-                                              product = ((RealType*)newvar->GetVarType())->GetValue();
+                                              sum -= ((RealType*)newvar->GetVarType())->GetValue();
                                           }
                                           else
                                           {
-                                              product = (double)((IntegerType*)newvar->GetVarType())->GetValue();
+                                              sum -= ((IntegerType*)newvar->GetVarType())->GetValue();
+                                          }
+                                          if(oldvar_type == VarTypes::REAL)
+                                          {
+                                              sum += ((RealType*)oldvar->GetVarType())->GetValue();
+                                          }
+                                          else
+                                          {
+                                              sum += ((IntegerType*)oldvar->GetVarType())->GetValue();
+                                          }
+                                          real->SetValue(sum);
+                                          Variable* next = new Variable("");
+                                          next->SetVarType(real);
+                                          current_scope->PushTempVars(next);
+                                      }
+                                      else
+                                      {
+                                          IntegerType* integer = new IntegerType("");
+                                          int sum = ((IntegerType*)oldvar->GetVarType())->GetValue() - ((IntegerType*)newvar->GetVarType())->GetValue();
+                                          integer->SetValue(sum);
+                                          Variable* next = new Variable("");
+                                          next->SetVarType(integer);
+                                          current_scope->PushTempVars(next);
+                                      }
+                                  }
+                              }
+                              else
+                              {
+                                  current_scope->PushTempVars(newvar);
+                              }
+                          }
+                      }
+                   |  TermExpr yor
+                      {
+                          expression_deque.push_back("||");
+                      }
+                      Term
+                   ;
+Term               :  Factor  
+                   |  Term  ymultiply
+                      {
+                          expression_deque.push_back("*");
+                      }
+                      Factor
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          Variable* newvar = current_scope->PopTempVars();
+                          VarTypes::Type types[] = {VarTypes::INTEGER, VarTypes::REAL};
+                          if(IsOneOfVarTypesCheck(newvar, 2, types)())
+                          {
+                              if(!current_scope->TempVarsEmpty())
+                              {
+                                  Variable* oldvar = current_scope->PopTempVars();
+                                  VarTypes::Type newvartype = newvar->GetVarType()->GetEnumType();
+                                  VarTypes::Type oldvartype = oldvar->GetVarType()->GetEnumType();
+                                  if(IsOneOfVarTypesCheck(oldvar, 2, types)())
+                                  {
+                                      VarTypes::Type newvar_type = newvar->GetVarType()->GetEnumType();
+                                      VarTypes::Type oldvar_type = oldvar->GetVarType()->GetEnumType();
+                                      if(newvar_type == VarTypes::REAL || oldvar_type == VarTypes::REAL)
+                                      {
+                                          RealType* real = new RealType("");
+                                          double product = 1.0;
+                                          if(newvar_type == VarTypes::REAL)
+                                          {
+                                              product *= ((RealType*)newvar->GetVarType())->GetValue();
+                                          }
+                                          else
+                                          {
+                                              product *= ((IntegerType*)newvar->GetVarType())->GetValue();
                                           }
                                           if(oldvar_type == VarTypes::REAL)
                                           {
@@ -1006,8 +1090,7 @@ Term               :  Factor
                    |  Term ydiv Factor
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
-                          Variable* newvar = new Variable("");
-                          newvar->SetVarType(current_scope->PopTempTypes());
+                          Variable* newvar = current_scope->PopTempVars();
                           if(IsVarTypeCheck(newvar, VarTypes::INTEGER)())
                           {
                               if(!current_scope->TempVarsEmpty())
@@ -1040,8 +1123,7 @@ Term               :  Factor
                    |  Term ydivide Factor
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
-                          Variable* newvar = new Variable("");
-                          newvar->SetVarType(current_scope->PopTempTypes());
+                          Variable* newvar = current_scope->PopTempVars();
                           VarTypes::Type types[] = {VarTypes::INTEGER, VarTypes::REAL};
                           if(IsOneOfVarTypesCheck(newvar, 2, types)())
                           {
@@ -1072,6 +1154,16 @@ Term               :  Factor
                               }
                           }
                       }
+                   |  Term ymod 
+                      {
+                          expression_deque.push_back("%");
+                      }
+                      Factor
+                   :  Term yand
+                      {
+                          expression_deque.push_back("&&");
+                      }
+                      Factor
                    ;
 Factor             :  ynumber
                       {
@@ -1080,14 +1172,18 @@ Factor             :  ynumber
                           stringstream(s) >> temp;
                           if(modf(temp, &temp_int) == 0.0)
                           {
-                              IntegerType* Int = new IntegerType("", (int)temp_int);
-                              global_scope.GetCurrentScope()->PushTempTypes(Int);
+                              IntegerType* Int = new IntegerType("integer", (int)temp_int);
+                              Variable* var  = new Variable(s);
+                              var->SetVarType(Int);
+                              global_scope.GetCurrentScope()->PushTempVars(var);
                               IntOutput generate_output(global_scope.CurrentScopeLevel(), Int->GetValue());
                               expression_deque.push_back(generate_output());
                           }
                           else
                           {
-                              RealType* Real = new RealType("", temp);
+                              RealType* Real = new RealType("real", temp);
+                              Variable* var  = new Variable(s);
+                              var->SetVarType(Real);
                               global_scope.GetCurrentScope()->PushTempTypes(Real);
                               RealOutput generate_output(global_scope.CurrentScopeLevel(), Real->GetValue());
                               expression_deque.push_back(generate_output());
@@ -1095,12 +1191,17 @@ Factor             :  ynumber
                       }
                    |  ynil
                       {
+                          Variable* var = new Variable("nil");
+                          var->SetVarType(new NilType());
+                          global_scope.GetCurrentScope()->PushTempVars(var);
                           expression_deque.push_back("NULL");
                       }
                    |  ystring
                       {
-                          StringType* String = new StringType("", s);
-                          global_scope.GetCurrentScope()->PushTempTypes(String);
+                          StringType* String = new StringType("char", s);
+                          Variable* var = new Variable("");
+                          var->SetVarType(String);
+                          global_scope.GetCurrentScope()->PushTempVars(var);
                           StringOutput generate_output(global_scope.CurrentScopeLevel(), String->GetValue());
                           expression_deque.push_back(generate_output());
                       }
@@ -1110,16 +1211,18 @@ Factor             :  ynumber
                           MetaType* var = current_scope->PopTempDesignators();
                           if(var->GetType() == VARIABLE_TYPE)
                           {
-                              current_scope->PushTempTypes((VariableType*)var);
+                              Variable* newvar = new Variable("");
+                              newvar->SetVarType((VariableType*)var);
+                              current_scope->PushTempVars(newvar);
                           }
                           else if(var->GetType() == VARIABLE)
                           {
-                              current_scope->PushTempTypes(((Variable*)var)->GetVarType());
+                              current_scope->PushTempVars((Variable*)var);
                               
                           }
                           else if(var->GetType() == PROCEDURE)
                           {
-                              current_scope->PushTempTypes(((Procedure*)var)->GetReturnType()->GetVarType());
+                              current_scope->PushTempVars(((Procedure*)var)->GetReturnType());
                           }
                           DesignatorOutput generate_output(global_scope.CurrentScopeLevel(), designator_deque);
                           expression_deque.push_back(generate_output());
@@ -1132,7 +1235,7 @@ Factor             :  ynumber
                       Expression
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
-                          current_scope->PushTempTypes(current_scope->PopTempExpressions()->GetVarType());
+                          current_scope->PushTempVars(current_scope->PopTempExpressions());
                           string expression_str = ")";
                           while(expression_deque.back() != "(")
                           {
@@ -1170,7 +1273,7 @@ FunctionCall       :  yident
                               MetaType* proc = current_scope->IsInScope(s) ? current_scope->Get(s) : current_scope->Get(s+"_");
                               if(IsMetatypeCheck(proc, PROCEDURE)())
                               {
-                                  current_scope->PushTempTypes(((Procedure*)proc)->GetReturnType()->GetVarType());
+                                  current_scope->PushTempVars(((Procedure*)proc)->GetReturnType());
                                   if(proc->GetName() == "writeln")
                                   {
                                       *output_file << "cout << endl";
@@ -1227,14 +1330,18 @@ Setvalue           :  yleftbracket
                               }
                           }
                           array->AddDimension(0, temp.size()-1);
-                          current_scope->PushTempTypes(array);
+                          Variable* var = new Variable("");
+                          var->SetVarType(array);
+                          current_scope->PushTempVars(var);
                           *output_file << "}";
                       }
                    |  yleftbracket yrightbracket
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           ArrayType* array = new ArrayType("");
-                          current_scope->PushTempTypes(array);
+                          Variable* var = new Variable("");
+                          var->SetVarType(array);
+                          current_scope->PushTempVars(var);
                           *output_file << "{ }";
                       }
                    ;
@@ -1530,35 +1637,6 @@ UnaryOperator      :  yplus
                           global_scope.GetCurrentScope()->PushTempStrings("-");
                           expression_deque.push_back("-");
                       }
-                   ;
-MultOperator       :  ymultiply
-                      {
-                          expression_deque.push_back("*");
-                      }
-                   |  ymod
-                      {
-                          expression_deque.push_back("%");
-                      }
-                   |  yand
-                      {
-                          expression_deque.push_back("&");
-                      }
-                   ;
-AddOperator        :  yplus
-                      {
-                          global_scope.GetCurrentScope()->PushTempStrings("+");
-                          expression_deque.push_back("+");
-                      }
-                   |  yminus
-                      {
-                          global_scope.GetCurrentScope()->PushTempStrings("-");
-                          expression_deque.push_back("-");
-                      }
-                   |  yor
-                      {
-                          expression_deque.push_back("|");
-                      }
-                   ;
 Relation           :  yequal
                       {
                           expression_deque.push_back("==");
