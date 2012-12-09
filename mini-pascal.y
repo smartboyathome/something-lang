@@ -1023,6 +1023,22 @@ TermExpr           :  Term
                           expression_deque.push_back("||");
                       }
                       Term
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          Variable* newvar = current_scope->PopTempVars();
+                          if(IsVarTypeCheck(newvar, VarTypes::BOOLEAN)())
+                          {
+                              if(!current_scope->TempVarsEmpty())
+                              {
+                                  Variable* oldvar = current_scope->PopTempVars();
+                                  IsVarTypeCheck(newvar, VarTypes::BOOLEAN)();
+                              }
+                              else
+                              {
+                                  current_scope->PushTempVars(newvar);
+                              }
+                          }
+                      }
                    ;
 Term               :  Factor  
                    |  Term  ymultiply
@@ -1105,13 +1121,9 @@ Term               :  Factor
                                       expression_deque.pop_back();
                                       string expression_left = expression_deque.back();
                                       expression_deque.pop_back();
-                                      expression_deque.push_back("(");
-                                      expression_deque.push_back("(int)");
                                       expression_deque.push_back(expression_left);
                                       expression_deque.push_back("/");
-                                      expression_deque.push_back("(int)");
                                       expression_deque.push_back(expression_right);
-                                      expression_deque.push_back(")");
                                   }
                               }
                               else
@@ -1159,11 +1171,43 @@ Term               :  Factor
                           expression_deque.push_back("%");
                       }
                       Factor
-                   :  Term yand
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          Variable* newvar = current_scope->PopTempVars();
+                          if(IsVarTypeCheck(newvar, VarTypes::INTEGER)())
+                          {
+                              if(!current_scope->TempVarsEmpty())
+                              {
+                                  Variable* oldvar = current_scope->PopTempVars();
+                                  IsVarTypeCheck(newvar, VarTypes::INTEGER)();
+                              }
+                              else
+                              {
+                                  current_scope->PushTempVars(newvar);
+                              }
+                          }
+                      }
+                   |  Term yand
                       {
                           expression_deque.push_back("&&");
                       }
                       Factor
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          Variable* newvar = current_scope->PopTempVars();
+                          if(IsVarTypeCheck(newvar, VarTypes::BOOLEAN)())
+                          {
+                              if(!current_scope->TempVarsEmpty())
+                              {
+                                  Variable* oldvar = current_scope->PopTempVars();
+                                  IsVarTypeCheck(newvar, VarTypes::BOOLEAN)();
+                              }
+                              else
+                              {
+                                  current_scope->PushTempVars(newvar);
+                              }
+                          }
+                      }
                    ;
 Factor             :  ynumber
                       {
