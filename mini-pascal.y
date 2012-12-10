@@ -26,7 +26,7 @@ extern ostream* output_file;
 extern string s; // This is the metadata, such a s an int or string value.
 extern int line_num; // And this is the line number that flex is on.
 void yyerror(const char *s) {
-    cout << "ERROR: " << s << " on line " << line_num << " with token " << yytext << endl;
+    cout << "***ERROR: " << s << " on line " << line_num << " with token " << yytext << endl;
 }
 extern "C" int yyparse();
 
@@ -267,6 +267,18 @@ VariableDecl       :  IdentList  ycolon  Type
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           VariableType* type = current_scope->PopTempTypes();
+                          if(type->GetEnumType() == VarTypes::POINTER)
+                          {
+                              Pointer* ptr = (Pointer*)type;
+                              if(IsInScopeCheck(current_scope, ptr->GetTypeIdentifier())())
+                              {
+                                  MetaType* next = current_scope->Get(ptr->GetTypeIdentifier());
+                                  if(IsMetatypeCheck(next, VARIABLE_TYPE)())
+                                  {
+                                      ptr->SetTypePtr((VariableType*)next);
+                                  }
+                              }
+                          }
                           while(!current_scope->TempVarsEmpty())
                           {
                               Variable* var = current_scope->PopTempVars();
@@ -611,6 +623,11 @@ ProcedureCall      :  yident
                                   {
                                       *output_file << " >> ";
                                   }
+                                  else if(next_expr == ",")
+                                  {
+                                      ++count;
+                                      *output_file << next_expr << " ";
+                                  }
                                   else
                                   {
                                       if(proc->parameters.size() > count && proc->parameters[count]->IsOutput())
@@ -618,7 +635,6 @@ ProcedureCall      :  yident
                                       *output_file << next_expr;
                                   }
                                   expression_deque.pop_front();
-                                  ++count;
                               }
                               if(is_output && do_newline)
                                   *output_file << " << endl";
@@ -671,12 +687,53 @@ ElsePart           :  /*** empty ***/
                           *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel()) << "}" << endl;
                       }
                    ;
-CaseStatement      :  ycase  Expression  yof  CaseList  yend
+CaseStatement      :  ycase  Expression
+                      {
+                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
+                          *output_file << "switch(";
+                          while(!expression_deque.empty())
+                          {
+                              *output_file << expression_deque.front() << " ";
+                              expression_deque.pop_front();
+                          }
+                          *output_file << ")" << endl;
+                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
+                          *output_file << "{" << endl;
+                          global_scope.IncrementScopeLevel();
+                      }
+                      yof  CaseList  yend
+                      {
+                          global_scope.DecrementScopeLevel();
+                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
+                          *output_file << "}" << endl;
+                      }
                    ;
 CaseList           :  Case
                    |  CaseList  ysemicolon  Case  
                    ;
-Case               :  CaseLabelList  ycolon  Statement
+Case               :  CaseLabelList
+                      {
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
+                          *output_file << "case ";
+                          bool first = true;
+                          while(!current_scope->TempConstantsEmpty())
+                          {
+                              if(!first)
+                                  *output_file << ",";
+                              else
+                                  first = false;
+                              *output_file << OutputFunctor::get_c_value(current_scope->PopTempConstants());
+                          }
+                          *output_file << ":" << endl;
+                          global_scope.IncrementScopeLevel();
+                      }
+                      ycolon  Statement
+                      {
+                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
+                          *output_file << "break;" << endl;
+                          global_scope.DecrementScopeLevel();
+                      }
                    ;
 CaseLabelList      :  ConstExpression  
                    |  CaseLabelList  ycomma  ConstExpression   
@@ -705,7 +762,26 @@ WhileStatement     :  ywhile  Expression
                           *output_file << "}" << endl;
                       }
                    ;
-RepeatStatement    :  yrepeat  StatementSequence  yuntil  Expression
+RepeatStatement    :  yrepeat
+                      {
+                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
+                          *output_file << "do" << endl;
+                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());\
+                          *output_file << "{" << endl;
+                          global_scope.IncrementScopeLevel();
+                      }
+                      StatementSequence  yuntil  Expression
+                      {
+                          global_scope.DecrementScopeLevel();
+                          *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
+                          *output_file << "} while(";
+                          while(!expression_deque.empty())
+                          {
+                              *output_file << expression_deque.front() << " ";
+                              expression_deque.pop_front();
+                          }
+                          *output_file << ");";
+                      }
                    ;
 ForStatement       :  yfor  yident
                       {
@@ -775,6 +851,10 @@ Designator         :  yident
                               if(metatype->GetType() == VARIABLE && ((Variable*)metatype)->IsOutput())
                               {
                                   designator_deque.push_back("(*" + metatype->GetName() + ")");
+                              }
+                              else if(metatype->GetType() == VARIABLE_TYPE)
+                              {
+                                  designator_deque.push_back(OutputFunctor::get_c_func_type((VariableType*)metatype));
                               }
                               else
                               {
@@ -847,13 +927,18 @@ theDesignatorStuff :  ydot yident
                       {
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           MetaType* metatype = current_scope->PopTempDesignators();
+                          VariableType* type;
                           if(metatype->GetType() == VARIABLE)
                           {
-                              metatype = ((Variable*)metatype)->GetVarType();
+                              type = ((Variable*)metatype)->GetVarType();
                           }
-                          if(IsMetatypeCheck(metatype, VARIABLE_TYPE)() && IsVarTypeCheck(metatype, VarTypes::POINTER)())
+                          else
                           {
-                              current_scope->PushTempDesignators(((Pointer*)metatype)->GetTypePtr());
+                              type = (VariableType*)type;
+                          }
+                          if(IsMetatypeCheck(type, VARIABLE_TYPE)() && IsVarTypeCheck(type, VarTypes::POINTER)())
+                          {
+                              current_scope->PushTempDesignators(((Pointer*)type)->GetTypePtr());
                               //string before = designator_deque.back();
                               //designator_deque.pop_back();
                               designator_deque.push_front("(*");

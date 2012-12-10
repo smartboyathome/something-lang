@@ -49,9 +49,20 @@ string OutputFunctor::get_c_type(VariableType* the_type, bool is_output)
         Pointer* pointer = (Pointer*)the_type;
         if(pointer->GetName() == "nil")
             retval =  "void";
-        stringstream ss;
-        ss << pointer->GetTypeIdentifier() << "*";
-        retval =  ss.str();
+        else
+        {
+            stringstream ss;
+            if(pointer->GetTypePtr() != NULL && pointer->GetTypePtr()->GetName() != "nil")
+            {
+                ss << get_c_func_type(pointer->GetTypePtr()) << "*";
+            }
+            else
+            {
+                ss << pointer->GetTypeIdentifier() << "*";
+            }
+            retval =  ss.str();
+            //retval = pointer->GetTypeIdentifier() + "*";
+        }
     }
     else if(enum_type == VarTypes::RECORD)
     {
@@ -114,6 +125,23 @@ string OutputFunctor::get_c_var_type(Variable* the_var)
         ss << " " << the_var->GetName();
         ss << create_array_indexes(array);
         return ss.str();
+    }
+    if(enum_type == VarTypes::POINTER)
+    {
+        Pointer* ptr = (Pointer*)the_var->GetVarType();
+        if(ptr->GetTypePtr()->GetEnumType() == VarTypes::ARRAY)
+        {
+            ArrayType* array = (ArrayType*)ptr->GetTypePtr();
+            stringstream ss;
+            Variable* new_var = new Variable("(*"+the_var->GetName()+")");
+            new_var->SetVarType(array);
+            ss << get_c_var_type(new_var);
+            return ss.str();
+        }
+        else
+        {
+            return get_c_type(the_var->GetVarType(), false) + " " + the_var->GetName();
+        }
     }
     else
     {
@@ -282,8 +310,18 @@ string SubprogDefOutput::operator() ()
             ss << ", ";
         else
             first = false;
-        ss << get_c_type(proc->parameters[i]->GetVarType(), proc->parameters[i]->IsOutput());
-        ss << " " << proc->parameters[i]->GetName();
+        if(proc->parameters[i]->IsOutput())
+        {
+            Variable* new_var = new Variable(proc->parameters[i]->GetName());
+            Pointer* new_ptr = new Pointer("");
+            new_ptr->SetTypePtr(proc->parameters[i]->GetVarType());
+            new_var->SetVarType(new_ptr);
+            ss << get_c_var_type(new_var);
+        }
+        else
+        {
+            ss << get_c_var_type(proc->parameters[i]);
+        }
     }
     ss << ")";
     return ss.str();
