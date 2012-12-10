@@ -1601,16 +1601,27 @@ ProcedureDecl      :  ProcedureHeading  ysemicolon
                           LocalScope* current_scope = global_scope.GetCurrentScope();
                           string identifier = current_scope->PopTempStrings();
                           Procedure* proc = (Procedure*)current_scope->Get(identifier);
+                          current_scope->current_procedure = proc;
+                          
                           SubprogDefOutput generate_output(global_scope.CurrentScopeLevel(), proc, false);
                           *output_file << generate_output() << endl;
                           *output_file << generate_output.BeginBlock() << endl;
                           is_main = false;
                           CreateNewScope();
+                          global_scope.IncrementScopeLevel();
                       }
                       Block 
                       {
                           global_scope.PopCurrentScope();
-                          *output_file << SubprogDefOutput::EndBlock(global_scope.CurrentScopeLevel()) << endl;
+                          LocalScope* current_scope = global_scope.GetCurrentScope();
+                          if(current_scope->current_procedure != NULL)
+                          {
+                              global_scope.IncrementScopeLevel();
+                              SubprogDefOutput generate_output(global_scope.CurrentScopeLevel(), current_scope->current_procedure, false);
+                              *output_file << generate_output.EndBlock() << endl << endl;
+                              global_scope.DecrementScopeLevel();
+                              global_scope.DecrementScopeLevel();
+                          }
                           if(global_scope.CurrentScopeLevel() == 0)
                               is_main = true;
                       }
@@ -1633,6 +1644,7 @@ FunctionDecl       :  FunctionHeading  ycolon  yident
                               *output_file << generate_output() << endl;
                               *output_file << generate_output.BeginBlock() << endl;
                               CreateNewScope();
+                              global_scope.IncrementScopeLevel();
                               VarDefOutput retval_output(global_scope.CurrentScopeLevel(), retval);
                               *output_file << retval_output() << endl;
                               is_main = false;
@@ -1646,15 +1658,14 @@ FunctionDecl       :  FunctionHeading  ycolon  yident
                           if(current_scope->current_procedure != NULL)
                           {
                               global_scope.IncrementScopeLevel();
-                              Variable* retval = current_scope->current_procedure->GetReturnType();
-                              *output_file << OutputFunctor::make_indent(global_scope.CurrentScopeLevel());
-                              *output_file << "return " << retval->GetName() << ";" << endl;
+                              SubprogDefOutput generate_output(global_scope.CurrentScopeLevel(), current_scope->current_procedure, true);
+                              *output_file << generate_output.EndBlock() << endl << endl;
                               current_scope->current_procedure = NULL;
                               global_scope.DecrementScopeLevel();
-                              *output_file << SubprogDefOutput::EndBlock(global_scope.CurrentScopeLevel()) << endl;
-                              if(global_scope.CurrentScopeLevel() == 0)
-                                  is_main = true;
+                              global_scope.DecrementScopeLevel();
                           }
+                          if(global_scope.CurrentScopeLevel() == 0)
+                              is_main = true;
                       }
                    ;
 ProcedureHeading   :  yprocedure  yident  

@@ -282,6 +282,8 @@ string VarDefOutput::operator() ()
 {
     stringstream ss;
     ss << make_indent();
+    if(scope_level > 0)
+        ss << "static ";
     ss << get_c_var_type(var) << ";";
     return ss.str();
 }
@@ -298,7 +300,38 @@ SubprogDefOutput::SubprogDefOutput(int the_scope_level, Procedure* the_proc, boo
 string SubprogDefOutput::operator() ()
 {
     stringstream ss;
+    ss << make_indent() << "struct " << proc->GetName() << "functor" << endl;
+    ss << make_indent() << "{" << endl;
+    ++scope_level;
+    ss << make_indent() << proc->GetName() << "functor() { };" << endl;
+    ss << make_indent();
     if(has_return_type)
+        ss << get_c_type(proc->GetReturnType()->GetVarType(), false);
+    else
+        ss << "void";
+    ss << " operator() (";
+    bool first = true;
+    for(int i = 0; i < proc->parameters.size(); ++i)
+    {
+        if(!first)
+            ss << ", ";
+        else
+            first = false;
+        if(proc->parameters[i]->IsOutput())
+        {
+            Variable* new_var = new Variable(proc->parameters[i]->GetName());
+            Pointer* new_ptr = new Pointer("");
+            new_ptr->SetTypePtr(proc->parameters[i]->GetVarType());
+            new_var->SetVarType(new_ptr);
+            ss << get_c_var_type(new_var);
+        }
+        else
+        {
+            ss << get_c_var_type(proc->parameters[i]);
+        }
+    }
+    ss << ")";
+    /*if(has_return_type)
         ss << get_c_type(proc->GetReturnType()->GetVarType(), false);
     else
         ss << "void";
@@ -323,7 +356,7 @@ string SubprogDefOutput::operator() ()
             ss << get_c_var_type(proc->parameters[i]);
         }
     }
-    ss << ")";
+    ss << ")";*/
     return ss.str();
 }
 
@@ -339,7 +372,17 @@ string SubprogDefOutput::BeginBlock(int level)
 
 string SubprogDefOutput::EndBlock()
 {
-    return make_indent() + "};";
+    stringstream ss;
+    Variable* retval = proc->GetReturnType();
+    if(has_return_type)
+        ss << make_indent() << "return " << retval->GetName() << ";" << endl;
+    --scope_level;
+    ss << make_indent() << "};" << endl;
+    --scope_level;
+    ss << make_indent() << "};" << endl;
+    ss << make_indent() << proc->GetName() << "functor" << " " << proc->GetName();
+    ss << ";";
+    return ss.str();
 }
 
 string SubprogDefOutput::EndBlock(int level)
